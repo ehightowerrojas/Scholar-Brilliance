@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — Scholar Brilliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="login-shell">
+
+  <div class="login-brand">
+    <a href="index.html" class="back-home">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to home
+    </a>
+
+    <div class="login-quote">
+      <span class="eyebrow">Welcome back</span>
+      <h1>Every finished application is a level up.</h1>
+      <p>Pick up your quest exactly where you left it — matches, drafts, and deadlines are all waiting in your dashboard.</p>
+
+      <div class="login-milestones">
+        <div class="login-milestone done">
+          <span class="dot">✓</span><span class="label">Profile built</span>
+        </div>
+        <div class="login-milestone done">
+          <span class="dot">✓</span><span class="label">10 scholarships won · $13,103 raised</span>
+        </div>
+        <div class="login-milestone">
+          <span class="dot">3</span><span class="label">Applications in progress</span>
+        </div>
+      </div>
+    </div>
+
+    <span class="eyebrow" style="opacity:.6;">Santa Cruz LaunchPad 2026</span>
+  </div>
+
+  <div class="login-panel">
+    <div class="login-card">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 5.8L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-1.2L12 2z" fill="#F5B700"/></svg>
+        </span>
+        Scholar Brilliance
+      </a>
+
+      <h2>Log in to your account</h2>
+      <p class="sub">Choose how you're joining us today.</p>
+
+      <div class="role-toggle" role="group" aria-label="Choose account type">
+        <button type="button" id="tab-student" aria-pressed="true">Student</button>
+        <button type="button" id="tab-staff" aria-pressed="false">School staff</button>
+      </div>
+
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="you@school.edu" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+          <div class="field-row">
+            <span></span>
+            <a href="#">Forgot password?</a>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold btn-block">Log in</button>
+      </form>
+
+      <div class="login-divider">or</div>
+
+      <div class="demo-note">
+        <strong>Try the demo</strong><br>
+        <span id="demo-cred">student@demo.org · password123</span>
+      </div>
+
+      <p class="login-foot">New to Scholar Brilliance? <a href="#">Create a free account</a></p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const studentTab = document.getElementById('tab-student');
+  const staffTab = document.getElementById('tab-staff');
+  const demoCred = document.getElementById('demo-cred');
+  const emailInput = document.getElementById('email');
+
+  function setRole(role){
+    const isStudent = role === 'student';
+    studentTab.setAttribute('aria-pressed', String(isStudent));
+    staffTab.setAttribute('aria-pressed', String(!isStudent));
+    demoCred.textContent = isStudent ? 'student@demo.org · password123' : 'staff@demo.org · password123';
+    emailInput.placeholder = isStudent ? 'you@student.edu' : 'you@school.edu';
+  }
+
+  studentTab.addEventListener('click', () => setRole('student'));
+  staffTab.addEventListener('click', () => setRole('staff'));
+
+  document.getElementById('login-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    // Wire this up to your auth endpoint — this template has no backend.
+    alert('This is a static template — connect this form to your login API.');
+  });
+</script>
+
+</body>
+</html>
