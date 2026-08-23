@@ -544,6 +544,16 @@ footer.site-footer{
   color:var(--bg);
 }
 
+.form-message{
+  margin-top:18px;
+  padding:12px 14px;
+  border:1px solid var(--line-strong);
+  border-radius:var(--radius-sm);
+  font-size:13.5px;
+  color:var(--fg);
+  line-height:1.5;
+}
+
 .field{ margin-top:20px; }
 .field label{
   display:block; font-size:13px; font-weight:600; margin-bottom:7px; color:var(--fg);
@@ -595,6 +605,64 @@ footer.site-footer{
   font-size:13.5px; font-weight:600; color:var(--muted);
 }
 .back-home:hover{ color:var(--fg); }
+
+/* ============================================================
+   ACHIEVEMENTS
+   ============================================================ */
+.level-card{
+  border:1px solid var(--line-strong);
+  border-radius:var(--radius-lg);
+  padding:32px 34px;
+  margin-bottom:44px;
+}
+.level-card h1{ font-size:clamp(22px,3vw,30px); margin-top:6px; color:var(--fg); }
+.level-meta{
+  display:flex; justify-content:space-between; align-items:baseline;
+  margin-top:10px; font-family:var(--font-mono); font-size:13px; color:var(--muted);
+}
+.level-track{
+  margin-top:16px; height:10px; border-radius:999px;
+  background:rgba(255,255,255,0.1); overflow:hidden;
+}
+.level-fill{ height:100%; background:var(--fg); border-radius:999px; transition:width .4s ease; }
+
+.achv-section{ margin-bottom:48px; }
+.achv-section h2{ font-size:20px; margin-bottom:18px; color:var(--fg); }
+.achv-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+.achv-card{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  padding:20px;
+  transition:transform .15s ease, opacity .2s ease;
+}
+.achv-card.earned{ background:var(--fg); color:var(--bg); border-color:var(--fg); }
+.achv-card.locked{ opacity:.55; }
+.achv-icon{
+  width:38px; height:38px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  border:1.5px solid currentColor; margin-bottom:14px;
+}
+.achv-icon svg{ width:18px; height:18px; stroke:currentColor; }
+.achv-card h3{ font-size:15px; margin-bottom:6px; }
+.achv-card p{ font-size:13px; opacity:.75; margin-bottom:12px; line-height:1.4; }
+.achv-foot{
+  display:flex; justify-content:space-between; align-items:center;
+  font-family:var(--font-mono); font-size:11.5px;
+}
+.achv-badge-earned{ font-weight:700; }
+.achv-demo-btn{
+  margin-top:14px; width:100%;
+  font-size:11.5px; padding:8px 10px;
+  border-radius:999px; border:1px solid currentColor;
+  background:transparent; color:inherit; cursor:pointer;
+  font-family:var(--font-body);
+}
+.achv-demo-btn:hover{ opacity:.8; }
+
+.demo-panel{
+  margin-top:20px; border-top:1px dashed var(--line);
+  padding-top:24px; font-size:13px; color:var(--muted); max-width:640px;
+}
 
 /* ============================================================
    RESPONSIVE

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Achievements — Scholar Brilliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stub-shell">
+  <nav class="stub-nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 5.8L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-1.2L12 2z" fill="#ffffff"/></svg></span>
+      Scholar Brilliance
+    </a>
+    <div style="display:flex; align-items:center; gap:24px;">
+      <a href="dashboard.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Dashboard</a>
+      <a href="achievements.html" style="font-size:14.5px; font-weight:600; color:var(--fg);">Achievements</a>
+      <button id="logout-btn" class="btn btn-line">Log out</button>
+    </div>
+  </nav>
+
+  <main style="flex:1; padding:56px 24px; max-width:960px; margin:0 auto; width:100%;">
+
+    <div class="level-card">
+      <span class="eyebrow">My achievements</span>
+      <h1 id="level-heading">Loading…</h1>
+      <div class="level-meta">
+        <span id="level-xp">— XP</span>
+        <span id="level-remaining">—</span>
+      </div>
+      <div class="level-track"><div class="level-fill" id="level-fill" style="width:0%;"></div></div>
+    </div>
+
+    <section class="achv-section">
+      <h2>Early Wins</h2>
+      <div class="achv-grid" id="early-wins-grid"></div>
+    </section>
+
+    <section class="achv-section">
+      <h2>Application Milestones</h2>
+      <div class="achv-grid" id="milestones-grid"></div>
+    </section>
+
+    <div class="demo-panel">
+      Demo controls — the real app will award these automatically as you use the tracker.
+      Use the buttons on each card to simulate earning or un-earning a badge while the rest
+      of Scholar Brilliance is still being built.
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="achievements.js"></script>
+
+</body>
+</html>
