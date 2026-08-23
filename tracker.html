@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Tracker — Scholar Brilliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stub-shell">
+  <nav class="stub-nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 5.8L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-1.2L12 2z" fill="#ffffff"/></svg></span>
+      Scholar Brilliance
+    </a>
+    <div style="display:flex; align-items:center; gap:24px;">
+      <a href="dashboard.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Dashboard</a>
+      <a href="tracker.html" style="font-size:14.5px; font-weight:600; color:var(--fg);">Tracker</a>
+      <a href="achievements.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Achievements</a>
+      <button id="logout-btn" class="btn btn-line">Log out</button>
+    </div>
+  </nav>
+
+  <main style="flex:1; padding:48px 24px; max-width:1180px; margin:0 auto; width:100%;">
+
+    <div class="tracker-head">
+      <div>
+        <span class="eyebrow">Application tracker</span>
+        <h1>Drag scholarships across the board as you make progress.</h1>
+      </div>
+      <button class="btn btn-gold" id="add-toggle-btn">+ Add scholarship</button>
+    </div>
+
+    <form id="add-form" class="add-form" style="display:none;">
+      <div class="add-form-grid">
+        <div class="field">
+          <label for="s-title">Title</label>
+          <input type="text" id="s-title" placeholder="Narrative Magazine Scholarship" required>
+        </div>
+        <div class="field">
+          <label for="s-amount">Amount ($)</label>
+          <input type="number" id="s-amount" placeholder="1000" min="0" step="1">
+        </div>
+        <div class="field">
+          <label for="s-deadline">Deadline</label>
+          <input type="date" id="s-deadline">
+        </div>
+        <div class="field">
+          <label for="s-website">Website</label>
+          <input type="url" id="s-website" placeholder="https://...">
+        </div>
+      </div>
+      <div class="add-form-actions">
+        <button type="button" class="btn btn-ghost-dark" id="cancel-add-btn">Cancel</button>
+        <button type="submit" class="btn btn-gold">Save scholarship</button>
+      </div>
+    </form>
+
+    <div class="kanban-board">
+      <div class="kanban-col" data-status="saved">
+        <div class="kanban-col-head"><span>Saved / Researching</span><span class="kanban-count" id="count-saved">0</span></div>
+        <div class="kanban-drop" id="col-saved"></div>
+      </div>
+      <div class="kanban-col" data-status="working">
+        <div class="kanban-col-head"><span>Working On</span><span class="kanban-count" id="count-working">0</span></div>
+        <div class="kanban-drop" id="col-working"></div>
+      </div>
+      <div class="kanban-col" data-status="submitted">
+        <div class="kanban-col-head"><span>Submitted</span><span class="kanban-count" id="count-submitted">0</span></div>
+        <div class="kanban-drop" id="col-submitted"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="tracker.js"></script>
+
+</body>
+</html>
