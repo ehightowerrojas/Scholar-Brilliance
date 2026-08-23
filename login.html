@@ -48,67 +48,54 @@
         Scholar Brilliance
       </a>
 
-      <h2>Log in to your account</h2>
-      <p class="sub">Choose how you're joining us today.</p>
+      <h2 id="form-heading">Log in to your account</h2>
+      <p class="sub" id="form-sub">Choose how you're joining us today.</p>
 
       <div class="role-toggle" role="group" aria-label="Choose account type">
         <button type="button" id="tab-student" aria-pressed="true">Student</button>
         <button type="button" id="tab-staff" aria-pressed="false">School staff</button>
       </div>
 
+      <div id="form-message" class="form-message" role="alert" style="display:none;"></div>
+
       <form id="login-form" novalidate>
+        <div class="field" id="name-field" style="display:none;">
+          <label for="full-name">Full name</label>
+          <input type="text" id="full-name" name="full-name" placeholder="Ava Thompson" autocomplete="name">
+        </div>
         <div class="field">
           <label for="email">Email</label>
           <input type="email" id="email" name="email" placeholder="you@school.edu" autocomplete="username" required>
         </div>
         <div class="field">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
-          <div class="field-row">
+          <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required minlength="6">
+          <div class="field-row" id="forgot-row">
             <span></span>
-            <a href="#">Forgot password?</a>
+            <a href="#" id="forgot-link">Forgot password?</a>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-gold btn-block">Log in</button>
+        <button type="submit" class="btn btn-gold btn-block" id="submit-btn">Log in</button>
       </form>
 
       <div class="login-divider">or</div>
 
-      <div class="demo-note">
+      <div class="demo-note" id="demo-note">
         <strong>Try the demo</strong><br>
         <span id="demo-cred">student@demo.org · password123</span>
       </div>
 
-      <p class="login-foot">New to Scholar Brilliance? <a href="#">Create a free account</a></p>
+      <p class="login-foot"><span id="toggle-mode-text">New to Scholar Brilliance?</span> <a href="#" id="toggle-mode-link">Create a free account</a></p>
     </div>
   </div>
 
 </div>
 
-<script>
-  const studentTab = document.getElementById('tab-student');
-  const staffTab = document.getElementById('tab-staff');
-  const demoCred = document.getElementById('demo-cred');
-  const emailInput = document.getElementById('email');
-
-  function setRole(role){
-    const isStudent = role === 'student';
-    studentTab.setAttribute('aria-pressed', String(isStudent));
-    staffTab.setAttribute('aria-pressed', String(!isStudent));
-    demoCred.textContent = isStudent ? 'student@demo.org · password123' : 'staff@demo.org · password123';
-    emailInput.placeholder = isStudent ? 'you@student.edu' : 'you@school.edu';
-  }
-
-  studentTab.addEventListener('click', () => setRole('student'));
-  staffTab.addEventListener('click', () => setRole('staff'));
-
-  document.getElementById('login-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    // Wire this up to your auth endpoint — this template has no backend.
-    alert('This is a static template — connect this form to your login API.');
-  });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="login.js"></script>
 
 </body>
 </html>

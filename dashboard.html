@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Scholar Brilliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .stub-shell{ min-height:100vh; display:flex; flex-direction:column; }
+  .stub-nav{ display:flex; align-items:center; justify-content:space-between; padding:24px 32px; border-bottom:1px solid var(--line); }
+  .stub-main{ flex:1; display:flex; align-items:center; justify-content:center; padding:40px 24px; text-align:center; }
+  .stub-card{ max-width:460px; }
+  .stub-card .eyebrow{ justify-content:center; margin-bottom:16px; }
+  .stub-card h1{ font-size:clamp(26px,3.4vw,36px); }
+  .stub-card p{ margin-top:14px; color:var(--muted); font-size:15.5px; }
+  .stub-meta{ margin-top:28px; border:1px solid var(--line); border-radius:var(--radius-md); padding:18px 20px; text-align:left; font-family:var(--font-mono); font-size:13px; color:var(--fg); }
+  .stub-meta div{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); }
+  .stub-meta div:last-child{ border-bottom:none; }
+  .stub-meta span:first-child{ color:var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="stub-shell">
+  <nav class="stub-nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 5.8L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-1.2L12 2z" fill="#ffffff"/></svg></span>
+      Scholar Brilliance
+    </a>
+    <button id="logout-btn" class="btn btn-line">Log out</button>
+  </nav>
+
+  <main class="stub-main">
+    <div class="stub-card">
+      <span class="eyebrow">Session confirmed</span>
+      <h1 id="welcome-heading">Welcome back.</h1>
+      <p>This is a placeholder — the real dashboard from the deck (scholarship tracker, progress bars, achievements) plugs in here next.</p>
+
+      <div class="stub-meta" id="session-meta">
+        <div><span>Email</span><span id="meta-email">—</span></div>
+        <div><span>Role</span><span id="meta-role">—</span></div>
+        <div><span>User ID</span><span id="meta-id">—</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script>
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+    const user = session.user;
+    document.getElementById('welcome-heading').textContent =
+      `Welcome back, ${user.user_metadata?.full_name || user.email}.`;
+    document.getElementById('meta-email').textContent = user.email;
+    document.getElementById('meta-role').textContent = user.user_metadata?.role || 'unknown';
+    document.getElementById('meta-id').textContent = user.id;
+  })();
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'login.html';
+  });
+</script>
+
+</body>
+</html>
