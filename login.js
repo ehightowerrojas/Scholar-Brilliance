@@ -3,27 +3,35 @@
 // ------------------------------------------------------------------
 
 const els = {
-  heading:     document.getElementById('form-heading'),
-  sub:         document.getElementById('form-sub'),
-  nameField:   document.getElementById('name-field'),
-  nameInput:   document.getElementById('full-name'),
-  email:       document.getElementById('email'),
-  password:    document.getElementById('password'),
-  submitBtn:   document.getElementById('submit-btn'),
-  form:        document.getElementById('login-form'),
-  toggleLink:  document.getElementById('toggle-mode-link'),
-  toggleText:  document.getElementById('toggle-mode-text'),
-  forgotRow:   document.getElementById('forgot-row'),
-  forgotLink:  document.getElementById('forgot-link'),
-  message:     document.getElementById('form-message'),
-  studentTab:  document.getElementById('tab-student'),
-  staffTab:    document.getElementById('tab-staff'),
-  demoNote:    document.getElementById('demo-note'),
-  demoCred:    document.getElementById('demo-cred'),
+  heading:      document.getElementById('form-heading'),
+  sub:          document.getElementById('form-sub'),
+  nameField:    document.getElementById('name-field'),
+  nameInput:    document.getElementById('full-name'),
+  orgField:     document.getElementById('org-name-field'),
+  orgInput:     document.getElementById('org-name'),
+  referralField:document.getElementById('referral-field'),
+  referralInput:document.getElementById('referral-code'),
+  email:        document.getElementById('email'),
+  password:     document.getElementById('password'),
+  submitBtn:    document.getElementById('submit-btn'),
+  form:         document.getElementById('login-form'),
+  toggleLink:   document.getElementById('toggle-mode-link'),
+  toggleText:   document.getElementById('toggle-mode-text'),
+  forgotRow:    document.getElementById('forgot-row'),
+  forgotLink:   document.getElementById('forgot-link'),
+  message:      document.getElementById('form-message'),
+  studentTab:   document.getElementById('tab-student'),
+  staffTab:     document.getElementById('tab-staff'),
+  demoNote:     document.getElementById('demo-note'),
+  demoCred:     document.getElementById('demo-cred'),
 };
 
-let mode = 'login';       // 'login' | 'signup'
+let mode = 'login';           // 'login' | 'signup'
 let selectedRole = 'student'; // 'student' | 'staff'
+
+function landingPageFor(role) {
+  return role === 'staff' ? 'staff-dashboard.html' : 'dashboard.html';
+}
 
 function setRole(role) {
   selectedRole = role;
@@ -32,11 +40,17 @@ function setRole(role) {
   els.staffTab.setAttribute('aria-pressed', String(!isStudent));
   els.demoCred.textContent = isStudent ? 'student@demo.org · password123' : 'staff@demo.org · password123';
   els.email.placeholder = isStudent ? 'you@student.edu' : 'you@school.edu';
+
+  if (mode === 'signup') {
+    els.orgField.style.display = isStudent ? 'none' : 'block';
+    els.referralField.style.display = isStudent ? 'block' : 'none';
+  }
 }
 
 function setMode(next) {
   mode = next;
   const isLogin = mode === 'login';
+  const isStudent = selectedRole === 'student';
 
   els.heading.textContent = isLogin ? 'Log in to your account' : 'Create your account';
   els.sub.textContent = isLogin
@@ -44,6 +58,8 @@ function setMode(next) {
     : "Set up your account to start tracking scholarships.";
   els.nameField.style.display = isLogin ? 'none' : 'block';
   els.nameInput.required = !isLogin;
+  els.orgField.style.display = (!isLogin && !isStudent) ? 'block' : 'none';
+  els.referralField.style.display = (!isLogin && isStudent) ? 'block' : 'none';
   els.submitBtn.textContent = isLogin ? 'Log in' : 'Create account';
   els.forgotRow.style.display = isLogin ? 'flex' : 'none';
   els.demoNote.style.display = isLogin ? 'block' : 'none';
@@ -99,14 +115,14 @@ els.form.addEventListener('submit', async (e) => {
   els.submitBtn.textContent = mode === 'login' ? 'Logging in…' : 'Creating account…';
 
   if (mode === 'login') {
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
       showMessage(error.message, 'error');
       els.submitBtn.disabled = false;
       els.submitBtn.textContent = originalLabel;
       return;
     }
-    window.location.href = 'dashboard.html';
+    window.location.href = landingPageFor(data.user.user_metadata?.role);
   } else {
     const { data, error } = await supabaseClient.auth.signUp({
       email,
@@ -115,6 +131,8 @@ els.form.addEventListener('submit', async (e) => {
         data: {
           full_name: els.nameInput.value.trim(),
           role: selectedRole,
+          org_name: selectedRole === 'staff' ? els.orgInput.value.trim() : null,
+          referral_code: selectedRole === 'student' ? els.referralInput.value.trim() : null,
         },
       },
     });
@@ -127,7 +145,8 @@ els.form.addEventListener('submit', async (e) => {
     }
     // If email confirmation is on (the default), there's no session yet.
     if (data.session) {
-      window.location.href = 'dashboard.html';
+      await awardAchievement('profile_builder', data.user.id);
+      window.location.href = landingPageFor(selectedRole);
     } else {
       showMessage(`Check ${email} for a confirmation link to finish creating your account.`, 'success');
       setMode('login');
@@ -135,8 +154,8 @@ els.form.addEventListener('submit', async (e) => {
   }
 });
 
-// If someone's already logged in, skip straight to the dashboard.
+// If someone's already logged in, skip straight to the right dashboard.
 (async () => {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) window.location.href = 'dashboard.html';
+  if (session) window.location.href = landingPageFor(session.user.user_metadata?.role);
 })();

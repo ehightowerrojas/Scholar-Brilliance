@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Dashboard — Scholar Brilliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stub-shell">
+  <nav class="stub-nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 5.8L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-1.2L12 2z" fill="#ffffff"/></svg></span>
+      Scholar Brilliance <span style="color:var(--muted); font-weight:400; font-size:13px;">Staff</span>
+    </a>
+    <div style="display:flex; align-items:center; gap:24px;">
+      <a href="staff-dashboard.html" style="font-size:14.5px; font-weight:600; color:var(--fg);">Dashboard</a>
+      <a href="staff-referrals.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Referral Codes</a>
+      <a href="staff-students.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Student Progress</a>
+      <a href="staff-scholarships.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Scholarships</a>
+      <button id="logout-btn" class="btn btn-line">Log out</button>
+    </div>
+  </nav>
+
+  <main style="flex:1; padding:48px 24px; max-width:1000px; margin:0 auto; width:100%;">
+    <span class="eyebrow">Staff dashboard</span>
+    <h1 id="welcome-heading" style="font-size:clamp(24px,3.2vw,32px); margin-top:8px; margin-bottom:8px;">Welcome back.</h1>
+    <p id="org-sub" class="dash-empty" style="margin-bottom:32px;"></p>
+
+    <div class="dash-grid-3" style="margin-bottom:0;">
+      <div class="dash-card">
+        <h3>Students</h3>
+        <div id="stat-students" style="font-family:var(--font-mono); font-size:30px;">—</div>
+        <a href="staff-students.html" class="dash-empty" style="text-decoration:underline; font-size:12.5px;">View student progress →</a>
+      </div>
+      <div class="dash-card">
+        <h3>Active Referral Codes</h3>
+        <div id="stat-codes" style="font-family:var(--font-mono); font-size:30px;">—</div>
+        <a href="staff-referrals.html" class="dash-empty" style="text-decoration:underline; font-size:12.5px;">Manage codes →</a>
+      </div>
+      <div class="dash-card">
+        <h3>Scholarships Listed</h3>
+        <div id="stat-scholarships" style="font-family:var(--font-mono); font-size:30px;">—</div>
+        <a href="staff-scholarships.html" class="dash-empty" style="text-decoration:underline; font-size:12.5px;">Manage scholarships →</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="staff-common.js"></script>
+<script src="staff-dashboard.js"></script>
+
+</body>
+</html>

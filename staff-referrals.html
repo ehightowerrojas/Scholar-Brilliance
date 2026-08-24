@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referral Codes — Scholar Brilliance Staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stub-shell">
+  <nav class="stub-nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 5.8L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-1.2L12 2z" fill="#ffffff"/></svg></span>
+      Scholar Brilliance <span style="color:var(--muted); font-weight:400; font-size:13px;">Staff</span>
+    </a>
+    <div style="display:flex; align-items:center; gap:24px;">
+      <a href="staff-dashboard.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Dashboard</a>
+      <a href="staff-referrals.html" style="font-size:14.5px; font-weight:600; color:var(--fg);">Referral Codes</a>
+      <a href="staff-students.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Student Progress</a>
+      <a href="staff-scholarships.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Scholarships</a>
+      <button id="logout-btn" class="btn btn-line">Log out</button>
+    </div>
+  </nav>
+
+  <main style="flex:1; padding:48px 24px; max-width:800px; margin:0 auto; width:100%;">
+    <span class="eyebrow">Manage referral codes</span>
+    <h1 style="font-size:clamp(24px,3.2vw,32px); margin-top:8px; margin-bottom:28px;">Generate and manage referral codes for student registration.</h1>
+
+    <div class="dash-grid-2" style="margin-bottom:28px;">
+      <div class="dash-card">
+        <h3>Your Referral Codes</h3>
+        <div id="codes-list">Loading…</div>
+      </div>
+      <div class="dash-card">
+        <h3>Generate New Referral Code</h3>
+        <div class="field" style="margin-top:0;">
+          <label for="expires-input">Expiration date (optional)</label>
+          <input type="date" id="expires-input">
+        </div>
+        <button class="btn btn-gold btn-block" id="generate-btn" style="margin-top:16px;">Generate Referral Code</button>
+        <div id="generate-result" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <strong style="font-size:13.5px;">How to use referral codes</strong>
+      <ol style="margin-top:12px; padding-left:18px; color:var(--muted); font-size:13px; display:flex; flex-direction:column; gap:6px;">
+        <li>Generate a new referral code using the form above.</li>
+        <li>Share the code with your students.</li>
+        <li>Students enter the code when creating their account.</li>
+        <li>The code links that student to your organization automatically.</li>
+      </ol>
+      <p class="dash-empty" style="margin-top:14px;">⚠️ For security, deactivate codes that are no longer in use.</p>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="staff-common.js"></script>
+<script src="staff-referrals.js"></script>
+
+</body>
+</html>
