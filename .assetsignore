@@ -1,1 +1,3 @@
 sql/
+worker.js
+wrangler.jsonc
