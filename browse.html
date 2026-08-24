@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Browse Scholarships — Scholar Brilliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stub-shell">
+  <nav class="stub-nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 5.8L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-1.2L12 2z" fill="#ffffff"/></svg></span>
+      Scholar Brilliance
+    </a>
+    <div style="display:flex; align-items:center; gap:24px;">
+      <a href="dashboard.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Dashboard</a>
+      <a href="tracker.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Tracker</a>
+      <a href="browse.html" style="font-size:14.5px; font-weight:600; color:var(--fg);">Browse</a>
+      <a href="achievements.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Achievements</a>
+      <button id="logout-btn" class="btn btn-line">Log out</button>
+    </div>
+  </nav>
+
+  <main style="flex:1; padding:48px 24px; max-width:960px; margin:0 auto; width:100%;">
+
+    <span class="eyebrow">Browse scholarships</span>
+    <h1 style="font-size:clamp(24px,3.2vw,32px); margin-top:8px; margin-bottom:8px;">Scholarships from Scholar Brilliance</h1>
+
+    <div class="browse-search">
+      <input type="text" id="catalog-search" placeholder="Search scholarships…">
+    </div>
+
+    <div id="catalog-list" class="catalog-list" style="margin-top:20px; margin-bottom:44px;">Loading…</div>
+
+    <div class="dash-card" style="margin-bottom:44px;">
+      <h3>Expand Your Scholarship Search</h3>
+      <p class="dash-empty" style="margin-bottom:18px;">Our database is not ready yet, but don't wait! These trusted platforms can help you discover thousands of additional opportunities right now.</p>
+      <div class="resource-grid">
+        <div class="resource-item"><a href="https://bigfuture.collegeboard.org" target="_blank" rel="noopener">Bigfuture.collegeboard.org</a><span>College Board's official scholarship finder</span></div>
+        <div class="resource-item"><a href="https://www.scholarshipamerica.org" target="_blank" rel="noopener">ScholarshipAmerica.org</a><span>Community-based scholarships nationwide</span></div>
+        <div class="resource-item"><a href="https://bold.org" target="_blank" rel="noopener">Bold.org</a><span>Modern platform with unique scholarships and easy applications</span></div>
+        <div class="resource-item"><a href="https://www.scholarships.com" target="_blank" rel="noopener">Scholarships.com</a><span>Comprehensive search with personalized matching</span></div>
+        <div class="resource-item"><a href="https://www.fastweb.com" target="_blank" rel="noopener">Fastweb.com</a><span>One of the largest scholarship databases available</span></div>
+        <div class="resource-item"><a href="https://scholarships360.org" target="_blank" rel="noopener">Scholarships360.org</a><span>Expert reviewed opportunities and application tips</span></div>
+        <div class="resource-item"><a href="https://jlvcollegecounseling.com" target="_blank" rel="noopener">JLVcollegecounseling.com</a><span>Curated opportunities and expert guidance</span></div>
+        <div class="resource-item"><a href="https://www.studentscholarships.org" target="_blank" rel="noopener">StudentScholarships.org</a><span>State-specific and national awards</span></div>
+      </div>
+
+      <div class="tips-box">
+        <strong>💡 Pro Search Tips</strong>
+        <p>Use specific keywords that match your profile:</p>
+        <ul>
+          <li>Your field of study: "engineering scholarship," "nursing scholarship"</li>
+          <li>Your background: "first-generation college," "military family"</li>
+          <li>Your location: "[your state] scholarship," "[your city] scholarship"</li>
+          <li>Your interests: "environmental scholarship," "community service award"</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="dash-card extractor-box">
+      <h3>🔍 Found a Scholarship Online? <span class="beta-tag">Beta</span></h3>
+      <p class="dash-empty" style="margin-bottom:14px;">Enter the URL below and our tool will attempt to extract the details for you.</p>
+      <div style="display:flex; gap:8px;">
+        <input type="url" id="extract-url" placeholder="Enter scholarship webpage URL…" style="flex:1; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--bg); color:var(--fg);">
+        <button class="btn btn-gold" id="extract-btn" style="padding:12px 20px;">Extract Info</button>
+      </div>
+      <p class="dash-empty" style="margin-top:12px; font-size:12px;">
+        Tips for best results: use the official scholarship page from the organization · always verify details after extraction · doesn't work with sites that block scraping (like Bold.org).
+      </p>
+      <div id="extract-result" style="margin-top:18px;"></div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="achievements-award.js"></script>
+<script src="browse.js"></script>
+
+</body>
+</html>
