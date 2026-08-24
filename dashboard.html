@@ -16,7 +16,7 @@
       <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z" fill="#5E35B1"/><path d="M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z" fill="#FFC107"/><path d="M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z" fill="#ffffff"/></svg></span>
       Scholar Brilliance
     </a>
-    <div style="display:flex; align-items:center; gap:24px;">
+    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
       <a href="dashboard.html" style="font-size:14.5px; font-weight:600; color:var(--fg);">Dashboard</a>
       <a href="tracker.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Tracker</a>
       <a href="browse.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Browse</a>
@@ -26,53 +26,45 @@
     </div>
   </nav>
 
-  <main style="flex:1; padding:48px 24px; max-width:1180px; margin:0 auto; width:100%;">
+  <main style="flex:1; padding:48px 24px; max-width:1000px; margin:0 auto; width:100%;">
 
     <span class="eyebrow">Dashboard</span>
-    <h1 id="welcome-heading" style="font-size:clamp(24px,3.2vw,34px); margin-top:8px; margin-bottom:32px;">Welcome back.</h1>
+    <h1 id="welcome-heading" style="font-size:clamp(24px,3.2vw,34px); margin-top:8px;">Welcome back.</h1>
+    <p id="welcome-subtext" class="dash-subtext">Loading your progress…</p>
 
-    <div class="dash-quick-actions">
-      <a href="browse.html" class="dash-action">
-        <span class="dash-action-title">Browse New Scholarships</span>
-        <span class="dash-action-sub">Find opportunities that match your profile</span>
-      </a>
-      <a href="tracker.html" class="dash-action">
-        <span class="dash-action-title">Add Scholarship to Tracker</span>
-        <span class="dash-action-sub">Track one you found elsewhere</span>
-      </a>
-      <a href="tracker.html" class="dash-action">
-        <span class="dash-action-title">Continue Applications</span>
-        <span class="dash-action-sub">Work on in-progress applications</span>
-      </a>
+    <div class="next-step-card" id="next-step-card">
+      <div>
+        <span class="next-step-label">Your next step</span>
+        <h2 id="next-step-title">Loading…</h2>
+        <p id="next-step-body"></p>
+      </div>
+      <a href="#" class="btn btn-gold" id="next-step-cta">Let's go</a>
     </div>
 
-    <div class="dash-grid-3">
-      <div class="dash-card" id="goal-card">
-        <h3>Progress Toward Financial Goal</h3>
-        <div id="goal-content">Loading…</div>
-      </div>
+    <div class="dash-card goal-hero">
+      <h3>Progress Toward Financial Goal</h3>
+      <div id="goal-content">Loading…</div>
+    </div>
+
+    <div class="dash-stats-row" id="stats-content"></div>
+
+    <div class="dash-grid-2">
       <div class="dash-card">
         <h3>Upcoming Deadlines</h3>
         <div id="deadlines-content">Loading…</div>
       </div>
       <div class="dash-card">
-        <h3>Quick Stats</h3>
-        <div id="stats-content">Loading…</div>
-      </div>
-    </div>
-
-    <div class="dash-grid-2">
-      <div class="dash-card">
         <div style="display:flex; justify-content:space-between; align-items:baseline;">
           <h3>Recent Achievements</h3>
-          <a href="achievements.html" style="font-size:12.5px; color:var(--muted);">View all →</a>
+          <a href="achievements.html" style="font-size:12.5px; color:var(--purple); font-weight:600;">View all →</a>
         </div>
         <div id="achievements-content">Loading…</div>
       </div>
-      <div class="dash-card">
-        <h3>Recent Activity</h3>
-        <div id="activity-content">Loading…</div>
-      </div>
+    </div>
+
+    <div class="dash-card" style="margin-top:20px;">
+      <h3>Recent Activity</h3>
+      <div id="activity-content">Loading…</div>
     </div>
 
   </main>

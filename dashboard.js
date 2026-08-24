@@ -41,20 +41,93 @@ async function loadDashboard() {
     ]);
 
   if (schErr) console.error(schErr);
+  const rows = scholarships || [];
 
-  renderGoal(session, scholarships || []);
-  renderDeadlines(scholarships || []);
-  renderStats(scholarships || []);
+  renderWelcomeSubtext(rows);
+  renderNextStep(session, rows);
+  renderGoal(session, rows);
+  renderStats(rows);
+  renderDeadlines(rows);
   renderAchievements(earnedRows || [], achievements || [], levels || []);
-  renderActivity(scholarships || []);
+  renderActivity(rows);
+}
+
+// ---- Encouraging one-liner under the heading ----
+function renderWelcomeSubtext(rows) {
+  const won = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').length;
+  const inFlight = rows.filter(s => s.status === 'submitted' || s.status === 'funds_received').length;
+  const el = document.getElementById('welcome-subtext');
+
+  if (won > 0) {
+    el.textContent = `You've won ${won} scholarship${won > 1 ? 's' : ''} so far — that momentum is real. Let's keep it going.`;
+  } else if (inFlight > 0) {
+    el.textContent = `You have ${inFlight} application${inFlight > 1 ? 's' : ''} waiting on a decision. Nice work getting them in.`;
+  } else if (rows.length > 0) {
+    el.textContent = `You're building your pipeline — every scholarship you add is a step closer to funding.`;
+  } else {
+    el.textContent = `Let's find your first scholarship match and get your pipeline started.`;
+  }
+}
+
+// ---- Smart, contextual "next step" CTA ----
+function renderNextStep(session, rows) {
+  const goal = session.user.user_metadata?.financial_goal;
+  const total = rows.length;
+  const savedOrWorking = rows.filter(s => s.status === 'saved' || s.status === 'working').length;
+  const inFlight = rows.filter(s => s.status === 'submitted' || s.status === 'funds_received').length;
+  const won = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').length;
+
+  let step;
+  if (!goal) {
+    step = {
+      title: 'Set your first financial goal',
+      body: "Give yourself a target — it turns every application into visible progress toward something real.",
+      cta: 'Set a goal',
+      href: '#goal-content',
+    };
+  } else if (total === 0) {
+    step = {
+      title: 'Find your first scholarship',
+      body: "Nothing in your tracker yet. Browse a few matches to get your pipeline started.",
+      cta: 'Browse scholarships',
+      href: 'browse.html',
+    };
+  } else if (savedOrWorking > 0 && inFlight === 0) {
+    step = {
+      title: `You have ${savedOrWorking} application${savedOrWorking > 1 ? 's' : ''} ready to move`,
+      body: "Submitting is the biggest step in the whole process — even one this week keeps things moving.",
+      cta: 'Open your tracker',
+      href: 'tracker.html',
+    };
+  } else if (inFlight > 0 && won === 0) {
+    step = {
+      title: `${inFlight} application${inFlight > 1 ? 's are' : ' is'} pending a decision`,
+      body: "While you wait to hear back, it's a great time to add a few more scholarships to your pipeline.",
+      cta: 'Browse more scholarships',
+      href: 'browse.html',
+    };
+  } else {
+    step = {
+      title: `🎉 You've won ${won} scholarship${won > 1 ? 's' : ''}!`,
+      body: "Keep the streak going — find your next match and add it to your tracker.",
+      cta: 'Browse scholarships',
+      href: 'browse.html',
+    };
+  }
+
+  document.getElementById('next-step-title').textContent = step.title;
+  document.getElementById('next-step-body').textContent = step.body;
+  const ctaEl = document.getElementById('next-step-cta');
+  ctaEl.textContent = step.cta;
+  ctaEl.href = step.href;
 }
 
 // ---- Progress toward financial goal ----
-function renderGoal(session, scholarships) {
+function renderGoal(session, rows) {
   const goal = session.user.user_metadata?.financial_goal;
-  const wonAmount = scholarships.filter(s => s.outcome === 'won').reduce((sum, s) => sum + Number(s.amount || 0), 0);
-  const inProgressAmount = scholarships.filter(s => s.status !== 'submitted').reduce((sum, s) => sum + Number(s.amount || 0), 0);
-  const submittedAmount = scholarships.filter(s => s.status === 'submitted' && !s.outcome).reduce((sum, s) => sum + Number(s.amount || 0), 0);
+  const wonAmount = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').reduce((sum, s) => sum + Number(s.amount || 0), 0);
+  const inProgressAmount = rows.filter(s => s.status === 'saved' || s.status === 'working').reduce((sum, s) => sum + Number(s.amount || 0), 0);
+  const submittedAmount = rows.filter(s => s.status === 'submitted' && !s.outcome).reduce((sum, s) => sum + Number(s.amount || 0), 0);
 
   const el = document.getElementById('goal-content');
 
@@ -62,7 +135,7 @@ function renderGoal(session, scholarships) {
     el.innerHTML = `
       <p style="color:var(--muted); font-size:13.5px; margin-bottom:14px;">Set a target so you can track progress toward it.</p>
       <div style="display:flex; gap:8px;">
-        <input type="number" id="goal-input" placeholder="35000" min="0" style="flex:1; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--bg); color:var(--fg);">
+        <input type="number" id="goal-input" placeholder="35000" min="0" style="flex:1; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
         <button class="btn btn-gold" id="save-goal-btn" style="padding:10px 18px;">Set</button>
       </div>
     `;
@@ -78,10 +151,11 @@ function renderGoal(session, scholarships) {
 
   const pct = Math.min(100, (wonAmount / goal) * 100);
   el.innerHTML = `
-    <div style="font-family:var(--font-mono); font-size:13px; color:var(--muted); display:flex; justify-content:space-between;">
-      <span>Current: ${fmtMoney(wonAmount)}</span><span>Goal: ${fmtMoney(goal)}</span>
+    <div class="goal-hero-numbers">
+      <span class="goal-hero-pct">${Math.round(pct)}%</span>
+      <span class="goal-hero-of">of the way to ${fmtMoney(goal)}</span>
     </div>
-    <div class="level-track" style="margin-top:10px;"><div class="level-fill" style="width:${pct}%;"></div></div>
+    <div class="level-track" style="margin-top:14px;"><div class="level-fill" style="width:${pct}%;"></div></div>
     <div class="goal-chip-row">
       <div class="goal-chip"><span>In Progress</span><strong>${fmtMoney(inProgressAmount)}</strong></div>
       <div class="goal-chip"><span>Submitted</span><strong>${fmtMoney(submittedAmount)}</strong></div>
@@ -90,11 +164,28 @@ function renderGoal(session, scholarships) {
   `;
 }
 
+// ---- Compact stats strip ----
+function renderStats(rows) {
+  const inProgress = rows.filter(s => s.status === 'saved' || s.status === 'working').length;
+  const submitted = rows.filter(s => s.status === 'submitted' && !s.outcome).length;
+  const won = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').length;
+  const notSelected = rows.filter(s => s.outcome === 'not_selected').length;
+  const decided = won + notSelected;
+  const winRate = decided > 0 ? Math.round((won / decided) * 100) : 0;
+
+  document.getElementById('stats-content').innerHTML = `
+    <div class="stat-chip purple"><strong>${inProgress}</strong><span>In Progress</span></div>
+    <div class="stat-chip purple"><strong>${submitted}</strong><span>Submitted</span></div>
+    <div class="stat-chip teal"><strong>${won}</strong><span>Won</span></div>
+    <div class="stat-chip amber"><strong>${winRate}%</strong><span>Win Rate</span></div>
+  `;
+}
+
 // ---- Upcoming deadlines ----
-function renderDeadlines(scholarships) {
+function renderDeadlines(rows) {
   const today = new Date().toISOString().slice(0, 10);
-  const upcoming = scholarships
-    .filter(s => s.status !== 'submitted' && s.deadline && s.deadline >= today)
+  const upcoming = rows
+    .filter(s => (s.status === 'saved' || s.status === 'working') && s.deadline && s.deadline >= today)
     .sort((a, b) => a.deadline.localeCompare(b.deadline))
     .slice(0, 4);
 
@@ -109,25 +200,6 @@ function renderDeadlines(scholarships) {
       <span class="deadline-date">${fmtDate(s.deadline)}</span>
     </div>
   `).join('');
-}
-
-// ---- Quick stats ----
-function renderStats(scholarships) {
-  const inProgress = scholarships.filter(s => s.status !== 'submitted').length;
-  const submitted = scholarships.filter(s => s.status === 'submitted' && !s.outcome).length;
-  const won = scholarships.filter(s => s.outcome === 'won').length;
-  const notSelected = scholarships.filter(s => s.outcome === 'not_selected').length;
-  const decided = won + notSelected;
-  const winRate = decided > 0 ? Math.round((won / decided) * 100) : 0;
-
-  document.getElementById('stats-content').innerHTML = `
-    <div class="stat-grid-mini">
-      <div><strong>${inProgress}</strong><span>In Progress</span></div>
-      <div><strong>${submitted}</strong><span>Submitted</span></div>
-      <div><strong>${won}</strong><span>Won</span></div>
-      <div><strong>${winRate}%</strong><span>Win Rate</span></div>
-    </div>
-  `;
 }
 
 // ---- Recent achievements + level ----
@@ -156,8 +228,8 @@ function renderAchievements(earnedRows, achievements, levels) {
 }
 
 // ---- Recent activity ----
-function renderActivity(scholarships) {
-  const recent = scholarships
+function renderActivity(rows) {
+  const recent = rows
     .filter(s => daysAgo(s.updated_at) <= 14)
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
     .slice(0, 5);
@@ -170,14 +242,19 @@ function renderActivity(scholarships) {
 
   el.innerHTML = recent.map(s => {
     const isNew = Math.abs(new Date(s.created_at) - new Date(s.updated_at)) < 2000;
-    const verb = isNew ? 'Added' : (s.status === 'submitted' ? 'Submitted' : 'Updated');
+    const verb = isNew ? 'Added' : (s.status === 'funds_received' ? 'Received funds for' : s.status === 'submitted' ? 'Submitted' : 'Updated');
     return `<div class="activity-row"><span>${verb} <strong>${s.title}</strong></span></div>`;
   }).join('');
 }
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
-  await supabaseClient.auth.signOut();
-  window.location.href = 'login.html';
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (err) {
+    console.error('Sign out failed, forcing local logout:', err);
+  } finally {
+    window.location.href = 'login.html';
+  }
 });
 
 loadDashboard();
