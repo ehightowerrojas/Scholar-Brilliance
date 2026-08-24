@@ -20,3 +20,22 @@ async function awardAchievement(achievementId, userId) {
     console.error('awardAchievement failed:', err);
   }
 }
+
+// Application Milestones tiers, checked against however many scholarships
+// currently sit in "Submitted" status (idempotent — safe to call every
+// time the Tracker loads, since awardAchievement no-ops on repeats).
+const APPLICATION_MILESTONES = [
+  { count: 3, id: 'application_apprentice' },
+  { count: 5, id: 'application_achiever' },
+  { count: 10, id: 'application_expert' },
+  { count: 20, id: 'application_master' },
+  { count: 50, id: 'application_legend' },
+];
+
+async function checkApplicationMilestones(submittedCount, userId) {
+  for (const tier of APPLICATION_MILESTONES) {
+    if (submittedCount >= tier.count) {
+      await awardAchievement(tier.id, userId);
+    }
+  }
+}

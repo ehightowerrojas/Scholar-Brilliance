@@ -40,6 +40,7 @@ function renderCard(row) {
         ${row.deadline ? `<span>${fmtDeadline(row.deadline)}</span>` : ''}
       </div>
       ${row.website ? `<a href="${row.website}" target="_blank" rel="noopener" class="kanban-link">Website ↗</a>` : ''}
+      <a href="essays.html?scholarship=${row.id}" class="kanban-link" style="margin-left:12px;">Essay →</a>
       ${outcomeBadge(row.outcome)}
       ${outcomeControls}
     </div>
@@ -70,6 +71,9 @@ async function loadBoard() {
     document.getElementById(`col-${status}`).innerHTML = rows.map(renderCard).join('');
     document.getElementById(`count-${status}`).textContent = rows.length;
   });
+
+  const submittedCount = data.filter(r => r.status === 'submitted').length;
+  await checkApplicationMilestones(submittedCount, currentUserId);
 
   wireCardEvents();
 }
@@ -120,6 +124,8 @@ function wireColumnDrops() {
       if (newStatus !== 'submitted') update.outcome = null; // moving back clears outcome
 
       await supabaseClient.from('scholarships').update(update).eq('id', id).eq('user_id', currentUserId);
+      await awardAchievement('organizer', currentUserId);
+      if (newStatus === 'submitted') await awardAchievement('first_submission', currentUserId);
       loadBoard();
     });
   });
@@ -160,6 +166,8 @@ addForm.addEventListener('submit', async (e) => {
     console.error(error);
     return;
   }
+
+  await awardAchievement('tracker_starter', currentUserId);
 
   addForm.reset();
   addForm.style.display = 'none';
