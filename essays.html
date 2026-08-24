@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Essays — Scholar Brilliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stub-shell">
+  <nav class="stub-nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 5.8L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-1.2L12 2z" fill="#ffffff"/></svg></span>
+      Scholar Brilliance
+    </a>
+    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+      <a href="dashboard.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Dashboard</a>
+      <a href="tracker.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Tracker</a>
+      <a href="browse.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Browse</a>
+      <a href="essays.html" style="font-size:14.5px; font-weight:600; color:var(--fg);">My Essays</a>
+      <a href="achievements.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Achievements</a>
+      <button id="logout-btn" class="btn btn-line">Log out</button>
+    </div>
+  </nav>
+
+  <main style="flex:1; padding:48px 24px; max-width:900px; margin:0 auto; width:100%;">
+
+    <div class="tracker-head">
+      <div>
+        <span class="eyebrow">My essays</span>
+        <h1 style="font-size:clamp(22px,3vw,28px); margin-top:8px;">Track your scholarship applications and essay submissions.</h1>
+      </div>
+      <button class="btn btn-gold" id="add-toggle-btn">+ New Essay</button>
+    </div>
+
+    <div class="stat-grid-mini" style="grid-template-columns:repeat(4,1fr); border:1px solid var(--line); border-radius:var(--radius-md); padding:20px; margin-bottom:24px;">
+      <div><strong id="stat-total">0</strong><span>Total Essays</span></div>
+      <div><strong id="stat-won">0</strong><span>Won</span></div>
+      <div><strong id="stat-submitted">0</strong><span>Submitted</span></div>
+      <div><strong id="stat-working">0</strong><span>Working On</span></div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap;">
+      <input type="text" id="essay-search" placeholder="Search essays, scholarships, or prompts…" style="flex:1; min-width:200px; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--bg); color:var(--fg);">
+      <select id="essay-filter" style="padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--bg); color:var(--fg);">
+        <option value="all">All Essays</option>
+        <option value="won">Won</option>
+        <option value="submitted">Submitted</option>
+        <option value="working">Working On</option>
+        <option value="not_selected">Not Selected</option>
+      </select>
+    </div>
+
+    <form id="essay-form" class="add-form" style="display:none;">
+      <input type="hidden" id="essay-id">
+      <div class="field">
+        <label for="essay-title">Essay title / prompt</label>
+        <input type="text" id="essay-title" placeholder="Leadership Philosophy" required>
+      </div>
+      <div class="field">
+        <label for="essay-scholarship">Linked scholarship (optional)</label>
+        <select id="essay-scholarship">
+          <option value="">Not linked yet — standalone draft</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="essay-content">Essay content</label>
+        <textarea id="essay-content" rows="10" placeholder="Write or paste your essay here…" style="width:100%; padding:13px 16px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--bg); color:var(--fg); font-family:var(--font-body); font-size:14px; resize:vertical;"></textarea>
+      </div>
+      <div class="add-form-actions">
+        <button type="button" class="btn btn-ghost-dark" id="cancel-essay-btn">Cancel</button>
+        <button type="submit" class="btn btn-gold">Save essay</button>
+      </div>
+    </form>
+
+    <div id="essays-list" class="catalog-list">Loading…</div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="achievements-award.js"></script>
+<script src="essays.js"></script>
+
+</body>
+</html>
