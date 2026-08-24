@@ -1,2 +1,0 @@
-# Scholar-Brilliance
-Scholar Brilliance
