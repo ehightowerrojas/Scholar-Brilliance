@@ -27,16 +27,29 @@ async function init() {
 
   if (role === 'staff') {
     document.getElementById('privacy-card').style.display = 'none';
+    document.getElementById('appinfo-card').style.display = 'none';
+    document.getElementById('avatar-card').style.display = 'none';
+  } else {
+    loadAvatarSection();
   }
 
   const { data: profile } = await supabaseClient
     .from('profiles')
-    .select('org_id, leaderboard_visible')
+    .select('org_id, leaderboard_visible, phone, address_line1, city, state, zip_code, school_name, graduation_year, gpa, major')
     .eq('id', accountUserId)
     .single();
 
   if (role !== 'staff') {
     document.getElementById('leaderboard-visible-input').checked = profile?.leaderboard_visible !== false;
+    document.getElementById('appinfo-phone').value = profile?.phone || '';
+    document.getElementById('appinfo-address').value = profile?.address_line1 || '';
+    document.getElementById('appinfo-city').value = profile?.city || '';
+    document.getElementById('appinfo-state').value = profile?.state || '';
+    document.getElementById('appinfo-zip').value = profile?.zip_code || '';
+    document.getElementById('appinfo-school').value = profile?.school_name || '';
+    document.getElementById('appinfo-gradyear').value = profile?.graduation_year || '';
+    document.getElementById('appinfo-gpa').value = profile?.gpa || '';
+    document.getElementById('appinfo-major').value = profile?.major || '';
   }
 
   if (profile?.org_id) {
@@ -62,6 +75,77 @@ document.getElementById('save-profile-btn').addEventListener('click', async () =
 
   btn.disabled = false;
   showMsg('profile-msg', authErr || profileErr ? 'Could not save — try again.' : 'Saved ✓', Boolean(authErr || profileErr));
+});
+
+async function loadAvatarSection() {
+  const [{ data: species }, { data: profile }, { data: scholarships }, { data: earnedRows }, { data: achievements }, { data: levels }] =
+    await Promise.all([
+      supabaseClient.from('avatar_species').select('*').order('sort_order'),
+      supabaseClient.from('profiles').select('avatar_species_id').eq('id', accountUserId).single(),
+      supabaseClient.from('scholarships').select('status').eq('user_id', accountUserId),
+      supabaseClient.from('user_achievements').select('achievement_id').eq('user_id', accountUserId),
+      supabaseClient.from('achievements').select('id, points'),
+      supabaseClient.from('levels').select('*').order('level_number'),
+    ]);
+
+  const submittedCount = (scholarships || []).filter(s => s.status === 'submitted' || s.status === 'funds_received').length;
+  const pointsMap = Object.fromEntries((achievements || []).map(a => [a.id, a.points]));
+  const totalXP = (earnedRows || []).reduce((sum, r) => sum + (pointsMap[r.achievement_id] || 0), 0);
+  let currentLevel = { level_number: 1 };
+  (levels || []).forEach(l => { if (totalXP >= l.xp_threshold) currentLevel = l; });
+  const tier = evolutionTierFromLevel(currentLevel.level_number);
+
+  const equippedId = profile?.avatar_species_id || 'raptor';
+  const grid = document.getElementById('avatar-grid');
+
+  grid.innerHTML = (species || []).map(s => {
+    const unlocked = submittedCount >= s.unlock_applications;
+    const isEquipped = s.id === equippedId;
+    const svg = renderAvatarSVG(s.id, unlocked ? tier : 1, 72);
+    return `
+      <div style="text-align:center; opacity:${unlocked ? 1 : 0.4};">
+        <div style="position:relative; display:inline-block;">
+          ${svg}
+          ${isEquipped ? '<div style="position:absolute; top:-4px; right:-4px; background:var(--teal); color:white; border-radius:50%; width:20px; height:20px; font-size:11px; display:flex; align-items:center; justify-content:center;">✓</div>' : ''}
+        </div>
+        <p style="font-size:11.5px; font-weight:600; margin-top:4px; color:var(--ink);">${s.name}</p>
+        <p style="font-size:10px; color:var(--muted); text-transform:capitalize;">${s.rarity}</p>
+        ${unlocked
+          ? (isEquipped ? '' : `<button class="achv-demo-btn" data-equip="${s.id}" style="width:auto; padding:4px 10px; font-size:11px; margin-top:2px;">Equip</button>`)
+          : `<p style="font-size:10px; color:var(--muted);">${s.unlock_applications} apps to unlock</p>`}
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('[data-equip]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { error } = await supabaseClient.from('profiles').update({ avatar_species_id: btn.dataset.equip }).eq('id', accountUserId);
+      const msg = document.getElementById('avatar-msg');
+      msg.style.display = 'block';
+      msg.textContent = error ? 'Could not equip — try again.' : 'Avatar updated ✓';
+      if (!error) loadAvatarSection();
+    });
+  });
+}
+
+document.getElementById('save-appinfo-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('save-appinfo-btn');
+  btn.disabled = true;
+
+  const { error } = await supabaseClient.from('profiles').update({
+    phone: document.getElementById('appinfo-phone').value.trim() || null,
+    address_line1: document.getElementById('appinfo-address').value.trim() || null,
+    city: document.getElementById('appinfo-city').value.trim() || null,
+    state: document.getElementById('appinfo-state').value.trim() || null,
+    zip_code: document.getElementById('appinfo-zip').value.trim() || null,
+    school_name: document.getElementById('appinfo-school').value.trim() || null,
+    graduation_year: document.getElementById('appinfo-gradyear').value || null,
+    gpa: document.getElementById('appinfo-gpa').value || null,
+    major: document.getElementById('appinfo-major').value.trim() || null,
+  }).eq('id', accountUserId);
+
+  btn.disabled = false;
+  showMsg('appinfo-msg', error ? 'Could not save — try again.' : 'Saved ✓', Boolean(error));
 });
 
 document.getElementById('leaderboard-visible-input').addEventListener('change', async (e) => {

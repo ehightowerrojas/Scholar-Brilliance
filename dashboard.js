@@ -27,12 +27,13 @@ async function loadDashboard() {
       supabaseClient.from('user_achievements').select('achievement_id, earned_at').eq('user_id', userId).order('earned_at', { ascending: false }),
       supabaseClient.from('achievements').select('*'),
       supabaseClient.from('levels').select('*').order('level_number'),
-      supabaseClient.from('profiles').select('financial_goal, goal_source').eq('id', userId).single(),
+      supabaseClient.from('profiles').select('financial_goal, goal_source, avatar_species_id').eq('id', userId).single(),
     ]);
 
   if (schErr) console.error(schErr);
   const rows = scholarships || [];
 
+  renderWelcomeAvatar(profile, earnedRows || [], achievements || [], levels || []);
   renderWelcomeSubtext(rows);
   renderNextStep(profile, rows);
   renderQuestSection(rows, earnedRows || [], achievements || []);
@@ -44,6 +45,15 @@ async function loadDashboard() {
 }
 
 // ---- Encouraging one-liner under the heading ----
+function renderWelcomeAvatar(profile, earnedRows, achievements, levels) {
+  const pointsMap = Object.fromEntries(achievements.map(a => [a.id, a.points]));
+  const totalXP = earnedRows.reduce((sum, r) => sum + (pointsMap[r.achievement_id] || 0), 0);
+  let currentLevel = { level_number: 1 };
+  levels.forEach(l => { if (totalXP >= l.xp_threshold) currentLevel = l; });
+  const tier = evolutionTierFromLevel(currentLevel.level_number);
+  document.getElementById('welcome-avatar').innerHTML = renderAvatarSVG(profile?.avatar_species_id || 'raptor', tier, 56);
+}
+
 function renderWelcomeSubtext(rows) {
   const won = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').length;
   const inFlight = rows.filter(s => s.status === 'submitted' || s.status === 'funds_received').length;

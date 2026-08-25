@@ -50,6 +50,58 @@
       <p id="profile-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
     </div>
 
+    <div class="dash-card" style="margin-bottom:20px;" id="avatar-card">
+      <h3>Your Avatar</h3>
+      <p class="dash-empty" style="margin-bottom:14px;">Unlock new species by submitting more scholarship applications. How developed your avatar looks is tied to your Achievement level.</p>
+      <div id="avatar-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px;">Loading…</div>
+      <p id="avatar-msg" class="dash-empty" style="margin-top:12px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;" id="appinfo-card">
+      <h3>Application Info</h3>
+      <p class="dash-empty" style="margin-bottom:14px;">Fill this in once — it gets reused automatically every time you build a scholarship application.</p>
+      <div class="add-form-grid" style="margin-bottom:0;">
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-phone">Phone</label>
+          <input type="tel" id="appinfo-phone" placeholder="(555) 123-4567">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-address">Street address</label>
+          <input type="text" id="appinfo-address" placeholder="123 Main St">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-city">City</label>
+          <input type="text" id="appinfo-city">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-state">State</label>
+          <input type="text" id="appinfo-state" placeholder="CA">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-zip">ZIP code</label>
+          <input type="text" id="appinfo-zip">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-school">School name</label>
+          <input type="text" id="appinfo-school">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-gradyear">Graduation year</label>
+          <input type="number" id="appinfo-gradyear" min="2020" max="2035">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-gpa">GPA</label>
+          <input type="number" id="appinfo-gpa" min="0" max="5" step="0.01">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-major">Intended major / field of study</label>
+          <input type="text" id="appinfo-major">
+        </div>
+      </div>
+      <button class="btn btn-gold" id="save-appinfo-btn" style="margin-top:20px;">Save application info</button>
+      <p id="appinfo-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
     <div class="dash-card" style="margin-bottom:20px;" id="privacy-card">
       <h3>Privacy</h3>
       <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px; color:var(--ink);">
@@ -91,6 +143,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="supabase-client.js"></script>
+<script src="avatars.js"></script>
 <script src="account.js"></script>
 
 </body>

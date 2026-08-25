@@ -145,16 +145,22 @@ a:focus-visible, button:focus-visible, input:focus-visible{
    workspace shell rather than a marketing header. */
 .site-nav{
   position:sticky; top:0; z-index:50;
-  background:var(--purple);
-  border-bottom:1px solid var(--purple-deep);
+  background:linear-gradient(180deg, var(--purple-soft), var(--purple));
 }
 .site-nav .wrap{
   display:flex; align-items:center; justify-content:space-between;
   height:76px;
 }
 .site-nav .brand{ color:var(--white); }
-.site-nav .nav-links a{ color:var(--white); }
-.site-nav .nav-links a:hover{ opacity:1; color:var(--amber); }
+.site-subnav{
+  background:var(--purple);
+}
+.site-subnav .wrap{
+  display:flex; justify-content:center;
+  height:52px; align-items:center;
+}
+.site-subnav .nav-links a{ color:var(--white); }
+.site-subnav .nav-links a:hover{ opacity:1; color:var(--amber); }
 .site-nav .nav-login{ color:var(--white); }
 
 .brand{

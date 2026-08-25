@@ -31,8 +31,13 @@
 
   <main style="flex:1; padding:48px 24px; max-width:1000px; margin:0 auto; width:100%;">
 
-    <span class="eyebrow">Dashboard</span>
-    <h1 id="welcome-heading" style="font-size:clamp(24px,3.2vw,34px); margin-top:8px;">Welcome back.</h1>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div id="welcome-avatar"></div>
+      <div>
+        <span class="eyebrow">Dashboard</span>
+        <h1 id="welcome-heading" style="font-size:clamp(24px,3.2vw,34px); margin-top:8px;">Welcome back.</h1>
+      </div>
+    </div>
     <p id="welcome-subtext" class="dash-subtext">Loading your progress…</p>
 
     <div class="next-step-card" id="next-step-card">
@@ -42,6 +47,16 @@
         <p id="next-step-body"></p>
       </div>
       <a href="#" class="btn btn-gold" id="next-step-cta">Let's go</a>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:24px; border-color:var(--amber); background:linear-gradient(135deg, var(--card-soft), var(--card));">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+        <div>
+          <span class="beta-tag" style="margin-left:0;">Coming soon</span>
+          <h3 style="margin-top:10px; margin-bottom:6px; color:var(--purple);">⚡ Autofill for real scholarship forms</h3>
+          <p class="dash-empty">We're building a browser extension that takes everything you build in your Application Builder and fills it straight into the actual scholarship form — no more retyping the same info five times. You review and hit submit yourself, every time.</p>
+        </div>
+      </div>
     </div>
 
     <div class="quest standalone" style="margin-bottom:24px;">
@@ -120,6 +135,7 @@
 <script src="achievements-award.js"></script>
 <script src="formatters.js"></script>
 <script src="quest-map.js"></script>
+<script src="avatars.js"></script>
 <script src="dashboard.js"></script>
 
 </body>

@@ -39,6 +39,7 @@ function renderCard(row) {
       </div>
       ${safeLink(row.website, 'Website ↗', 'target="_blank" rel="noopener" class="kanban-link"')}
       <a href="essays.html?scholarship=${row.id}" class="kanban-link" style="margin-left:12px;">Essay →</a>
+      <a href="application.html?scholarship=${row.id}" class="kanban-link" style="margin-left:12px;">Build Application →</a>
       ${fundsBadge}
       ${outcomeControls}
       ${fundsControl}
