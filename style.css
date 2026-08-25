@@ -145,7 +145,12 @@ a:focus-visible, button:focus-visible, input:focus-visible{
    workspace shell rather than a marketing header. */
 .site-nav{
   position:sticky; top:0; z-index:50;
-  background:linear-gradient(180deg, var(--purple-soft), var(--purple));
+  background:transparent;
+  transition:background .25s ease;
+}
+.site-nav.is-scrolled{
+  background:rgba(46, 27, 84, 0.92);
+  backdrop-filter:blur(10px);
 }
 .site-nav .wrap{
   display:flex; align-items:center; justify-content:space-between;
@@ -153,11 +158,9 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 }
 .site-nav .brand{ color:var(--white); }
 .site-subnav{
-  background:var(--purple);
-}
-.site-subnav .wrap{
-  display:flex; justify-content:center;
-  height:52px; align-items:center;
+  position:absolute; top:0; left:0; right:0; z-index:40;
+  height:76px;
+  display:flex; align-items:center; justify-content:center;
 }
 .site-subnav .nav-links a{ color:var(--white); }
 .site-subnav .nav-links a:hover{ opacity:1; color:var(--amber); }
