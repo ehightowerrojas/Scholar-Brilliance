@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect x=%270%27 y=%270%27 width=%2724%27 height=%2724%27 rx=%276%27 fill=%27white%27/%3E%3Cpath d=%27M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z%27 fill=%27%235E35B1%27/%3E%3Cpath d=%27M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z%27 fill=%27%23FFC107%27/%3E%3Cpath d=%27M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E">
+<title>Build Application — Scholar Brilliance</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stub-shell">
+  <nav class="stub-nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z" fill="#5E35B1"/><path d="M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z" fill="#FFC107"/><path d="M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z" fill="#ffffff"/></svg></span>
+      Scholar Brilliance
+    </a>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <a href="tracker.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">← Back to Tracker</a>
+      <button id="logout-btn" class="btn btn-line">Log out</button>
+    </div>
+  </nav>
+
+  <main style="flex:1; padding:48px 24px; max-width:760px; margin:0 auto; width:100%;">
+
+    <span class="eyebrow">Application builder</span>
+    <h1 id="scholarship-title" style="font-size:clamp(22px,3vw,30px); margin-top:8px; margin-bottom:8px;">Loading…</h1>
+    <p class="dash-empty" id="scholarship-sub" style="margin-bottom:28px;"></p>
+
+    <div class="dash-card" style="margin-bottom:20px; border-color:var(--amber); background:var(--card-soft);">
+      <p style="font-size:13.5px; color:var(--ink); line-height:1.6;">
+        <strong>How this works:</strong> Scholar Brilliance can't submit this application for you — every scholarship's official form is different, and we'd never want to risk a mistake on something that matters this much.
+        Fill everything in here, then either use "Send to Extension" to autofill the real form (fields only — you always review and click submit yourself), or "Copy"/the PDF if you'd rather paste it in by hand.
+      </p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline;">
+        <h3>Your Info</h3>
+        <button class="achv-demo-btn" id="copy-info-btn" style="width:auto;">Copy</button>
+      </div>
+      <div id="appinfo-content">Loading…</div>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline;">
+        <h3>Your Essay</h3>
+        <a id="edit-essay-link" href="#" style="font-size:12.5px; color:var(--purple); font-weight:600;">Edit in My Essays →</a>
+      </div>
+      <div id="essay-content">Loading…</div>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;">
+      <h3>Additional Notes / Short Answers</h3>
+      <p class="dash-empty" style="margin-bottom:12px;">Anything else this scholarship's form asks for that isn't a full essay — activities list, household info, short-answer questions.</p>
+      <textarea id="notes-input" rows="6" style="width:100%; padding:13px 16px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink); font-family:var(--font-body); font-size:14px; resize:vertical;"></textarea>
+      <button class="btn btn-line" id="save-notes-btn" style="margin-top:14px;">Save notes</button>
+      <p id="notes-msg" class="dash-empty" style="margin-top:8px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;">
+      <h3>Ready to submit</h3>
+      <p class="dash-empty" style="margin-bottom:16px;">Export everything above as one document, then head to the scholarship's official page to paste it in and submit for real.</p>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <button class="btn btn-teal" id="send-extension-btn">Send to Extension</button>
+        <button class="btn btn-gold" id="export-pdf-btn">Download as PDF</button>
+        <a id="visit-site-btn" href="#" target="_blank" rel="noopener" class="btn btn-line">Visit official application ↗</a>
+      </div>
+      <p id="extension-msg" class="dash-empty" style="margin-top:12px; display:none;"></p>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="utils.js"></script>
+<script src="application.js"></script>
+
+</body>
+</html>
