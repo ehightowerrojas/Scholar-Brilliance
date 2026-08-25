@@ -300,6 +300,7 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   0%,100%{ transform:scale(1); opacity:1; }
   50%{ transform:scale(1.3); opacity:.45; }
 }
+.quest-node .node-backing{ fill:var(--purple-deep); }
 .quest-node circle.ring{ fill:none; stroke:rgba(255,255,255,0.4); stroke-width:2; }
 .quest-node.is-live circle.ring{ transform-origin:center; animation:quest-pulse 1.8s ease-in-out infinite; }
 .quest-node.is-done circle.dot{ fill:var(--amber); }
