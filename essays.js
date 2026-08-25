@@ -13,6 +13,7 @@ function wordCount(text) {
 function essayStatus(essay) {
   const s = essay.scholarship;
   if (!s) return { key: 'working', label: 'Working On' };
+  if (s.status === 'funds_received') return { key: 'funds_received', label: 'Funds Received' };
   if (s.outcome === 'won') return { key: 'won', label: 'Won' };
   if (s.outcome === 'not_selected') return { key: 'not_selected', label: 'Not Selected' };
   if (s.status === 'submitted') return { key: 'submitted', label: 'Submitted' };
@@ -21,6 +22,7 @@ function essayStatus(essay) {
 
 function badgeClass(key) {
   if (key === 'won') return 'won';
+  if (key === 'funds_received') return 'funds-received';
   if (key === 'not_selected') return 'not-selected';
   return '';
 }
@@ -65,7 +67,7 @@ async function init() {
 function populateScholarshipDropdown() {
   const select = document.getElementById('essay-scholarship');
   select.innerHTML = '<option value="">Not linked yet — standalone draft</option>' +
-    userScholarships.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+    userScholarships.map(s => `<option value="${s.id}">${escapeHtml(s.title)}</option>`).join('');
 }
 
 function renderStats() {
@@ -107,11 +109,11 @@ function renderEssays(list) {
     return `
       <div class="catalog-card">
         <div class="catalog-card-top">
-          <h4>${e.scholarship?.title || 'Standalone draft'}</h4>
+          <h4>${escapeHtml(e.scholarship?.title) || 'Standalone draft'}</h4>
           <span class="kanban-badge ${badgeClass(status.key)}">${status.label}</span>
         </div>
-        <p class="dash-empty" style="margin-top:4px; font-weight:600; color:var(--fg);">${e.title}</p>
-        <p class="catalog-desc" id="preview-${e.id}">${preview}${e.content.length > 160 ? '…' : ''}</p>
+        <p class="dash-empty" style="margin-top:4px; font-weight:600; color:var(--fg);">${escapeHtml(e.title)}</p>
+        <p class="catalog-desc" id="preview-${e.id}">${escapeHtml(preview)}${e.content.length > 160 ? '…' : ''}</p>
         <div class="catalog-card-meta">
           <span>${wordCount(e.content)} words</span>
           <span>Updated ${new Date(e.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
@@ -244,8 +246,15 @@ function downloadEssayPDF(title, content) {
 }
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
-  await supabaseClient.auth.signOut();
-  window.location.href = 'login.html';
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (err) {
+    console.error('Sign out failed, forcing local logout:', err);
+  } finally {
+    // Always redirect, even if the server-side sign-out call failed —
+    // otherwise a network hiccup makes the button look completely broken.
+    window.location.href = 'login.html';
+  }
 });
 
 init();

@@ -5,14 +5,6 @@
 let browseUserId = null;
 let catalogItems = [];
 
-function fmtAmount(n) {
-  return n != null ? `$${Number(n).toLocaleString()}` : '';
-}
-function fmtDeadline(d) {
-  if (!d) return '';
-  return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 async function init() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
@@ -20,7 +12,72 @@ async function init() {
     return;
   }
   browseUserId = session.user.id;
+  await loadInterests();
+  await loadRecommendations();
   await loadCatalog();
+}
+
+async function loadInterests() {
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .select('interests')
+    .eq('id', browseUserId)
+    .single();
+  if (!error && data?.interests) {
+    document.getElementById('interests-input').value = data.interests;
+  }
+}
+
+document.getElementById('save-interests-btn').addEventListener('click', async () => {
+  const value = document.getElementById('interests-input').value.trim();
+  const { error } = await supabaseClient.from('profiles').update({ interests: value }).eq('id', browseUserId);
+  const msg = document.getElementById('interests-saved-msg');
+  if (!error) {
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  }
+});
+
+async function loadRecommendations() {
+  const { data, error } = await supabaseClient
+    .from('scholarship_recommendations')
+    .select('*, scholarships_catalog(*)')
+    .eq('student_id', browseUserId);
+
+  if (error || !data || data.length === 0) return;
+
+  const section = document.getElementById('recommended-section');
+  const list = document.getElementById('recommended-list');
+  section.style.display = 'block';
+
+  list.innerHTML = data.map(rec => {
+    const item = rec.scholarships_catalog;
+    if (!item) return '';
+    return `
+      <div class="catalog-card" style="border-color:var(--amber);">
+        <div class="catalog-card-top">
+          <h4>⭐ ${escapeHtml(item.title)}</h4>
+          <span class="catalog-amount">${fmtMoney(item.amount)}</span>
+        </div>
+        <p class="catalog-desc">${escapeHtml(item.description || '')}</p>
+        <div class="catalog-card-meta">
+          ${item.deadline ? `<span>Deadline: ${fmtDateLong(item.deadline)}</span>` : ''}
+          <span>Recommended by ${escapeHtml(item.org_name)}</span>
+        </div>
+        <div class="catalog-card-actions">
+          ${safeLink(item.website, 'Visit Website', 'target="_blank" rel="noopener" class="btn btn-line" style="padding:8px 16px; font-size:13px;"')}
+          <button class="btn btn-gold" style="padding:8px 16px; font-size:13px;" data-add-catalog="${item.id}">Add to Tracker</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('[data-add-catalog]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = data.find(r => r.scholarships_catalog?.id === btn.dataset.addCatalog)?.scholarships_catalog;
+      if (item) addCatalogItemToTracker(item.id, btn, item);
+    });
+  });
 }
 
 async function loadCatalog() {
@@ -48,16 +105,16 @@ function renderCatalog(items) {
   el.innerHTML = items.map(item => `
     <div class="catalog-card">
       <div class="catalog-card-top">
-        <h4>${item.title}</h4>
-        <span class="catalog-amount">${fmtAmount(item.amount)}</span>
+        <h4>${escapeHtml(item.title)}</h4>
+        <span class="catalog-amount">${fmtMoney(item.amount)}</span>
       </div>
-      <p class="catalog-desc">${item.description || ''}</p>
+      <p class="catalog-desc">${escapeHtml(item.description || '')}</p>
       <div class="catalog-card-meta">
-        ${item.deadline ? `<span>Deadline: ${fmtDeadline(item.deadline)}</span>` : ''}
-        <span>${item.org_name}</span>
+        ${item.deadline ? `<span>Deadline: ${fmtDateLong(item.deadline)}</span>` : ''}
+        <span>${escapeHtml(item.org_name)}</span>
       </div>
       <div class="catalog-card-actions">
-        ${item.website ? `<a href="${item.website}" target="_blank" rel="noopener" class="btn btn-line" style="padding:8px 16px; font-size:13px;">Visit Website</a>` : ''}
+        ${safeLink(item.website, 'Visit Website', 'target="_blank" rel="noopener" class="btn btn-line" style="padding:8px 16px; font-size:13px;"')}
         <button class="btn btn-gold" style="padding:8px 16px; font-size:13px;" data-add-catalog="${item.id}">Add to Tracker</button>
       </div>
     </div>
@@ -68,8 +125,8 @@ function renderCatalog(items) {
   });
 }
 
-async function addCatalogItemToTracker(catalogId, btn) {
-  const item = catalogItems.find(i => i.id === catalogId);
+async function addCatalogItemToTracker(catalogId, btn, itemOverride) {
+  const item = itemOverride || catalogItems.find(i => i.id === catalogId);
   if (!item) return;
 
   btn.disabled = true;
@@ -112,7 +169,10 @@ document.getElementById('extract-btn').addEventListener('click', async () => {
   resultEl.innerHTML = `<p class="dash-empty">Extracting…</p>`;
 
   try {
-    const resp = await fetch(`/api/extract?url=${encodeURIComponent(url)}`);
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const resp = await fetch(`/api/extract?url=${encodeURIComponent(url)}`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
     const data = await resp.json();
 
     if (data.error) {
@@ -127,14 +187,14 @@ document.getElementById('extract-btn').addEventListener('click', async () => {
     resultEl.innerHTML = `
       <div class="catalog-card">
         <div class="catalog-card-top">
-          <h4>${data.title || 'Untitled scholarship'}</h4>
+          <h4>${escapeHtml(data.title) || 'Untitled scholarship'}</h4>
           ${data.amount ? `<span class="catalog-amount">$${Number(data.amount).toLocaleString()}</span>` : ''}
         </div>
         <div class="catalog-card-meta">
-          ${data.deadlineText ? `<span>Possible deadline: ${data.deadlineText}</span>` : '<span>No deadline detected</span>'}
+          ${data.deadlineText ? `<span>Possible deadline: ${escapeHtml(data.deadlineText)}</span>` : '<span>No deadline detected</span>'}
         </div>
         <div class="catalog-card-actions">
-          <a href="${data.source}" target="_blank" rel="noopener" class="btn btn-line" style="padding:8px 16px; font-size:13px;">Visit Page</a>
+          ${safeLink(data.source, 'Visit Page', 'target="_blank" rel="noopener" class="btn btn-line" style="padding:8px 16px; font-size:13px;"')}
           <button class="btn btn-gold" style="padding:8px 16px; font-size:13px;" id="add-extracted-btn">Add to Tracker</button>
         </div>
       </div>
@@ -166,8 +226,15 @@ document.getElementById('extract-btn').addEventListener('click', async () => {
 });
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
-  await supabaseClient.auth.signOut();
-  window.location.href = 'login.html';
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (err) {
+    console.error('Sign out failed, forcing local logout:', err);
+  } finally {
+    // Always redirect, even if the server-side sign-out call failed —
+    // otherwise a network hiccup makes the button look completely broken.
+    window.location.href = 'login.html';
+  }
 });
 
 init();

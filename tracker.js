@@ -4,17 +4,6 @@
 
 let currentUserId = null;
 
-function fmtAmount(amount) {
-  if (amount === null || amount === undefined) return '';
-  return `$${Number(amount).toLocaleString()}`;
-}
-
-function fmtDeadline(deadline) {
-  if (!deadline) return '';
-  const d = new Date(deadline + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 function outcomeBadge(outcome) {
   if (outcome === 'won') return '<span class="kanban-badge won">Won</span>';
   if (outcome === 'not_selected') return '<span class="kanban-badge not-selected">Not selected</span>';
@@ -29,20 +18,30 @@ function renderCard(row) {
       <button class="achv-demo-btn" data-outcome-btn="not_selected" data-id="${row.id}">Not selected</button>
     </div>` : '';
 
+  const fundsControl = (isSubmitted && row.outcome === 'won') ? `
+    <div class="kanban-card-actions">
+      <button class="achv-demo-btn" data-confirm-funds="${row.id}">✓ Confirm funds received</button>
+    </div>` : '';
+
+  const fundsBadge = row.status === 'funds_received'
+    ? '<span class="kanban-badge funds-received">Funds Received</span>'
+    : outcomeBadge(row.outcome);
+
   return `
     <div class="kanban-card" draggable="true" data-id="${row.id}">
       <div class="kanban-card-top">
-        <h4>${row.title}</h4>
+        <h4>${escapeHtml(row.title)}</h4>
         <button class="kanban-delete" data-delete="${row.id}" aria-label="Delete">×</button>
       </div>
       <div class="kanban-card-meta">
-        ${row.amount != null ? `<span>${fmtAmount(row.amount)}</span>` : ''}
-        ${row.deadline ? `<span>${fmtDeadline(row.deadline)}</span>` : ''}
+        ${row.amount != null ? `<span>${fmtMoney(row.amount)}</span>` : ''}
+        ${row.deadline ? `<span>${fmtDateLong(row.deadline)}</span>` : ''}
       </div>
-      ${row.website ? `<a href="${row.website}" target="_blank" rel="noopener" class="kanban-link">Website ↗</a>` : ''}
+      ${safeLink(row.website, 'Website ↗', 'target="_blank" rel="noopener" class="kanban-link"')}
       <a href="essays.html?scholarship=${row.id}" class="kanban-link" style="margin-left:12px;">Essay →</a>
-      ${outcomeBadge(row.outcome)}
+      ${fundsBadge}
       ${outcomeControls}
+      ${fundsControl}
     </div>
   `;
 }
@@ -66,13 +65,13 @@ async function loadBoard() {
     return;
   }
 
-  ['saved', 'working', 'submitted'].forEach(status => {
+  ['saved', 'working', 'submitted', 'funds_received'].forEach(status => {
     const rows = data.filter(r => r.status === status);
     document.getElementById(`col-${status}`).innerHTML = rows.map(renderCard).join('');
     document.getElementById(`count-${status}`).textContent = rows.length;
   });
 
-  const submittedCount = data.filter(r => r.status === 'submitted').length;
+  const submittedCount = data.filter(r => r.status === 'submitted' || r.status === 'funds_received').length;
   await checkApplicationMilestones(submittedCount, currentUserId);
 
   wireCardEvents();
@@ -105,6 +104,15 @@ function wireCardEvents() {
       loadBoard();
     });
   });
+
+  document.querySelectorAll('[data-confirm-funds]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.confirmFunds;
+      await supabaseClient.from('scholarships').update({ status: 'funds_received' }).eq('id', id).eq('user_id', currentUserId);
+      loadBoard();
+    });
+  });
 }
 
 function wireColumnDrops() {
@@ -121,7 +129,11 @@ function wireColumnDrops() {
       const newStatus = col.closest('.kanban-col').dataset.status;
 
       const update = { status: newStatus };
-      if (newStatus !== 'submitted') update.outcome = null; // moving back clears outcome
+      if (newStatus === 'funds_received') {
+        update.outcome = 'won'; // only won scholarships end up here
+      } else if (newStatus !== 'submitted') {
+        update.outcome = null; // moving back to saved/working clears outcome
+      }
 
       await supabaseClient.from('scholarships').update(update).eq('id', id).eq('user_id', currentUserId);
       await awardAchievement('organizer', currentUserId);
@@ -175,8 +187,15 @@ addForm.addEventListener('submit', async (e) => {
 });
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
-  await supabaseClient.auth.signOut();
-  window.location.href = 'login.html';
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (err) {
+    console.error('Sign out failed, forcing local logout:', err);
+  } finally {
+    // Always redirect, even if the server-side sign-out call failed —
+    // otherwise a network hiccup makes the button look completely broken.
+    window.location.href = 'login.html';
+  }
 });
 
 wireColumnDrops();

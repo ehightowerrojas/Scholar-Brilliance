@@ -11,6 +11,8 @@ const els = {
   orgInput:     document.getElementById('org-name'),
   referralField:document.getElementById('referral-field'),
   referralInput:document.getElementById('referral-code'),
+  consentField:  document.getElementById('consent-field'),
+  consentCheckbox: document.getElementById('consent-checkbox'),
   email:        document.getElementById('email'),
   password:     document.getElementById('password'),
   submitBtn:    document.getElementById('submit-btn'),
@@ -31,6 +33,24 @@ let selectedRole = 'student'; // 'student' | 'staff'
 
 function landingPageFor(role) {
   return role === 'staff' ? 'staff-dashboard.html' : 'dashboard.html';
+}
+
+// Supabase's raw error text is accurate but not written for end
+// users ("Invalid login credentials" reads like a system log). This
+// maps the common ones to plain language; anything unrecognized
+// still falls through to the original message so nothing gets
+// silently swallowed.
+function friendlyAuthError(message) {
+  const map = [
+    [/invalid login credentials/i, "That email or password doesn't look right. Try again, or use \"Forgot password?\" below."],
+    [/user already registered/i, 'An account with that email already exists — try logging in instead.'],
+    [/email not confirmed/i, 'Check your inbox for a confirmation link before logging in.'],
+    [/password should be at least/i, 'Choose a password with at least 6 characters.'],
+    [/rate limit/i, "That's a lot of attempts — wait a minute and try again."],
+    [/network/i, "Couldn't reach the server — check your connection and try again."],
+  ];
+  const match = map.find(([pattern]) => pattern.test(message));
+  return match ? match[1] : message;
 }
 
 function setRole(role) {
@@ -60,6 +80,8 @@ function setMode(next) {
   els.nameInput.required = !isLogin;
   els.orgField.style.display = (!isLogin && !isStudent) ? 'block' : 'none';
   els.referralField.style.display = (!isLogin && isStudent) ? 'block' : 'none';
+  els.consentField.style.display = isLogin ? 'none' : 'block';
+  els.consentCheckbox.checked = false;
   els.submitBtn.textContent = isLogin ? 'Log in' : 'Create account';
   els.forgotRow.style.display = isLogin ? 'flex' : 'none';
   els.demoNote.style.display = isLogin ? 'block' : 'none';
@@ -98,7 +120,7 @@ els.forgotLink.addEventListener('click', async (e) => {
     redirectTo: window.location.origin + '/login.html',
   });
   showMessage(
-    error ? error.message : `Password reset email sent to ${email}.`,
+    error ? friendlyAuthError(error.message) : `Password reset email sent to ${email}.`,
     error ? 'error' : 'success'
   );
 });
@@ -106,6 +128,11 @@ els.forgotLink.addEventListener('click', async (e) => {
 els.form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearMessage();
+
+  if (mode === 'signup' && !els.consentCheckbox.checked) {
+    showMessage('Please agree to the Terms of Service and Privacy Policy to continue.', 'error');
+    return;
+  }
 
   const email = els.email.value.trim();
   const password = els.password.value;
@@ -117,7 +144,7 @@ els.form.addEventListener('submit', async (e) => {
   if (mode === 'login') {
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
-      showMessage(error.message, 'error');
+      showMessage(friendlyAuthError(error.message), 'error');
       els.submitBtn.disabled = false;
       els.submitBtn.textContent = originalLabel;
       return;
@@ -140,7 +167,7 @@ els.form.addEventListener('submit', async (e) => {
     els.submitBtn.textContent = originalLabel;
 
     if (error) {
-      showMessage(error.message, 'error');
+      showMessage(friendlyAuthError(error.message), 'error');
       return;
     }
     // If email confirmation is on (the default), there's no session yet.

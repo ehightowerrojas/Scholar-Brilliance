@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z%27 fill=%27%235E35B1%27/%3E%3Cpath d=%27M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z%27 fill=%27%23FFC107%27/%3E%3Cpath d=%27M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E">
+<title>Account Settings — Scholar Brilliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stub-shell">
+  <nav class="stub-nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z" fill="#5E35B1"/><path d="M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z" fill="#FFC107"/><path d="M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z" fill="#ffffff"/></svg></span>
+      Scholar Brilliance
+    </a>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <a href="#" id="back-link" style="font-size:14.5px; font-weight:600; color:var(--muted);">← Back</a>
+      <button id="logout-btn" class="btn btn-line">Log out</button>
+    </div>
+  </nav>
+
+  <main style="flex:1; padding:48px 24px; max-width:640px; margin:0 auto; width:100%;">
+
+    <span class="eyebrow">Account settings</span>
+    <h1 style="font-size:clamp(24px,3.2vw,32px); margin-top:8px; margin-bottom:32px;">Manage your account.</h1>
+
+    <div class="dash-card" style="margin-bottom:20px;">
+      <h3>Profile</h3>
+      <div class="field">
+        <label for="full-name-input">Full name</label>
+        <input type="text" id="full-name-input">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="text" id="email-display" disabled style="opacity:.7;">
+      </div>
+      <div class="field">
+        <label>Account type</label>
+        <input type="text" id="role-display" disabled style="opacity:.7;">
+      </div>
+      <div class="field" id="org-field" style="display:none;">
+        <label>Organization</label>
+        <input type="text" id="org-display" disabled style="opacity:.7;">
+      </div>
+      <button class="btn btn-gold" id="save-profile-btn" style="margin-top:20px;">Save name</button>
+      <p id="profile-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;" id="privacy-card">
+      <h3>Privacy</h3>
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px; color:var(--ink);">
+        <input type="checkbox" id="leaderboard-visible-input" style="width:18px; height:18px; accent-color:var(--purple);">
+        Show my name on the leaderboard
+      </label>
+      <p class="dash-empty" style="margin-top:8px;">If turned off, you'll still appear ranked by your real points — classmates will just see "Student #_" instead of your name. This doesn't affect what you see about yourself.</p>
+      <p id="privacy-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;">
+      <h3>Change email</h3>
+      <p class="dash-empty" style="margin-bottom:14px;">You'll need to confirm the change via a link sent to your new email address.</p>
+      <div class="field" style="margin-top:0;">
+        <label for="new-email-input">New email</label>
+        <input type="email" id="new-email-input" placeholder="you@example.com">
+      </div>
+      <button class="btn btn-line" id="change-email-btn" style="margin-top:16px;">Update email</button>
+      <p id="email-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
+    <div class="dash-card">
+      <h3>Change password</h3>
+      <div class="field" style="margin-top:0;">
+        <label for="new-password-input">New password</label>
+        <input type="password" id="new-password-input" placeholder="At least 6 characters" minlength="6">
+      </div>
+      <div class="field">
+        <label for="confirm-password-input">Confirm new password</label>
+        <input type="password" id="confirm-password-input" minlength="6">
+      </div>
+      <button class="btn btn-line" id="change-password-btn" style="margin-top:16px;">Update password</button>
+      <p id="password-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="account.js"></script>
+
+</body>
+</html>

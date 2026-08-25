@@ -11,11 +11,6 @@ function randomCode(length = 8) {
   return out;
 }
 
-function fmtDate(d) {
-  if (!d) return 'No expiration';
-  return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 function codeStatus(row) {
   if (!row.active) return { label: 'Inactive', className: 'not-selected' };
   if (row.expires_at && row.expires_at < new Date().toISOString().slice(0, 10)) return { label: 'Expired', className: 'not-selected' };
@@ -46,7 +41,7 @@ async function loadCodes() {
       <div class="code-row">
         <div>
           <div class="code-value">${row.code}</div>
-          <div class="dash-empty" style="font-size:11.5px;">Expires: ${fmtDate(row.expires_at)}</div>
+          <div class="dash-empty" style="font-size:11.5px;">Expires: ${row.expires_at ? fmtDateLong(row.expires_at) : 'No expiration'}</div>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
           <span class="kanban-badge ${status.className}">${status.label}</span>

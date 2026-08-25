@@ -4,12 +4,6 @@
 
 let staffOrgId = null;
 
-function fmtAmount(n) { return n != null ? `$${Number(n).toLocaleString()}` : ''; }
-function fmtDeadline(d) {
-  if (!d) return '';
-  return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 async function loadScholarships() {
   const { data, error } = await supabaseClient
     .from('scholarships_catalog')
@@ -31,12 +25,12 @@ async function loadScholarships() {
   el.innerHTML = data.map(item => `
     <div class="catalog-card">
       <div class="catalog-card-top">
-        <h4>${item.title}</h4>
-        <span class="catalog-amount">${fmtAmount(item.amount)}</span>
+        <h4>${escapeHtml(item.title)}</h4>
+        <span class="catalog-amount">${fmtMoney(item.amount)}</span>
       </div>
-      <p class="catalog-desc">${item.description || ''}</p>
+      <p class="catalog-desc">${escapeHtml(item.description || '')}</p>
       <div class="catalog-card-meta">
-        ${item.deadline ? `<span>Deadline: ${fmtDeadline(item.deadline)}</span>` : '<span>No deadline set</span>'}
+        ${item.deadline ? `<span>Deadline: ${fmtDateLong(item.deadline)}</span>` : '<span>No deadline set</span>'}
         <span class="kanban-badge ${item.active ? 'won' : 'not-selected'}">${item.active ? 'Active' : 'Inactive'}</span>
       </div>
       <div class="catalog-card-actions">

@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z%27 fill=%27%235E35B1%27/%3E%3Cpath d=%27M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z%27 fill=%27%23FFC107%27/%3E%3Cpath d=%27M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E">
 <title>Scholar Brilliance — Turn scholarship hunting into a game you win</title>
+<meta name="description" content="Scholar Brilliance turns the overwhelming scholarship search into a guided, gamified path — track applications, find real matches, and stay motivated toward a debt-free degree.">
+<meta property="og:title" content="Scholar Brilliance — Your Path to a Debt-Free Degree">
+<meta property="og:description" content="Track scholarships, write stronger essays, and stay motivated — the Duolingo for scholarships.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -53,23 +59,32 @@
         <span>Your quest map</span>
         <strong>2,540 XP</strong>
       </div>
-      <svg viewBox="0 0 420 220" role="img" aria-label="Path from exploring scholarships to receiving funds, showing progress through four stages">
-        <path class="quest-path" d="M30,170 C110,90 150,190 210,110 C270,30 310,130 390,60"/>
-        <path class="quest-path-fill" d="M30,170 C70,128 90,150 110,128" pathLength="210"/>
-        <g class="quest-node is-done" transform="translate(30,170)">
+      <svg id="quest-svg-home" viewBox="0 0 420 200" role="img" aria-label="Path from exploring scholarships to receiving funds, showing progress through four stages, currently on stage 2 of 4">
+        <defs>
+          <path id="quest-svg-home-seg-0" d="M30,150 C80,120 110,100 150,90"/>
+          <path id="quest-svg-home-seg-1" d="M150,90 C190,80 230,140 270,120"/>
+          <path id="quest-svg-home-seg-2" d="M270,120 C310,105 350,70 390,60"/>
+        </defs>
+        <path class="quest-path" d="M30,150 C80,120 110,100 150,90 C190,80 230,140 270,120 C310,105 350,70 390,60"/>
+        <path class="quest-path-fill" d="M30,150 C80,120 110,100 150,90 C190,80 230,140 270,120 C310,105 350,70 390,60"/>
+        <g class="quest-node" transform="translate(30,150)">
           <circle class="ring" r="16"/><circle class="dot" r="8"/>
+          <path class="quest-check" d="M-4,0.5 L-1,3.5 L5,-4"/>
           <text y="32">EXPLORE</text>
         </g>
-        <g class="quest-node is-live" transform="translate(210,110)">
+        <g class="quest-node" transform="translate(150,90)">
           <circle class="ring" r="16"/><circle class="dot" r="8"/>
+          <path class="quest-check" d="M-4,0.5 L-1,3.5 L5,-4"/>
           <text y="32">APPLY</text>
         </g>
-        <g class="quest-node is-next" transform="translate(310,130)">
+        <g class="quest-node" transform="translate(270,120)">
           <circle class="ring" r="16"/><circle class="dot" r="8"/>
+          <path class="quest-check" d="M-4,0.5 L-1,3.5 L5,-4"/>
           <text y="32">WIN</text>
         </g>
-        <g class="quest-node is-next" transform="translate(390,60)">
+        <g class="quest-node" transform="translate(390,60)">
           <circle class="ring" r="16"/><circle class="dot" r="8"/>
+          <path class="quest-check" d="M-4,0.5 L-1,3.5 L5,-4"/>
           <text y="-14">FUND</text>
         </g>
       </svg>
@@ -251,14 +266,23 @@
             <li><a href="mailto:evangel@scholarbrilliance.com">Contact</a></li>
           </ul>
         </div>
+        <div>
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="footer-bottom">
       <span>© 2026 Scholar Brilliance. All rights reserved.</span>
-      <span>Santa Cruz LaunchPad · scholarbrilliance.com</span>
+      <span>scholarbrilliance.com</span>
     </div>
   </div>
 </footer>
+
+<script src="quest-map.js"></script>
 
 </body>
 </html>

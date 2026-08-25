@@ -7,10 +7,6 @@ let currentFilter = 'all';
 let orgCatalog = [];
 let staffId = null;
 
-function daysAgo(ts) {
-  return (Date.now() - new Date(ts).getTime()) / 86400000;
-}
-
 function renderStudents() {
   let list = allStudents;
   if (currentFilter === 'active') list = list.filter(s => s.stats.total > 0);
@@ -22,25 +18,30 @@ function renderStudents() {
     return;
   }
 
-  const catalogOptions = orgCatalog.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+  const catalogOptions = orgCatalog.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
 
   el.innerHTML = list.map(s => `
     <div class="catalog-card">
       <div class="catalog-card-top">
-        <h4>${s.full_name || '(No name set)'}</h4>
+        <h4>${escapeHtml(s.full_name) || '(No name set)'}</h4>
         <span class="dash-empty" style="font-size:11.5px;">Joined ${new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
       </div>
-      ${s.interests ? `<p class="catalog-desc"><strong>Interests:</strong> ${s.interests}</p>` : `<p class="dash-empty" style="margin-top:6px;">No interests set yet.</p>`}
-      <div class="stat-grid-mini" style="margin-top:14px; grid-template-columns:repeat(4, 1fr);">
+      ${s.interests ? `<p class="catalog-desc"><strong>Interests:</strong> ${escapeHtml(s.interests)}</p>` : `<p class="dash-empty" style="margin-top:6px;">No interests set yet.</p>`}
+      <div class="stat-grid-mini stat-grid-mini-4">
         <div><strong>${s.stats.saved}</strong><span>Saved</span></div>
         <div><strong>${s.stats.working}</strong><span>Working</span></div>
         <div><strong>${s.stats.submitted}</strong><span>Submitted</span></div>
         <div><strong>${s.stats.won}</strong><span>Won</span></div>
       </div>
 
+      <p class="dash-empty" style="margin-top:12px;">
+        <strong style="color:var(--ink);">Goal:</strong>
+        ${s.financial_goal ? `$${Number(s.financial_goal).toLocaleString()} ${s.goal_source === 'staff' ? '(set by school)' : '(set by student)'}` : 'Not set yet'}
+      </p>
+
       ${s.recommendations.length > 0 ? `
         <div style="margin-top:12px;">
-          ${s.recommendations.map(r => `<span class="kanban-badge" style="margin-right:6px;">⭐ ${r}</span>`).join('')}
+          ${s.recommendations.map(r => `<span class="kanban-badge" style="margin-right:6px;">⭐ ${escapeHtml(r)}</span>`).join('')}
         </div>` : ''}
 
       <div class="catalog-card-actions" style="margin-top:14px;">
@@ -50,8 +51,35 @@ function renderStudents() {
         </select>
         <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-recommend="${s.id}">Recommend</button>
       </div>
+
+      <div class="catalog-card-actions" style="margin-top:10px;">
+        <input type="number" id="goal-input-${s.id}" placeholder="Set financial goal ($)" min="0" value="${s.financial_goal || ''}" style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+        <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-set-goal="${s.id}">${s.financial_goal ? 'Update goal' : 'Assign goal'}</button>
+      </div>
     </div>
   `).join('');
+
+  document.querySelectorAll('[data-set-goal]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const studentId = btn.dataset.setGoal;
+      const input = document.getElementById(`goal-input-${studentId}`);
+      const val = Number(input.value);
+      if (!val || val <= 0) return;
+
+      btn.disabled = true;
+      const { error } = await supabaseClient.from('profiles')
+        .update({ financial_goal: val, goal_source: 'staff' })
+        .eq('id', studentId);
+      btn.disabled = false;
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+      await awardAchievement('goal_setter', studentId);
+      loadStudents();
+    });
+  });
 
   document.querySelectorAll('[data-recommend]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -93,7 +121,7 @@ function setFilter(filter) {
 async function loadStudents() {
   const { data: students, error: studentsErr } = await supabaseClient
     .from('profiles')
-    .select('id, full_name, created_at, interests')
+    .select('id, full_name, created_at, interests, financial_goal, goal_source')
     .eq('org_id', currentOrgId)
     .eq('role', 'student')
     .order('created_at', { ascending: false });

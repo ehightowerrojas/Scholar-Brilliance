@@ -5,17 +5,6 @@
 let userId = null;
 let userSession = null;
 
-function fmtMoney(n) {
-  return `$${Math.round(n).toLocaleString()}`;
-}
-function fmtDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-function daysAgo(timestamp) {
-  return (Date.now() - new Date(timestamp).getTime()) / 86400000;
-}
-
 async function loadDashboard() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
@@ -32,20 +21,22 @@ async function loadDashboard() {
     awardAchievement('profile_builder', userId);
   }
 
-  const [{ data: scholarships, error: schErr }, { data: earnedRows }, { data: achievements }, { data: levels }] =
+  const [{ data: scholarships, error: schErr }, { data: earnedRows }, { data: achievements }, { data: levels }, { data: profile }] =
     await Promise.all([
       supabaseClient.from('scholarships').select('*').eq('user_id', userId),
       supabaseClient.from('user_achievements').select('achievement_id, earned_at').eq('user_id', userId).order('earned_at', { ascending: false }),
       supabaseClient.from('achievements').select('*'),
       supabaseClient.from('levels').select('*').order('level_number'),
+      supabaseClient.from('profiles').select('financial_goal, goal_source').eq('id', userId).single(),
     ]);
 
   if (schErr) console.error(schErr);
   const rows = scholarships || [];
 
   renderWelcomeSubtext(rows);
-  renderNextStep(session, rows);
-  renderGoal(session, rows);
+  renderNextStep(profile, rows);
+  renderQuestSection(rows, earnedRows || [], achievements || []);
+  renderGoal(profile, rows);
   renderStats(rows);
   renderDeadlines(rows);
   renderAchievements(earnedRows || [], achievements || [], levels || []);
@@ -70,8 +61,8 @@ function renderWelcomeSubtext(rows) {
 }
 
 // ---- Smart, contextual "next step" CTA ----
-function renderNextStep(session, rows) {
-  const goal = session.user.user_metadata?.financial_goal;
+function renderNextStep(profile, rows) {
+  const goal = profile?.financial_goal;
   const total = rows.length;
   const savedOrWorking = rows.filter(s => s.status === 'saved' || s.status === 'working').length;
   const inFlight = rows.filter(s => s.status === 'submitted' || s.status === 'funds_received').length;
@@ -122,39 +113,78 @@ function renderNextStep(session, rows) {
   ctaEl.href = step.href;
 }
 
+// ---- Quest map: real progress computed from actual tracker data ----
+function renderQuestSection(rows, earnedRows, achievements) {
+  const catalog = Object.fromEntries(achievements.map(a => [a.id, a]));
+  const totalXP = earnedRows.reduce((sum, r) => sum + (catalog[r.achievement_id]?.points || 0), 0);
+  document.getElementById('quest-xp').textContent = `${totalXP.toLocaleString()} XP`;
+
+  const inProgress = rows.filter(s => s.status === 'saved' || s.status === 'working').length;
+  const submitted = rows.filter(s => s.status === 'submitted' && !s.outcome).length;
+  const won = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received');
+  const wonAmount = won.reduce((sum, s) => sum + Number(s.amount || 0), 0);
+
+  document.getElementById('quest-in-progress').textContent = `${inProgress} in progress`;
+  document.getElementById('quest-won').textContent = `${won.length} won · ${fmtMoney(wonAmount)} raised`;
+
+  // 0 = Explore, 1 = Apply, 2 = Win (waiting), 3 = Fund (already won)
+  let step = 0;
+  if (won.length > 0) step = 3;
+  else if (submitted > 0) step = 2;
+  else if (inProgress > 0) step = 1;
+
+  renderQuestMap(document.getElementById('quest-svg-dashboard'), step);
+}
+
 // ---- Progress toward financial goal ----
-function renderGoal(session, rows) {
-  const goal = session.user.user_metadata?.financial_goal;
+function renderGoal(profile, rows) {
+  const goal = profile?.financial_goal;
+  const goalSource = profile?.goal_source;
   const wonAmount = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').reduce((sum, s) => sum + Number(s.amount || 0), 0);
   const inProgressAmount = rows.filter(s => s.status === 'saved' || s.status === 'working').reduce((sum, s) => sum + Number(s.amount || 0), 0);
   const submittedAmount = rows.filter(s => s.status === 'submitted' && !s.outcome).reduce((sum, s) => sum + Number(s.amount || 0), 0);
 
   const el = document.getElementById('goal-content');
 
-  if (!goal) {
+  function showEditor(currentValue) {
     el.innerHTML = `
-      <p style="color:var(--muted); font-size:13.5px; margin-bottom:14px;">Set a target so you can track progress toward it.</p>
+      <p style="color:var(--muted); font-size:13.5px; margin-bottom:14px;">Set a target so you can track progress toward it. You can change this any time.</p>
       <div style="display:flex; gap:8px;">
-        <input type="number" id="goal-input" placeholder="35000" min="0" style="flex:1; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
-        <button class="btn btn-gold" id="save-goal-btn" style="padding:10px 18px;">Set</button>
+        <input type="number" id="goal-input" placeholder="35000" min="0" value="${currentValue || ''}" style="flex:1; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+        <button class="btn btn-gold" id="save-goal-btn" style="padding:10px 18px;">${currentValue ? 'Save' : 'Set'}</button>
+        ${currentValue ? '<button class="btn btn-line" id="cancel-goal-edit-btn" style="padding:10px 18px;">Cancel</button>' : ''}
       </div>
     `;
     document.getElementById('save-goal-btn').addEventListener('click', async () => {
       const val = Number(document.getElementById('goal-input').value);
       if (!val || val <= 0) return;
-      await supabaseClient.auth.updateUser({ data: { financial_goal: val } });
+      await supabaseClient.from('profiles').update({ financial_goal: val, goal_source: 'self' }).eq('id', userId);
       await awardAchievement('goal_setter', userId);
       loadDashboard();
     });
+    const cancelBtn = document.getElementById('cancel-goal-edit-btn');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => loadDashboard());
+  }
+
+  if (!goal) {
+    showEditor(null);
     return;
   }
 
   const pct = Math.min(100, (wonAmount / goal) * 100);
+  const sourceNote = goalSource === 'staff'
+    ? '<span class="dash-empty" style="display:block; margin-top:6px;">🎓 Set by your school</span>'
+    : '';
+
   el.innerHTML = `
-    <div class="goal-hero-numbers">
-      <span class="goal-hero-pct">${Math.round(pct)}%</span>
-      <span class="goal-hero-of">of the way to ${fmtMoney(goal)}</span>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <div class="goal-hero-numbers">
+        <span class="goal-hero-pct">${Math.round(pct)}%</span>
+        <span class="goal-hero-of">of the way to ${fmtMoney(goal)}</span>
+      </div>
+      <button class="achv-demo-btn" id="edit-goal-btn" style="width:auto; white-space:nowrap;">Edit goal</button>
     </div>
+    ${sourceNote}
     <div class="level-track" style="margin-top:14px;"><div class="level-fill" style="width:${pct}%;"></div></div>
     <div class="goal-chip-row">
       <div class="goal-chip"><span>In Progress</span><strong>${fmtMoney(inProgressAmount)}</strong></div>
@@ -162,6 +192,7 @@ function renderGoal(session, rows) {
       <div class="goal-chip"><span>Won</span><strong>${fmtMoney(wonAmount)}</strong></div>
     </div>
   `;
+  document.getElementById('edit-goal-btn').addEventListener('click', () => showEditor(goal));
 }
 
 // ---- Compact stats strip ----
@@ -196,8 +227,8 @@ function renderDeadlines(rows) {
   }
   el.innerHTML = upcoming.map(s => `
     <div class="deadline-row">
-      <span>${s.title}</span>
-      <span class="deadline-date">${fmtDate(s.deadline)}</span>
+      <span>${escapeHtml(s.title)}</span>
+      <span class="deadline-date">${fmtDateShort(s.deadline)}</span>
     </div>
   `).join('');
 }
@@ -243,7 +274,7 @@ function renderActivity(rows) {
   el.innerHTML = recent.map(s => {
     const isNew = Math.abs(new Date(s.created_at) - new Date(s.updated_at)) < 2000;
     const verb = isNew ? 'Added' : (s.status === 'funds_received' ? 'Received funds for' : s.status === 'submitted' ? 'Submitted' : 'Updated');
-    return `<div class="activity-row"><span>${verb} <strong>${s.title}</strong></span></div>`;
+    return `<div class="activity-row"><span>${verb} <strong>${escapeHtml(s.title)}</strong></span></div>`;
   }).join('');
 }
 

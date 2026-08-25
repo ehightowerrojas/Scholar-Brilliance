@@ -32,8 +32,13 @@ function wireLogout() {
   const btn = document.getElementById('logout-btn');
   if (!btn) return;
   btn.addEventListener('click', async () => {
-    await supabaseClient.auth.signOut();
-    window.location.href = 'login.html';
+    try {
+      await supabaseClient.auth.signOut();
+    } catch (err) {
+      console.error('Sign out failed, forcing local logout:', err);
+    } finally {
+      window.location.href = 'login.html';
+    }
   });
 }
 wireLogout();

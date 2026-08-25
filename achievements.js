@@ -29,9 +29,6 @@ function renderCard(achievement, earned) {
         <span>${achievement.points} pts</span>
         <span class="achv-badge-earned">${earned ? 'Earned ✓' : 'Locked'}</span>
       </div>
-      <button class="achv-demo-btn" data-toggle="${achievement.id}">
-        ${earned ? 'Un-earn (demo)' : 'Mark earned (demo)'}
-      </button>
     </div>
   `;
 }
@@ -64,7 +61,6 @@ async function loadAchievements() {
 
   renderLevel(totalXP, levels);
   renderGrids(achievements, earnedIds);
-  wireDemoButtons(userId);
 }
 
 function renderLevel(totalXP, levels) {
@@ -102,31 +98,16 @@ function renderGrids(achievements, earnedIds) {
     milestones.map(a => renderCard(a, earnedIds.has(a.id))).join('');
 }
 
-function wireDemoButtons(userId) {
-  document.querySelectorAll('[data-toggle]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const achievementId = btn.dataset.toggle;
-      const card = btn.closest('.achv-card');
-      const isEarned = card.classList.contains('earned');
-
-      btn.disabled = true;
-      if (isEarned) {
-        await supabaseClient.from('user_achievements')
-          .delete()
-          .eq('user_id', userId)
-          .eq('achievement_id', achievementId);
-      } else {
-        await supabaseClient.from('user_achievements')
-          .insert({ user_id: userId, achievement_id: achievementId });
-      }
-      loadAchievements(); // reload everything so XP/level stay in sync
-    });
-  });
-}
-
 document.getElementById('logout-btn').addEventListener('click', async () => {
-  await supabaseClient.auth.signOut();
-  window.location.href = 'login.html';
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (err) {
+    console.error('Sign out failed, forcing local logout:', err);
+  } finally {
+    // Always redirect, even if the server-side sign-out call failed —
+    // otherwise a network hiccup makes the button look completely broken.
+    window.location.href = 'login.html';
+  }
 });
 
 loadAchievements();
