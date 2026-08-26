@@ -229,21 +229,6 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 @media (prefers-reduced-motion: reduce){
   .hero::after{ animation:none; }
 }
-
-/* ============================================================
-   SCROLL REVEAL
-   Content settles into place as it scrolls into view, rather than
-   just appearing — restrained (short distance, quick fade), applied
-   at the section/card level rather than every paragraph.
-   ============================================================ */
-.reveal{
-  opacity:0; transform:translateY(22px);
-  transition:opacity .55s ease, transform .55s ease;
-}
-.reveal.is-visible{ opacity:1; transform:translateY(0); }
-@media (prefers-reduced-motion: reduce){
-  .reveal{ opacity:1; transform:none; transition:none; }
-}
 .hero .wrap{
   position:relative; z-index:1;
   display:grid;
@@ -418,6 +403,8 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   padding:56px 48px;
   text-align:center;
   border:1px solid var(--line);
+  transition:opacity .55s ease, transform .55s ease;
+  transform:translateY(var(--reveal-y, 0px));
 }
 .positioning h2{
   font-size:clamp(24px,3.4vw,34px);
@@ -447,10 +434,11 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   border:1px solid var(--line);
   border-radius:var(--radius-md);
   padding:28px 24px;
-  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  transition:opacity .5s ease, transform .3s ease, box-shadow .2s ease, border-color .2s ease;
+  transform:translateY(calc(var(--reveal-y, 0px) + var(--hover-lift, 0px)));
 }
 .feature-card:hover{
-  transform:translateY(-4px);
+  --hover-lift:-4px;
   box-shadow:var(--shadow-soft);
   border-color:transparent;
 }
@@ -483,6 +471,8 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   padding:40px 34px;
   position:relative;
   overflow:hidden;
+  transition:opacity .55s ease, transform .55s ease;
+  transform:translateY(var(--reveal-y, 0px));
 }
 .audience-card.student{ background:var(--purple); color:var(--white); }
 .audience-card.school{ background:var(--card); color:var(--ink); border:1px solid var(--line); }
@@ -513,6 +503,8 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   grid-template-columns:1.2fr 0.8fr;
   gap:40px;
   align-items:center;
+  transition:opacity .55s ease, transform .55s ease;
+  transform:translateY(var(--reveal-y, 0px));
 }
 .price-tag{
   font-family:var(--font-accent);
@@ -1069,4 +1061,25 @@ footer.site-footer{
 @media (min-width: 621px) and (max-width: 900px){
   .kanban-board{ grid-template-columns:1fr 1fr; }
   .add-form-grid{ grid-template-columns:1fr 1fr; }
+}
+
+/* ============================================================
+   SCROLL REVEAL
+   Deliberately placed at the very end of the file: it needs to be
+   combinable with ANY component class (feature-card, audience-card,
+   etc.) that may define its own `transition` shorthand for hover
+   effects. Since transition is a shorthand, two classes both setting
+   it on the same element don't merge — whichever rule is later in
+   the file wins outright. Being last guarantees this one wins.
+   ============================================================ */
+.reveal{
+  opacity:0;
+  --reveal-y:22px;
+}
+.reveal.is-visible{
+  opacity:1;
+  --reveal-y:0px;
+}
+@media (prefers-reduced-motion: reduce){
+  .reveal{ opacity:1; --reveal-y:0px; }
 }
