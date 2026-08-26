@@ -229,6 +229,21 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 @media (prefers-reduced-motion: reduce){
   .hero::after{ animation:none; }
 }
+
+/* ============================================================
+   SCROLL REVEAL
+   Content settles into place as it scrolls into view, rather than
+   just appearing — restrained (short distance, quick fade), applied
+   at the section/card level rather than every paragraph.
+   ============================================================ */
+.reveal{
+  opacity:0; transform:translateY(22px);
+  transition:opacity .55s ease, transform .55s ease;
+}
+.reveal.is-visible{ opacity:1; transform:translateY(0); }
+@media (prefers-reduced-motion: reduce){
+  .reveal{ opacity:1; transform:none; transition:none; }
+}
 .hero .wrap{
   position:relative; z-index:1;
   display:grid;
