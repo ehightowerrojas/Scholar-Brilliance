@@ -175,6 +175,40 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 /* App-page utility shell — used by dashboard, tracker, achievements,
    browse, essays, and every staff-*.html page. */
 .stub-shell{ min-height:100vh; display:flex; flex-direction:column; }
+/* ============================================================
+   UNIVERSAL PAGE MOTION
+   Applied to the shared shell wrapper used on every authenticated
+   page (and login), so every page gets a gentle arrival instead of
+   just snapping into existence — with zero risk of the transition-
+   shorthand cascade conflict fixed earlier, since neither wrapper
+   has any other transform/animation declared.
+   ============================================================ */
+@keyframes page-fade-in{
+  from{ opacity:0; transform:translateY(8px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+.stub-shell, .login-shell{
+  animation:page-fade-in .35s ease both;
+}
+@media (prefers-reduced-motion: reduce){
+  .stub-shell, .login-shell{ animation:none; }
+}
+
+/* Staggered entrance for a page's own top-level cards (e.g. the
+   Dashboard). Uses `animation`, not `transition` — a completely
+   separate CSS property from what hover effects use, so this can
+   never hit the shorthand-cascade conflict that broke the homepage
+   reveal system. Safe to combine with any hover effect. */
+@keyframes motion-in-up{
+  from{ opacity:0; transform:translateY(16px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+.motion-in{
+  animation:motion-in-up .5s ease both;
+}
+@media (prefers-reduced-motion: reduce){
+  .motion-in{ animation:none; }
+}
 .stub-nav{
   display:flex; align-items:center; justify-content:space-between;
   gap:16px; flex-wrap:wrap;
@@ -1057,11 +1091,49 @@ footer.site-footer{
   .quest-head, .quest-foot{ flex-wrap:wrap; gap:6px; }
   .quest-node text{ font-size:11px; }
   .login-brand{ padding:32px 24px; }
+  .press-grid{ grid-template-columns:1fr; }
+  .included-grid{ grid-template-columns:1fr; }
 }
 @media (min-width: 621px) and (max-width: 900px){
   .kanban-board{ grid-template-columns:1fr 1fr; }
   .add-form-grid{ grid-template-columns:1fr 1fr; }
+  .included-grid{ grid-template-columns:1fr 1fr; }
 }
+
+/* ============================================================
+   PRESS / RECOGNITION
+   ============================================================ */
+.press-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:24px;
+}
+.press-card{
+  display:block; background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg);
+  padding:28px; text-decoration:none; color:inherit;
+  transition:opacity .5s ease, transform .3s ease, box-shadow .2s ease, border-color .2s ease;
+  transform:translateY(calc(var(--reveal-y, 0px) + var(--hover-lift, 0px)));
+}
+a.press-card:hover{ --hover-lift:-4px; box-shadow:var(--shadow-soft); border-color:transparent; }
+.press-date{ font-family:var(--font-accent); font-weight:700; font-size:12px; color:var(--teal); text-transform:uppercase; letter-spacing:.05em; }
+.press-card h4{ font-size:17px; margin-top:10px; margin-bottom:8px; color:var(--ink); line-height:1.35; }
+.press-card p{ font-size:14px; color:var(--muted); line-height:1.55; }
+.press-link{ display:inline-block; margin-top:14px; font-weight:700; font-size:13.5px; color:var(--purple); }
+
+/* ============================================================
+   WHAT'S INCLUDED
+   ============================================================ */
+.whats-included{
+  margin-bottom:48px;
+  transition:opacity .55s ease, transform .55s ease;
+  transform:translateY(var(--reveal-y, 0px));
+}
+.included-grid{
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; max-width:900px; margin:0 auto;
+}
+.included-item{
+  display:flex; align-items:flex-start; gap:10px; font-size:14.5px; color:var(--ink); font-weight:500;
+  background:var(--card-soft); border-radius:var(--radius-md); padding:14px 16px; text-align:left;
+}
+.included-item .check{ color:var(--teal); font-weight:800; flex-shrink:0; }
 
 /* ============================================================
    SCROLL REVEAL
@@ -1072,14 +1144,19 @@ footer.site-footer{
    it on the same element don't merge — whichever rule is later in
    the file wins outright. Being last guarantees this one wins.
    ============================================================ */
-.reveal{
+/* Content is visible by default — .reveal only hides it once JS has
+   confirmed it's actually running and ready to animate (via the
+   .js-ready class on <html>). This means if the JS fails for any
+   reason in a given browser, content simply stays visible with no
+   animation, rather than being stuck invisible forever. */
+.js-ready .reveal{
   opacity:0;
   --reveal-y:22px;
 }
-.reveal.is-visible{
+.js-ready .reveal.is-visible{
   opacity:1;
   --reveal-y:0px;
 }
 @media (prefers-reduced-motion: reduce){
-  .reveal{ opacity:1; --reveal-y:0px; }
+  .js-ready .reveal{ opacity:1; --reveal-y:0px; }
 }
