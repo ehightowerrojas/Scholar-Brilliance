@@ -245,24 +245,6 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   margin-top:-76px;
   padding:172px 0 70px;
 }
-.hero::after{
-  content:"";
-  position:absolute;
-  top:-25%; right:-15%;
-  width:75%; height:130%;
-  background:radial-gradient(circle, rgba(255,193,7,0.4), transparent 65%);
-  filter:blur(50px);
-  pointer-events:none;
-  animation:hero-blob-drift 24s ease-in-out infinite alternate;
-}
-@keyframes hero-blob-drift{
-  0%{ transform:translate(0, 0) scale(1); }
-  50%{ transform:translate(-10%, 8%) scale(1.1); }
-  100%{ transform:translate(5%, -6%) scale(0.94); }
-}
-@media (prefers-reduced-motion: reduce){
-  .hero::after{ animation:none; }
-}
 .hero .wrap{
   position:relative; z-index:1;
   display:grid;
