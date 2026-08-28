@@ -152,14 +152,14 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 .site-nav .nav-cta{ transition:background .25s ease, padding .25s ease, box-shadow .25s ease; }
 .site-nav.is-scrolled .brand{
   background:var(--purple);
-  padding:8px 18px 8px 8px;
+  padding:8px 24px 8px 10px;
   border-radius:999px;
 }
 .site-nav.is-scrolled .nav-cta{
   background:var(--white);
-  padding:8px;
+  padding:8px 22px;
   border-radius:999px;
-  box-shadow:var(--shadow-soft);
+  box-shadow:0 4px 14px rgba(0,0,0,0.12);
 }
 .site-nav.is-scrolled .nav-login{ color:var(--ink); }
 .site-nav .wrap{
@@ -1133,8 +1133,10 @@ a.press-card:hover{ --hover-lift:-4px; box-shadow:var(--shadow-soft); border-col
   position:relative;
   height:150px;
   display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
 }
 .press-visual svg{ width:58px; height:58px; opacity:0.92; }
+.press-visual img{ width:100%; height:100%; object-fit:cover; object-position:50% 25%; }
 .press-visual-nfte{ background:linear-gradient(135deg, var(--purple), var(--purple-deep)); }
 .press-visual-summit{ background:linear-gradient(135deg, var(--teal), var(--teal-deep)); }
 .press-badge{
