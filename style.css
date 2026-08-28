@@ -68,13 +68,6 @@ button, input{ font-family:inherit; }
   align-items:center;
   gap:8px;
 }
-.eyebrow::before{
-  content:"";
-  width:6px; height:6px;
-  border-radius:2px;
-  background:var(--amber);
-  display:inline-block;
-}
 
 .wrap{
   max-width:1180px;
@@ -283,7 +276,6 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   display:inline-flex; align-items:center; gap:8px;
   margin-bottom:22px;
 }
-.hero-eyebrow::before{ content:""; width:6px; height:6px; border-radius:2px; background:var(--amber); }
 .hero h1{
   font-size:clamp(36px, 4.6vw, 58px);
   font-weight:700;
@@ -632,7 +624,6 @@ footer.site-footer{
 .login-brand .brand{ color:var(--white); }
 .login-quote{ max-width:380px; margin-top:14px; }
 .login-quote .eyebrow{ color:var(--amber); }
-.login-quote .eyebrow::before{ background:var(--amber); }
 .login-quote h1{
   font-size:clamp(28px,3vw,38px);
   margin-top:18px;
