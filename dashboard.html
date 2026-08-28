@@ -40,59 +40,7 @@
     </div>
     <p id="welcome-subtext" class="dash-subtext">Loading your progress…</p>
 
-    <div class="quest standalone motion-in" style="margin-bottom:24px; animation-delay:0.02s;">
-      <div class="quest-head">
-        <span>Your quest map</span>
-        <strong id="quest-xp">0 XP</strong>
-      </div>
-      <div id="quest-start-prompt" style="display:none; align-items:center; gap:14px; background:rgba(255,255,255,0.1); border-radius:var(--radius-md); padding:16px 18px; margin-bottom:14px;">
-        <span style="font-size:22px;">🧭</span>
-        <div style="flex:1;">
-          <strong style="display:block; font-size:14px; color:var(--white);">Your quest hasn't started yet</strong>
-          <span style="font-size:13px; color:rgba(255,255,255,0.75);">Save your first scholarship to set out on the path below.</span>
-        </div>
-        <a href="browse.html" class="btn btn-gold" style="padding:9px 18px; font-size:13px; flex-shrink:0;">Find one now</a>
-      </div>
-      <svg id="quest-svg-dashboard" viewBox="0 0 420 200" role="img" aria-label="Your progress from exploring scholarships to receiving funds">
-        <defs>
-          <path id="quest-svg-dashboard-seg-0" d="M30,150 C70,130 110,95 150,90"/>
-          <path id="quest-svg-dashboard-seg-1" d="M150,90 C190,85 230,125 270,120"/>
-          <path id="quest-svg-dashboard-seg-2" d="M270,120 C310,115 350,80 390,60"/>
-        </defs>
-        <path class="quest-path" d="M30,150 C70,130 110,95 150,90 C190,85 230,125 270,120 C310,115 350,80 390,60"/>
-        <path class="quest-path-fill" d="M30,150 C70,130 110,95 150,90 C190,85 230,125 270,120 C310,115 350,80 390,60"/>
-        <g class="quest-node" transform="translate(30,150)">
-          <circle class="node-backing" r="17"/><circle class="ring" r="16"/><circle class="dot" r="8"/>
-          <path class="quest-check" d="M-4,0.5 L-1,3.5 L5,-4"/>
-          <text y="32">EXPLORE</text>
-        </g>
-        <g class="quest-node" transform="translate(150,90)">
-          <circle class="node-backing" r="17"/><circle class="ring" r="16"/><circle class="dot" r="8"/>
-          <path class="quest-check" d="M-4,0.5 L-1,3.5 L5,-4"/>
-          <text y="32">APPLY</text>
-        </g>
-        <g class="quest-node" transform="translate(270,120)">
-          <circle class="node-backing" r="17"/><circle class="ring" r="16"/><circle class="dot" r="8"/>
-          <path class="quest-check" d="M-4,0.5 L-1,3.5 L5,-4"/>
-          <text y="32">WIN</text>
-        </g>
-        <g class="quest-node" transform="translate(390,60)">
-          <g class="fund-shield" transform="scale(1.5) translate(-12,-12)">
-            <path d="M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z" fill="#5E35B1"/>
-            <path d="M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z" fill="#FFC107"/>
-            <path d="M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z" fill="#ffffff"/>
-          </g>
-          <text y="-32">FUND</text>
-        </g>
-      </svg>
-      <div class="quest-foot">
-        <span id="quest-in-progress">0 in progress</span>
-        <span id="quest-won">0 won · $0 raised</span>
-      </div>
-    </div>
-
-
-    <div class="next-step-card motion-in" id="next-step-card" style="animation-delay:0.08s;">
+    <div class="next-step-card motion-in" id="next-step-card" style="animation-delay:0.02s;">
       <div>
         <span class="next-step-label">Your next step</span>
         <h2 id="next-step-title">Loading…</h2>
@@ -101,7 +49,7 @@
       <a href="#" class="btn btn-gold" id="next-step-cta">Let's go</a>
     </div>
 
-    <div class="dash-card motion-in" style="margin-bottom:24px; border-color:var(--amber); background:linear-gradient(135deg, var(--card-soft), var(--card)); animation-delay:0.14s;">
+    <div class="dash-card motion-in" style="margin-bottom:24px; border-color:var(--amber); background:linear-gradient(135deg, var(--card-soft), var(--card)); animation-delay:0.08s;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
         <div>
           <span class="beta-tag" style="margin-left:0;">Coming soon</span>
@@ -112,14 +60,14 @@
     </div>
 
 
-    <div class="dash-card goal-hero motion-in" style="animation-delay:0.2s;">
-      <h3>Progress Toward Financial Goal</h3>
+    <div class="dash-card goal-hero motion-in" style="animation-delay:0.14s;">
+      <h3>Your Goals</h3>
       <div id="goal-content">Loading…</div>
     </div>
 
-    <div class="dash-stats-row motion-in" id="stats-content" style="animation-delay:0.26s;"></div>
+    <div class="dash-stats-row motion-in" id="stats-content" style="animation-delay:0.2s;"></div>
 
-    <div class="dash-grid-2 motion-in" style="animation-delay:0.32s;">
+    <div class="dash-grid-2 motion-in" style="animation-delay:0.26s;">
       <div class="dash-card">
         <h3>Upcoming Deadlines</h3>
         <div id="deadlines-content">Loading…</div>
@@ -147,7 +95,6 @@
 <script src="supabase-client.js"></script>
 <script src="achievements-award.js"></script>
 <script src="formatters.js"></script>
-<script src="quest-map.js"></script>
 <script src="avatars.js"></script>
 <script src="dashboard.js"></script>
 

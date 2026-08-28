@@ -38,7 +38,6 @@ async function loadDashboard() {
   renderWelcomeAvatar(profile, earnedRows || [], achievements || [], levels || []);
   renderWelcomeSubtext(rows);
   renderNextStep(goalRows, rows);
-  renderQuestSection(rows, earnedRows || [], achievements || []);
   renderGoal(goalRows, rows);
   renderStats(rows);
   renderDeadlines(rows);
@@ -123,34 +122,6 @@ function renderNextStep(goalRows, rows) {
   const ctaEl = document.getElementById('next-step-cta');
   ctaEl.textContent = step.cta;
   ctaEl.href = step.href;
-}
-
-// ---- Quest map: real progress computed from actual tracker data ----
-function renderQuestSection(rows, earnedRows, achievements) {
-  const catalog = Object.fromEntries(achievements.map(a => [a.id, a]));
-  const totalXP = earnedRows.reduce((sum, r) => sum + (catalog[r.achievement_id]?.points || 0), 0);
-  document.getElementById('quest-xp').textContent = `${totalXP.toLocaleString()} XP`;
-
-  const inProgress = rows.filter(s => s.status === 'saved' || s.status === 'working').length;
-  const submitted = rows.filter(s => s.status === 'submitted' && !s.outcome).length;
-  const won = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received');
-  const wonAmount = won.reduce((sum, s) => sum + Number(s.amount || 0), 0);
-
-  document.getElementById('quest-in-progress').textContent = `${inProgress} in progress`;
-  document.getElementById('quest-won').textContent = `${won.length} won · ${fmtMoney(wonAmount)} raised`;
-
-  // -1 = nothing tracked yet at all — no node should glow as "live"
-  // before the student has actually started their first quest.
-  // 0 = Explore, 1 = Apply, 2 = Win (waiting), 3 = Fund (already won)
-  let step = rows.length === 0 ? -1 : 0;
-  if (won.length > 0) step = 3;
-  else if (submitted > 0) step = 2;
-  else if (inProgress > 0) step = 1;
-
-  renderQuestMap(document.getElementById('quest-svg-dashboard'), step);
-
-  const startPrompt = document.getElementById('quest-start-prompt');
-  if (startPrompt) startPrompt.style.display = rows.length === 0 ? 'flex' : 'none';
 }
 
 // ---- Progress toward financial goal ----
