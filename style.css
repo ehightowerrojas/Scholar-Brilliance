@@ -148,7 +148,20 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   background:transparent;
   transition:background .25s ease;
 }
-.site-nav.is-scrolled .brand, .site-nav.is-scrolled .nav-login{ color:var(--ink); }
+.site-nav .brand{ transition:background .25s ease, padding .25s ease; }
+.site-nav .nav-cta{ transition:background .25s ease, padding .25s ease, box-shadow .25s ease; }
+.site-nav.is-scrolled .brand{
+  background:var(--purple);
+  padding:8px 18px 8px 8px;
+  border-radius:999px;
+}
+.site-nav.is-scrolled .nav-cta{
+  background:var(--white);
+  padding:8px;
+  border-radius:999px;
+  box-shadow:var(--shadow-soft);
+}
+.site-nav.is-scrolled .nav-login{ color:var(--ink); }
 .site-nav .wrap{
   display:flex; align-items:center; justify-content:space-between;
   height:76px;

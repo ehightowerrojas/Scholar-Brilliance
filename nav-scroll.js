@@ -1,11 +1,13 @@
 // ------------------------------------------------------------------
-// The header is fully transparent, always — no background, at any
-// scroll position. Its logo text and "Log in" link are white, which
-// reads fine over the dark hero but would go unreadable once
-// scrolled over the site's lighter sections below. Rather than
-// adding a background back in, this swaps just that text to dark ink
-// once scrolled far enough, keeping the header itself see-through
-// the whole time.
+// The header itself is fully transparent, always — no background
+// behind the row as a whole, at any scroll position. But its logo
+// and Log in/Get started group are white text on a transparent
+// backdrop, which reads fine over the dark hero but wouldn't over
+// the site's lighter sections below. Rather than giving the whole
+// header a background, each piece gets its own small rounded pill
+// once scrolled far enough: a purple pill behind the logo, a white
+// pill behind Log in/Get started — keeping the header itself
+// see-through while each piece stays independently legible.
 // ------------------------------------------------------------------
 
 (function () {
