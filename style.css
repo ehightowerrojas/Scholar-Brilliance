@@ -355,10 +355,11 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   50%{ transform:scale(1.3); opacity:.45; }
 }
 .quest-node .node-backing{ fill:var(--purple-deep); }
-.quest-node .node-star{ transform-origin:center; }
-.quest-node.is-done .node-star{ fill:var(--amber); }
-.quest-node.is-live .node-star{ fill:var(--white); animation:quest-pulse 1.8s ease-in-out infinite; }
-.quest-node.is-next .node-star{ fill:rgba(255,255,255,0.35); }
+.quest-node circle.ring{ fill:none; stroke:rgba(255,255,255,0.4); stroke-width:2; }
+.quest-node.is-done circle.ring, .quest-node.is-live circle.ring{ stroke:var(--amber); }
+.quest-node.is-live circle.ring{ transform-origin:center; animation:quest-pulse 1.8s ease-in-out infinite; }
+.quest-node.is-done circle.dot, .quest-node.is-live circle.dot{ fill:var(--amber); }
+.quest-node.is-next circle.dot{ fill:rgba(255,255,255,0.35); }
 
 .quest-node .fund-shield{ transition:opacity .3s ease, filter .3s ease; }
 .quest-node.is-next .fund-shield{ opacity:0.4; filter:grayscale(1); }
@@ -377,7 +378,7 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 }
 
 @media (prefers-reduced-motion: reduce){
-  .quest-node.is-live .node-star{ animation:none; }
+  .quest-node.is-live circle.ring{ animation:none; }
 }
 
 /* ============================================================
