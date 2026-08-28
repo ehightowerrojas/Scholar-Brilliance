@@ -609,7 +609,7 @@ footer.site-footer{
    LOGIN PAGE
    ============================================================ */
 .login-shell{
-  min-height:100vh;
+  height:100vh;
   display:grid;
   grid-template-columns:1fr 1fr;
 }
@@ -619,7 +619,8 @@ footer.site-footer{
   padding:56px;
   display:flex; flex-direction:column;
   position:relative;
-  overflow:hidden;
+  overflow-x:hidden;
+  overflow-y:auto;
 }
 .login-brand::after{
   content:"";
@@ -660,6 +661,7 @@ footer.site-footer{
   display:flex; align-items:center; justify-content:center;
   padding:56px 24px;
   background:var(--paper);
+  overflow-y:auto;
 }
 .login-card{ width:100%; max-width:400px; }
 .login-card .brand{ margin-bottom:38px; }
@@ -1089,7 +1091,7 @@ footer.site-footer{
   .feature-grid{ grid-template-columns:1fr 1fr; }
   .audience{ grid-template-columns:1fr; }
   .pricing-teaser{ grid-template-columns:1fr; }
-  .login-shell{ grid-template-columns:1fr; }
+  .login-shell{ grid-template-columns:1fr; height:auto; min-height:100vh; }
   .login-brand{ min-height:280px; }
   .nav-links{ display:none; }
 }
