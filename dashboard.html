@@ -40,29 +40,18 @@
     </div>
     <p id="welcome-subtext" class="dash-subtext">Loading your progress…</p>
 
-    <div class="next-step-card motion-in" id="next-step-card" style="animation-delay:0.02s;">
-      <div>
-        <span class="next-step-label">Your next step</span>
-        <h2 id="next-step-title">Loading…</h2>
-        <p id="next-step-body"></p>
-      </div>
-      <a href="#" class="btn btn-gold" id="next-step-cta">Let's go</a>
-    </div>
-
-    <div class="dash-card motion-in" style="margin-bottom:24px; border-color:var(--amber); background:linear-gradient(135deg, var(--card-soft), var(--card)); animation-delay:0.08s;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
-        <div>
-          <span class="beta-tag" style="margin-left:0;">Coming soon</span>
-          <h3 style="margin-top:10px; margin-bottom:6px; color:var(--purple);">⚡ Autofill for real scholarship forms</h3>
-          <p class="dash-empty">We're building a browser extension that takes everything you build in your Application Builder and fills it straight into the actual scholarship form — no more retyping the same info five times. You review and hit submit yourself, every time.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="quest standalone motion-in" style="margin-bottom:24px; animation-delay:0.14s;">
+    <div class="quest standalone motion-in" style="margin-bottom:24px; animation-delay:0.02s;">
       <div class="quest-head">
         <span>Your quest map</span>
         <strong id="quest-xp">0 XP</strong>
+      </div>
+      <div id="quest-start-prompt" style="display:none; align-items:center; gap:14px; background:rgba(255,255,255,0.1); border-radius:var(--radius-md); padding:16px 18px; margin-bottom:14px;">
+        <span style="font-size:22px;">🧭</span>
+        <div style="flex:1;">
+          <strong style="display:block; font-size:14px; color:var(--white);">Your quest hasn't started yet</strong>
+          <span style="font-size:13px; color:rgba(255,255,255,0.75);">Save your first scholarship to set out on the path below.</span>
+        </div>
+        <a href="browse.html" class="btn btn-gold" style="padding:9px 18px; font-size:13px; flex-shrink:0;">Find one now</a>
       </div>
       <svg id="quest-svg-dashboard" viewBox="0 0 420 200" role="img" aria-label="Your progress from exploring scholarships to receiving funds">
         <defs>
@@ -101,6 +90,27 @@
         <span id="quest-won">0 won · $0 raised</span>
       </div>
     </div>
+
+
+    <div class="next-step-card motion-in" id="next-step-card" style="animation-delay:0.08s;">
+      <div>
+        <span class="next-step-label">Your next step</span>
+        <h2 id="next-step-title">Loading…</h2>
+        <p id="next-step-body"></p>
+      </div>
+      <a href="#" class="btn btn-gold" id="next-step-cta">Let's go</a>
+    </div>
+
+    <div class="dash-card motion-in" style="margin-bottom:24px; border-color:var(--amber); background:linear-gradient(135deg, var(--card-soft), var(--card)); animation-delay:0.14s;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+        <div>
+          <span class="beta-tag" style="margin-left:0;">Coming soon</span>
+          <h3 style="margin-top:10px; margin-bottom:6px; color:var(--purple);">⚡ Autofill for real scholarship forms</h3>
+          <p class="dash-empty">We're building a browser extension that takes everything you build in your Application Builder and fills it straight into the actual scholarship form — no more retyping the same info five times. You review and hit submit yourself, every time.</p>
+        </div>
+      </div>
+    </div>
+
 
     <div class="dash-card goal-hero motion-in" style="animation-delay:0.2s;">
       <h3>Progress Toward Financial Goal</h3>

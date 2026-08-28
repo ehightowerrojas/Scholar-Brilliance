@@ -137,13 +137,18 @@ function renderQuestSection(rows, earnedRows, achievements) {
   document.getElementById('quest-in-progress').textContent = `${inProgress} in progress`;
   document.getElementById('quest-won').textContent = `${won.length} won · ${fmtMoney(wonAmount)} raised`;
 
+  // -1 = nothing tracked yet at all — no node should glow as "live"
+  // before the student has actually started their first quest.
   // 0 = Explore, 1 = Apply, 2 = Win (waiting), 3 = Fund (already won)
-  let step = 0;
+  let step = rows.length === 0 ? -1 : 0;
   if (won.length > 0) step = 3;
   else if (submitted > 0) step = 2;
   else if (inProgress > 0) step = 1;
 
   renderQuestMap(document.getElementById('quest-svg-dashboard'), step);
+
+  const startPrompt = document.getElementById('quest-start-prompt');
+  if (startPrompt) startPrompt.style.display = rows.length === 0 ? 'flex' : 'none';
 }
 
 // ---- Progress toward financial goal ----
@@ -183,23 +188,36 @@ function renderGoal(profile, rows) {
 
   const pct = Math.min(100, (wonAmount / goal) * 100);
   const sourceNote = goalSource === 'staff'
-    ? '<span class="dash-empty" style="display:block; margin-top:6px;">🎓 Set by your school</span>'
+    ? '<span class="dash-empty" style="display:block; margin-top:10px;">🎓 Set by your school</span>'
     : '';
 
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - pct / 100);
+
   el.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
-      <div class="goal-hero-numbers">
-        <span class="goal-hero-pct">${Math.round(pct)}%</span>
+    <div style="display:flex; align-items:center; gap:26px; flex-wrap:wrap;">
+      <div style="position:relative; width:120px; height:120px; flex-shrink:0;">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="${radius}" fill="none" stroke="var(--line)" stroke-width="12"/>
+          <circle cx="60" cy="60" r="${radius}" fill="none" stroke="var(--amber)" stroke-width="12"
+            stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+            transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s ease;"/>
+        </svg>
+        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+          <span style="font-family:var(--font-accent); font-weight:800; font-size:26px; color:var(--ink);">${Math.round(pct)}%</span>
+        </div>
+      </div>
+      <div style="flex:1; min-width:180px;">
         <span class="goal-hero-of">of the way to ${fmtMoney(goal)}</span>
+        ${sourceNote}
+        <div class="goal-chip-row" style="margin-top:14px;">
+          <div class="goal-chip"><span>In Progress</span><strong>${fmtMoney(inProgressAmount)}</strong></div>
+          <div class="goal-chip"><span>Submitted</span><strong>${fmtMoney(submittedAmount)}</strong></div>
+          <div class="goal-chip"><span>Won</span><strong>${fmtMoney(wonAmount)}</strong></div>
+        </div>
       </div>
       <button class="achv-demo-btn" id="edit-goal-btn" style="width:auto; white-space:nowrap;">Edit goal</button>
-    </div>
-    ${sourceNote}
-    <div class="level-track" style="margin-top:14px;"><div class="level-fill" style="width:${pct}%;"></div></div>
-    <div class="goal-chip-row">
-      <div class="goal-chip"><span>In Progress</span><strong>${fmtMoney(inProgressAmount)}</strong></div>
-      <div class="goal-chip"><span>Submitted</span><strong>${fmtMoney(submittedAmount)}</strong></div>
-      <div class="goal-chip"><span>Won</span><strong>${fmtMoney(wonAmount)}</strong></div>
     </div>
   `;
   document.getElementById('edit-goal-btn').addEventListener('click', () => showEditor(goal));
