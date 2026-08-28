@@ -630,7 +630,7 @@ footer.site-footer{
 }
 .login-brand > *{ position:relative; z-index:2; }
 .login-brand .brand{ color:var(--white); }
-.login-quote{ max-width:380px; margin-top:auto; margin-bottom:auto; }
+.login-quote{ max-width:380px; margin-top:14px; }
 .login-quote .eyebrow{ color:var(--amber); }
 .login-quote .eyebrow::before{ background:var(--amber); }
 .login-quote h1{
@@ -658,7 +658,7 @@ footer.site-footer{
 .login-milestone span.label{ font-family:var(--font-body); font-size:14px; color:rgba(255,255,255,0.85); }
 
 .login-panel{
-  display:flex; align-items:center; justify-content:center;
+  display:flex; align-items:flex-start; justify-content:center;
   padding:56px 24px;
   background:var(--paper);
   overflow-y:auto;
