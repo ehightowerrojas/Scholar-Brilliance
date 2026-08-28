@@ -21,23 +21,25 @@ async function loadDashboard() {
     awardAchievement('profile_builder', userId);
   }
 
-  const [{ data: scholarships, error: schErr }, { data: earnedRows }, { data: achievements }, { data: levels }, { data: profile }] =
+  const [{ data: scholarships, error: schErr }, { data: earnedRows }, { data: achievements }, { data: levels }, { data: profile }, { data: goals }] =
     await Promise.all([
       supabaseClient.from('scholarships').select('*').eq('user_id', userId),
       supabaseClient.from('user_achievements').select('achievement_id, earned_at').eq('user_id', userId).order('earned_at', { ascending: false }),
       supabaseClient.from('achievements').select('*'),
       supabaseClient.from('levels').select('*').order('level_number'),
-      supabaseClient.from('profiles').select('financial_goal, goal_source, avatar_species_id').eq('id', userId).single(),
+      supabaseClient.from('profiles').select('avatar_species_id').eq('id', userId).single(),
+      supabaseClient.from('goals').select('*').eq('student_id', userId).order('created_at'),
     ]);
 
   if (schErr) console.error(schErr);
   const rows = scholarships || [];
+  const goalRows = goals || [];
 
   renderWelcomeAvatar(profile, earnedRows || [], achievements || [], levels || []);
   renderWelcomeSubtext(rows);
-  renderNextStep(profile, rows);
+  renderNextStep(goalRows, rows);
   renderQuestSection(rows, earnedRows || [], achievements || []);
-  renderGoal(profile, rows);
+  renderGoal(goalRows, rows);
   renderStats(rows);
   renderDeadlines(rows);
   renderAchievements(earnedRows || [], achievements || [], levels || []);
@@ -71,8 +73,8 @@ function renderWelcomeSubtext(rows) {
 }
 
 // ---- Smart, contextual "next step" CTA ----
-function renderNextStep(profile, rows) {
-  const goal = profile?.financial_goal;
+function renderNextStep(goalRows, rows) {
+  const goal = goalRows.length > 0;
   const total = rows.length;
   const savedOrWorking = rows.filter(s => s.status === 'saved' || s.status === 'working').length;
   const inFlight = rows.filter(s => s.status === 'submitted' || s.status === 'funds_received').length;
@@ -81,7 +83,7 @@ function renderNextStep(profile, rows) {
   let step;
   if (!goal) {
     step = {
-      title: 'Set your first financial goal',
+      title: 'Set your first goal',
       body: "Give yourself a target — it turns every application into visible progress toward something real.",
       cta: 'Set a goal',
       href: '#goal-content',
@@ -152,28 +154,43 @@ function renderQuestSection(rows, earnedRows, achievements) {
 }
 
 // ---- Progress toward financial goal ----
-function renderGoal(profile, rows) {
-  const goal = profile?.financial_goal;
-  const goalSource = profile?.goal_source;
-  const wonAmount = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').reduce((sum, s) => sum + Number(s.amount || 0), 0);
-  const inProgressAmount = rows.filter(s => s.status === 'saved' || s.status === 'working').reduce((sum, s) => sum + Number(s.amount || 0), 0);
-  const submittedAmount = rows.filter(s => s.status === 'submitted' && !s.outcome).reduce((sum, s) => sum + Number(s.amount || 0), 0);
-
+function renderGoal(goalRows, rows) {
   const el = document.getElementById('goal-content');
+  const wonAmount = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').reduce((sum, s) => sum + Number(s.amount || 0), 0);
 
-  function showEditor(currentValue) {
+  // Progress toward each individual goal comes only from scholarships
+  // explicitly tagged to it — untagged scholarships still count
+  // toward the aggregate ring below, just not any specific goal.
+  function goalProgress(goal) {
+    return rows
+      .filter(s => s.goal_id === goal.id && (s.outcome === 'won' || s.status === 'funds_received'))
+      .reduce((sum, s) => sum + Number(s.amount || 0), 0);
+  }
+
+  // Check for any goal that just crossed its own target and hasn't
+  // been marked complete yet — award the bonus once, quietly.
+  goalRows.forEach(async (goal) => {
+    if (!goal.completed_at && goalProgress(goal) >= goal.target_amount) {
+      await supabaseClient.from('goals').update({ completed_at: new Date().toISOString() }).eq('id', goal.id);
+      await awardAchievement('goal_crusher', userId);
+    }
+  });
+
+  function showAddForm() {
     el.innerHTML = `
-      <p style="color:var(--muted); font-size:13.5px; margin-bottom:14px;">Set a target so you can track progress toward it. You can change this any time.</p>
-      <div style="display:flex; gap:8px;">
-        <input type="number" id="goal-input" placeholder="35000" min="0" value="${currentValue || ''}" style="flex:1; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
-        <button class="btn btn-gold" id="save-goal-btn" style="padding:10px 18px;">${currentValue ? 'Save' : 'Set'}</button>
-        ${currentValue ? '<button class="btn btn-line" id="cancel-goal-edit-btn" style="padding:10px 18px;">Cancel</button>' : ''}
+      <p style="color:var(--muted); font-size:13.5px; margin-bottom:14px;">Give it a name and a target — you can add as many goals as you want.</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input type="text" id="goal-name-input" placeholder="e.g. STEM scholarships" style="flex:2; min-width:160px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+        <input type="number" id="goal-amount-input" placeholder="5000" min="0" style="flex:1; min-width:100px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+        <button class="btn btn-gold" id="save-goal-btn" style="padding:10px 18px;">Add goal</button>
+        ${goalRows.length > 0 ? '<button class="btn btn-line" id="cancel-goal-edit-btn" style="padding:10px 18px;">Cancel</button>' : ''}
       </div>
     `;
     document.getElementById('save-goal-btn').addEventListener('click', async () => {
-      const val = Number(document.getElementById('goal-input').value);
-      if (!val || val <= 0) return;
-      await supabaseClient.from('profiles').update({ financial_goal: val, goal_source: 'self' }).eq('id', userId);
+      const name = document.getElementById('goal-name-input').value.trim();
+      const amount = Number(document.getElementById('goal-amount-input').value);
+      if (!name || !amount || amount <= 0) return;
+      await supabaseClient.from('goals').insert({ student_id: userId, name, target_amount: amount, source: 'self' });
       await awardAchievement('goal_setter', userId);
       loadDashboard();
     });
@@ -181,46 +198,52 @@ function renderGoal(profile, rows) {
     if (cancelBtn) cancelBtn.addEventListener('click', () => loadDashboard());
   }
 
-  if (!goal) {
-    showEditor(null);
+  if (goalRows.length === 0) {
+    showAddForm();
     return;
   }
 
-  const pct = Math.min(100, (wonAmount / goal) * 100);
-  const sourceNote = goalSource === 'staff'
-    ? '<span class="dash-empty" style="display:block; margin-top:10px;">🎓 Set by your school</span>'
-    : '';
+  const totalTarget = goalRows.reduce((sum, g) => sum + Number(g.target_amount), 0);
+  const aggregatePct = totalTarget > 0 ? Math.min(100, (wonAmount / totalTarget) * 100) : 0;
 
-  const radius = 52;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - pct / 100);
+  const goalRowsHtml = goalRows.map(goal => {
+    const progress = goalProgress(goal);
+    const pct = Math.min(100, (progress / goal.target_amount) * 100);
+    const isDone = progress >= goal.target_amount;
+    const sourceLabel = goal.source === 'staff' ? 'set by your school' : 'set by you';
+    return `
+      <div style="display:flex; align-items:center; gap:14px; padding:12px; border:1px solid var(--line); border-radius:var(--radius-sm); margin-bottom:8px;">
+        <div style="width:40px; height:40px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-accent); font-weight:700; font-size:11px; background:${isDone ? 'var(--teal)' : 'var(--card-soft)'}; color:${isDone ? 'var(--white)' : 'var(--ink)'};">
+          ${isDone ? '✓' : Math.round(pct) + '%'}
+        </div>
+        <div style="flex:1; min-width:0;">
+          <p style="font-size:14px; font-weight:600; color:var(--ink); margin:0;">${escapeHtml(goal.name)}</p>
+          <p style="font-size:12px; color:var(--muted); margin:2px 0 0;">${fmtMoney(progress)} of ${fmtMoney(goal.target_amount)} · ${sourceLabel}</p>
+        </div>
+        <button class="kanban-delete" data-delete-goal="${goal.id}" aria-label="Delete goal" style="flex-shrink:0;">×</button>
+      </div>
+    `;
+  }).join('');
 
   el.innerHTML = `
-    <div style="display:flex; align-items:center; gap:26px; flex-wrap:wrap;">
-      <div style="position:relative; width:120px; height:120px; flex-shrink:0;">
-        <svg width="120" height="120" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="${radius}" fill="none" stroke="var(--line)" stroke-width="12"/>
-          <circle cx="60" cy="60" r="${radius}" fill="none" stroke="var(--amber)" stroke-width="12"
-            stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
-            transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s ease;"/>
-        </svg>
-        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-          <span style="font-family:var(--font-accent); font-weight:800; font-size:26px; color:var(--ink);">${Math.round(pct)}%</span>
-        </div>
+    <div style="margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+        <span style="font-size:13px; color:var(--muted);">Total progress across all goals</span>
+        <span style="font-size:13px; font-weight:700; color:var(--amber-deep);">${Math.round(aggregatePct)}%</span>
       </div>
-      <div style="flex:1; min-width:180px;">
-        <span class="goal-hero-of">of the way to ${fmtMoney(goal)}</span>
-        ${sourceNote}
-        <div class="goal-chip-row" style="margin-top:14px;">
-          <div class="goal-chip"><span>In Progress</span><strong>${fmtMoney(inProgressAmount)}</strong></div>
-          <div class="goal-chip"><span>Submitted</span><strong>${fmtMoney(submittedAmount)}</strong></div>
-          <div class="goal-chip"><span>Won</span><strong>${fmtMoney(wonAmount)}</strong></div>
-        </div>
-      </div>
-      <button class="achv-demo-btn" id="edit-goal-btn" style="width:auto; white-space:nowrap;">Edit goal</button>
+      <div class="level-track"><div class="level-fill" style="width:${aggregatePct}%;"></div></div>
     </div>
+    ${goalRowsHtml}
+    <button class="achv-demo-btn" id="add-goal-btn" style="margin-top:4px;">+ Add a goal</button>
   `;
-  document.getElementById('edit-goal-btn').addEventListener('click', () => showEditor(goal));
+  document.getElementById('add-goal-btn').addEventListener('click', showAddForm);
+  el.querySelectorAll('[data-delete-goal]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Delete this goal? This can\'t be undone.')) return;
+      await supabaseClient.from('goals').delete().eq('id', btn.dataset.deleteGoal);
+      loadDashboard();
+    });
+  });
 }
 
 // ---- Compact stats strip ----

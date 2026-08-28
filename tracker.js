@@ -47,6 +47,25 @@ function renderCard(row) {
   `;
 }
 
+async function populateGoalDropdown() {
+  const { data: goals, error } = await supabaseClient
+    .from('goals')
+    .select('id, name')
+    .eq('student_id', currentUserId)
+    .order('created_at');
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const select = document.getElementById('s-goal');
+  const current = select.value;
+  select.innerHTML = '<option value="">No specific goal</option>' +
+    (goals || []).map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+  select.value = current;
+}
+
 async function loadBoard() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
@@ -54,6 +73,8 @@ async function loadBoard() {
     return;
   }
   currentUserId = session.user.id;
+
+  populateGoalDropdown();
 
   const { data, error } = await supabaseClient
     .from('scholarships')
@@ -163,6 +184,7 @@ addForm.addEventListener('submit', async (e) => {
   const amount = document.getElementById('s-amount').value || null;
   const deadline = document.getElementById('s-deadline').value || null;
   const website = document.getElementById('s-website').value.trim() || null;
+  const goalId = document.getElementById('s-goal').value || null;
 
   if (!title) return;
 
@@ -172,6 +194,7 @@ addForm.addEventListener('submit', async (e) => {
     amount,
     deadline,
     website,
+    goal_id: goalId,
     status: 'saved',
   });
 
