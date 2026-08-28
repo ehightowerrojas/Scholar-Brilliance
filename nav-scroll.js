@@ -1,11 +1,11 @@
 // ------------------------------------------------------------------
-// The header is fully transparent by default so it blends seamlessly
-// with the hero behind it. But its logo/link text is white — once
-// the user scrolls past the dark hero into the site's lighter
-// sections, a transparent header would make that white text
-// unreadable. This adds a solid background once scrolled far enough
-// that legibility would otherwise break, removing it again if the
-// user scrolls back to the top.
+// The header is fully transparent, always — no background, at any
+// scroll position. Its logo text and "Log in" link are white, which
+// reads fine over the dark hero but would go unreadable once
+// scrolled over the site's lighter sections below. Rather than
+// adding a background back in, this swaps just that text to dark ink
+// once scrolled far enough, keeping the header itself see-through
+// the whole time.
 // ------------------------------------------------------------------
 
 (function () {

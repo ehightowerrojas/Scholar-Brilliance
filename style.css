@@ -148,15 +148,12 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   background:transparent;
   transition:background .25s ease;
 }
-.site-nav.is-scrolled{
-  background:rgba(46, 27, 84, 0.92);
-  backdrop-filter:blur(10px);
-}
+.site-nav.is-scrolled .brand, .site-nav.is-scrolled .nav-login{ color:var(--ink); }
 .site-nav .wrap{
   display:flex; align-items:center; justify-content:space-between;
   height:76px;
 }
-.site-nav .brand{ color:var(--white); }
+.site-nav .brand{ color:var(--white); transition:color .25s ease; }
 .site-subnav{
   position:absolute; top:0; left:0; right:0; z-index:40;
   height:76px;
@@ -164,7 +161,7 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 }
 .site-subnav .nav-links a{ color:var(--white); }
 .site-subnav .nav-links a:hover{ opacity:1; color:var(--amber); }
-.site-nav .nav-login{ color:var(--white); }
+.site-nav .nav-login{ color:var(--white); transition:color .25s ease; }
 
 .brand{
   display:flex; align-items:center; gap:10px;
