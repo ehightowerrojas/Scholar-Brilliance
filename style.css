@@ -152,12 +152,12 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 .site-nav .nav-cta{ transition:background .25s ease, padding .25s ease, box-shadow .25s ease; }
 .site-nav.is-scrolled .brand{
   background:var(--purple);
-  padding:8px 24px 8px 10px;
+  padding:12px 32px 12px 14px;
   border-radius:999px;
 }
 .site-nav.is-scrolled .nav-cta{
   background:var(--white);
-  padding:8px 22px;
+  padding:12px 28px;
   border-radius:999px;
   box-shadow:0 4px 14px rgba(0,0,0,0.12);
 }
