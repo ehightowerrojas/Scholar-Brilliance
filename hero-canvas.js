@@ -24,8 +24,9 @@
   window.addEventListener('resize', resize);
   resize();
 
-  const NODE_COUNT = 26;
-  const MAX_DIST = 170;
+  const isSubtle = canvas.dataset.density === 'subtle';
+  const NODE_COUNT = isSubtle ? 14 : 26;
+  const MAX_DIST = isSubtle ? 140 : 170;
   const nodes = Array.from({ length: NODE_COUNT }, () => ({
     x: Math.random() * w,
     y: Math.random() * h * 0.8,

@@ -627,7 +627,7 @@ footer.site-footer{
   background:radial-gradient(55% 55% at 85% 90%, rgba(255,193,7,0.16), transparent 60%);
   pointer-events:none;
 }
-.login-brand > *{ position:relative; }
+.login-brand > *{ position:relative; z-index:2; }
 .login-brand .brand{ color:var(--white); }
 .login-quote{ max-width:380px; margin-top:auto; margin-bottom:auto; }
 .login-quote .eyebrow{ color:var(--amber); }
