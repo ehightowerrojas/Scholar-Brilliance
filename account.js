@@ -78,17 +78,17 @@ document.getElementById('save-profile-btn').addEventListener('click', async () =
 });
 
 async function loadAvatarSection() {
-  const [{ data: species }, { data: profile }, { data: scholarships }, { data: earnedRows }, { data: achievements }, { data: levels }] =
+  const [{ data: species }, { data: profile }, { data: goals }, { data: earnedRows }, { data: achievements }, { data: levels }] =
     await Promise.all([
       supabaseClient.from('avatar_species').select('*').order('sort_order'),
       supabaseClient.from('profiles').select('avatar_species_id').eq('id', accountUserId).single(),
-      supabaseClient.from('scholarships').select('status').eq('user_id', accountUserId),
+      supabaseClient.from('goals').select('completed_at').eq('student_id', accountUserId),
       supabaseClient.from('user_achievements').select('achievement_id').eq('user_id', accountUserId),
       supabaseClient.from('achievements').select('id, points'),
       supabaseClient.from('levels').select('*').order('level_number'),
     ]);
 
-  const submittedCount = (scholarships || []).filter(s => s.status === 'submitted' || s.status === 'funds_received').length;
+  const completedGoalsCount = (goals || []).filter(g => g.completed_at).length;
   const pointsMap = Object.fromEntries((achievements || []).map(a => [a.id, a.points]));
   const totalXP = (earnedRows || []).reduce((sum, r) => sum + (pointsMap[r.achievement_id] || 0), 0);
   let currentLevel = { level_number: 1 };
@@ -99,7 +99,7 @@ async function loadAvatarSection() {
   const grid = document.getElementById('avatar-grid');
 
   grid.innerHTML = (species || []).map(s => {
-    const unlocked = submittedCount >= s.unlock_applications;
+    const unlocked = completedGoalsCount >= s.unlock_goals_completed;
     const isEquipped = s.id === equippedId;
     const svg = renderAvatarSVG(s.id, unlocked ? tier : 1, 72);
     return `
@@ -112,7 +112,7 @@ async function loadAvatarSection() {
         <p style="font-size:10px; color:var(--muted); text-transform:capitalize;">${s.rarity}</p>
         ${unlocked
           ? (isEquipped ? '' : `<button class="achv-demo-btn" data-equip="${s.id}" style="width:auto; padding:4px 10px; font-size:11px; margin-top:2px;">Equip</button>`)
-          : `<p style="font-size:10px; color:var(--muted);">${s.unlock_applications} apps to unlock</p>`}
+          : `<p style="font-size:10px; color:var(--muted);">${s.unlock_goals_completed} goal${s.unlock_goals_completed === 1 ? '' : 's'} completed to unlock</p>`}
       </div>
     `;
   }).join('');

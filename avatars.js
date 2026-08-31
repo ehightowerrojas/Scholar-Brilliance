@@ -149,13 +149,13 @@ function renderAvatarSVG(speciesId, tier, size) {
   </svg>`;
 }
 
-// Given how many applications a student has submitted, which species
+// Given how many goals a student has fully completed, which species
 // are unlocked, and which is the next one to work toward.
-function getUnlockedSpecies(submittedCount, allSpecies) {
-  return allSpecies.filter(s => submittedCount >= s.unlock_applications);
+function getUnlockedSpecies(completedGoalsCount, allSpecies) {
+  return allSpecies.filter(s => completedGoalsCount >= s.unlock_goals_completed);
 }
-function getNextLockedSpecies(submittedCount, allSpecies) {
+function getNextLockedSpecies(completedGoalsCount, allSpecies) {
   return allSpecies
-    .filter(s => submittedCount < s.unlock_applications)
-    .sort((a, b) => a.unlock_applications - b.unlock_applications)[0] || null;
+    .filter(s => completedGoalsCount < s.unlock_goals_completed)
+    .sort((a, b) => a.unlock_goals_completed - b.unlock_goals_completed)[0] || null;
 }
