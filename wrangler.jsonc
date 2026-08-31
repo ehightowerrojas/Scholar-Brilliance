@@ -9,7 +9,7 @@
     "not_found_handling": "404-page"
   },
   "vars": {
-    "SUPABASE_URL": "https://YOUR-PROJECT-REF.supabase.co",
-    "SUPABASE_ANON_KEY": "YOUR-PUBLISHABLE-KEY"
+    "SUPABASE_URL": "https://trbcndodzwzpxikkhsvt.supabase.co",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyYmNuZG9kend6cHhpa2toc3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MTQxODMsImV4cCI6MjEwMzA5MDE4M30.xMPwWQ4_SVFuYYnNkSyPGEvhsKht9XR_8Txz0WQ4HTI"
   }
 }
