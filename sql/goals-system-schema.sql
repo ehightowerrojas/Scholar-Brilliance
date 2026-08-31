@@ -66,16 +66,26 @@ create policy "Staff can create goals for their org's students"
 alter table public.scholarships add column if not exists goal_id uuid references public.goals(id) on delete set null;
 
 -- Migrate any existing single financial_goal into a real goal row,
--- so no one's existing progress is lost. Safe to re-run — only
--- migrates profiles that haven't been migrated yet (no existing goal
--- with the migration marker name).
-insert into public.goals (student_id, name, target_amount, source, created_at)
-select p.id, 'My financial goal', p.financial_goal, coalesce(p.goal_source, 'self'), now()
-from public.profiles p
-where p.financial_goal is not null
-  and not exists (
-    select 1 from public.goals g where g.student_id = p.id and g.name = 'My financial goal'
-  );
+-- so no one's existing progress is lost. Guarded to only run if that
+-- legacy column actually exists on this project — some projects
+-- never had it (goal-setting-schema.sql wasn't run, or this is a
+-- fresh database), in which case there's nothing to migrate and this
+-- step is safely skipped.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'profiles' and column_name = 'financial_goal'
+  ) then
+    insert into public.goals (student_id, name, target_amount, source, created_at)
+    select p.id, 'My financial goal', p.financial_goal, coalesce(p.goal_source, 'self'), now()
+    from public.profiles p
+    where p.financial_goal is not null
+      and not exists (
+        select 1 from public.goals g where g.student_id = p.id and g.name = 'My financial goal'
+      );
+  end if;
+end $$;
 
 -- New achievement for fully funding a goal.
 insert into public.achievements (id, category, title, description, points, icon, sort_order) values

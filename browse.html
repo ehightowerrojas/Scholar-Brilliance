@@ -36,12 +36,11 @@
 
     <div class="dash-card" style="margin-bottom:24px;">
       <h3>My Interests</h3>
-      <p class="dash-empty" style="margin-bottom:12px;">Let your school know what you're interested in — they can use this to recommend scholarships to you directly.</p>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <input type="text" id="interests-input" placeholder="e.g. engineering, first-generation, community service" style="flex:1; min-width:220px; padding:11px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
-        <button class="btn btn-line" id="save-interests-btn" style="padding:11px 20px;">Save</button>
+      <p class="dash-empty" style="margin-bottom:12px;">Select what you're interested in — your school can use this to recommend scholarships to you directly.</p>
+      <div id="interests-tags" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+      <div id="interests-saved-msg" style="display:none; align-items:center; gap:6px; margin-top:12px; color:var(--teal-deep); font-weight:600; font-size:13px;">
+        <span>✓</span><span>Got it — we've saved your interests.</span>
       </div>
-      <p id="interests-saved-msg" class="dash-empty" style="margin-top:8px; display:none;">Saved ✓</p>
     </div>
 
     <div id="recommended-section" style="display:none; margin-bottom:36px;">

@@ -39,3 +39,19 @@ async function checkApplicationMilestones(submittedCount, userId) {
     }
   }
 }
+
+// Streak Milestones, checked against the real consecutive-day streak
+// (idempotent — safe to call every time the dashboard loads).
+const STREAK_MILESTONES = [
+  { count: 3, id: 'streak_3' },
+  { count: 7, id: 'streak_7' },
+  { count: 30, id: 'streak_30' },
+];
+
+async function checkStreakMilestones(streakCount, userId) {
+  for (const tier of STREAK_MILESTONES) {
+    if (streakCount >= tier.count) {
+      await awardAchievement(tier.id, userId);
+    }
+  }
+}

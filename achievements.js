@@ -13,6 +13,7 @@ const ICONS = {
   badge:  '<circle cx="12" cy="9" r="6"/><path d="M9 14l-2 7 5-3 5 3-2-7"/>',
   crown:  '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5L3 8z"/>',
   trophy: '<path d="M8 4h8v4a4 4 0 0 1-8 0V4z"/><path d="M6 6H4a2 2 0 0 0 2 4"/><path d="M18 6h2a2 2 0 0 1-2 4"/><path d="M10 15h4v3h-4z"/><path d="M8 21h8"/>',
+  flame:  '<path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1.5-1-2-1-3.5 1.5 1 3 3 3 6a5 5 0 0 1-10 0c0-5 3-6 5-11.5z"/>',
 };
 
 function iconSvg(key) {
@@ -90,10 +91,13 @@ function renderLevel(totalXP, levels) {
 
 function renderGrids(achievements, earnedIds) {
   const earlyWins = achievements.filter(a => a.category === 'early_wins');
+  const streaks = achievements.filter(a => a.category === 'streak_milestones');
   const milestones = achievements.filter(a => a.category === 'application_milestones');
 
   document.getElementById('early-wins-grid').innerHTML =
     earlyWins.map(a => renderCard(a, earnedIds.has(a.id))).join('');
+  document.getElementById('streak-grid').innerHTML =
+    streaks.map(a => renderCard(a, earnedIds.has(a.id))).join('');
   document.getElementById('milestones-grid').innerHTML =
     milestones.map(a => renderCard(a, earnedIds.has(a.id))).join('');
 }

@@ -164,6 +164,7 @@ create policy "Staff can delete catalog items for own org"
 -- Update the catalog's read policy: everyone sees global (org_id
 -- null) listings, plus their own org's listings.
 drop policy if exists "Catalog is readable by any authenticated user" on public.scholarships_catalog;
+drop policy if exists "Catalog is readable by matching org or global listings" on public.scholarships_catalog;
 create policy "Catalog is readable by matching org or global listings"
   on public.scholarships_catalog for select to authenticated
   using (

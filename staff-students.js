@@ -37,7 +37,7 @@ function renderStudents() {
       <div class="dash-empty" style="margin-top:12px;">
         <strong style="color:var(--ink);">Goals:</strong>
         ${s.goals.length > 0
-          ? s.goals.map(g => `<span style="display:inline-block; margin:4px 6px 0 0;">${escapeHtml(g.name)} — $${Number(g.target_amount).toLocaleString()} ${g.source === 'staff' ? '(set by school)' : '(set by student)'}${g.completed_at ? ' ✓' : ''}</span>`).join('<br>')
+          ? s.goals.map(g => `<span style="display:inline-block; margin:4px 6px 0 0;">${escapeHtml(g.name)} — $${Number(g.target_amount).toLocaleString()}${g.target_date ? ' · due ' + fmtDateShort(g.target_date) : ''} ${g.source === 'staff' ? '(set by school)' : '(set by student)'}${g.completed_at ? ' ✓' : ''}</span>`).join('<br>')
           : ' Not set yet'}
       </div>
 
@@ -54,11 +54,13 @@ function renderStudents() {
         <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-recommend="${s.id}">Recommend</button>
       </div>
 
-      <div class="catalog-card-actions" style="margin-top:10px;">
-        <input type="text" id="goal-name-${s.id}" placeholder="Goal name (e.g. STEM scholarships)" style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
-        <input type="number" id="goal-amount-${s.id}" placeholder="Target ($)" min="0" style="width:110px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+      <div class="catalog-card-actions" style="margin-top:10px; flex-wrap:wrap;">
+        <input type="text" id="goal-name-${s.id}" placeholder="Goal name (e.g. STEM scholarships)" style="flex:1; min-width:160px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+        <input type="number" id="goal-amount-${s.id}" placeholder="Target ($)" min="0" style="width:100px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+        <input type="date" id="goal-deadline-${s.id}" style="width:140px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
         <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-assign-goal="${s.id}">Assign goal</button>
       </div>
+      <p class="dash-empty" id="goal-msg-${s.id}" style="display:none; margin-top:6px; font-size:12px;"></p>
     </div>
   `).join('');
 
@@ -67,19 +69,26 @@ function renderStudents() {
       const studentId = btn.dataset.assignGoal;
       const name = document.getElementById(`goal-name-${studentId}`).value.trim();
       const amount = Number(document.getElementById(`goal-amount-${studentId}`).value);
+      const deadline = document.getElementById(`goal-deadline-${studentId}`).value || null;
+      const msg = document.getElementById(`goal-msg-${studentId}`);
       if (!name || !amount || amount <= 0) return;
 
       btn.disabled = true;
       const { error } = await supabaseClient.from('goals')
-        .insert({ student_id: studentId, name, target_amount: amount, source: 'staff', created_by: staffId });
+        .insert({ student_id: studentId, name, target_amount: amount, target_date: deadline, source: 'staff', created_by: staffId });
       btn.disabled = false;
 
+      msg.style.display = 'block';
       if (error) {
         console.error(error);
+        msg.textContent = 'Could not assign this goal — please try again.';
+        msg.style.color = '#c62828';
         return;
       }
+      msg.textContent = 'Goal assigned ✓';
+      msg.style.color = 'var(--teal-deep)';
       await awardAchievement('goal_setter', studentId);
-      loadStudents();
+      setTimeout(loadStudents, 900);
     });
   });
 
@@ -143,7 +152,7 @@ async function loadStudents() {
     const [{ data: schData, error: schErr }, { data: recData, error: recErr }, { data: goalData, error: goalErr }] = await Promise.all([
       supabaseClient.from('scholarships').select('user_id, status, outcome').in('user_id', studentIds),
       supabaseClient.from('scholarship_recommendations').select('student_id, scholarships_catalog(title)').in('student_id', studentIds),
-      supabaseClient.from('goals').select('student_id, name, target_amount, source, completed_at').in('student_id', studentIds),
+      supabaseClient.from('goals').select('student_id, name, target_amount, target_date, source, completed_at').in('student_id', studentIds),
     ]);
     if (schErr) console.error(schErr); else scholarships = schData;
     if (recErr) console.error(recErr); else recommendations = recData;

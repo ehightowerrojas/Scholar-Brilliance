@@ -17,6 +17,40 @@ async function init() {
   await loadCatalog();
 }
 
+const INTEREST_OPTIONS = [
+  'STEM', 'Arts & Design', 'Community Service', 'Leadership', 'Athletics',
+  'First-Generation', 'Business & Entrepreneurship', 'Healthcare',
+  'Environmental', 'Writing & Journalism', 'Music', 'Social Justice',
+];
+let selectedInterests = new Set();
+
+function renderInterestTags() {
+  const container = document.getElementById('interests-tags');
+  container.innerHTML = INTEREST_OPTIONS.map(tag => `
+    <button type="button" class="interest-tag" data-tag="${escapeHtml(tag)}" aria-pressed="${selectedInterests.has(tag)}">${escapeHtml(tag)}</button>
+  `).join('');
+
+  container.querySelectorAll('.interest-tag').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tag = btn.dataset.tag;
+      if (selectedInterests.has(tag)) selectedInterests.delete(tag);
+      else selectedInterests.add(tag);
+      btn.setAttribute('aria-pressed', selectedInterests.has(tag));
+
+      const { error } = await supabaseClient.from('profiles')
+        .update({ interests: [...selectedInterests].join(', ') })
+        .eq('id', browseUserId);
+
+      const msg = document.getElementById('interests-saved-msg');
+      if (!error) {
+        msg.style.display = 'flex';
+        clearTimeout(msg._hideTimer);
+        msg._hideTimer = setTimeout(() => { msg.style.display = 'none'; }, 2500);
+      }
+    });
+  });
+}
+
 async function loadInterests() {
   const { data, error } = await supabaseClient
     .from('profiles')
@@ -24,19 +58,10 @@ async function loadInterests() {
     .eq('id', browseUserId)
     .single();
   if (!error && data?.interests) {
-    document.getElementById('interests-input').value = data.interests;
+    selectedInterests = new Set(data.interests.split(',').map(s => s.trim()).filter(Boolean));
   }
+  renderInterestTags();
 }
-
-document.getElementById('save-interests-btn').addEventListener('click', async () => {
-  const value = document.getElementById('interests-input').value.trim();
-  const { error } = await supabaseClient.from('profiles').update({ interests: value }).eq('id', browseUserId);
-  const msg = document.getElementById('interests-saved-msg');
-  if (!error) {
-    msg.style.display = 'block';
-    setTimeout(() => { msg.style.display = 'none'; }, 2500);
-  }
-});
 
 async function loadRecommendations() {
   const { data, error } = await supabaseClient

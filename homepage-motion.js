@@ -13,7 +13,6 @@
 // ------------------------------------------------------------------
 
 (function () {
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.documentElement.classList.add('js-ready');
 
   const revealEls = Array.from(document.querySelectorAll('.reveal'));
@@ -35,38 +34,30 @@
     });
   }
 
-  if (reduceMotion) {
-    revealAll();
-  } else {
-    // Primary: IntersectionObserver.
-    if ('IntersectionObserver' in window) {
-      const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            revealObserver.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.15 });
-      revealEls.forEach(el => revealObserver.observe(el));
-    }
-
-    // Backup: manual check on scroll/resize, in case the observer
-    // above doesn't fire for any reason in a given browser.
-    window.addEventListener('scroll', manualCheck, { passive: true });
-    window.addEventListener('resize', manualCheck, { passive: true });
-    manualCheck(); // catch anything already in view at load
-
-    // Last resort: never leave content invisible indefinitely.
-    setTimeout(revealAll, 4000);
+  // Primary: IntersectionObserver.
+  if ('IntersectionObserver' in window) {
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(el => revealObserver.observe(el));
   }
+
+  // Backup: manual check on scroll/resize, in case the observer
+  // above doesn't fire for any reason in a given browser.
+  window.addEventListener('scroll', manualCheck, { passive: true });
+  window.addEventListener('resize', manualCheck, { passive: true });
+  manualCheck(); // catch anything already in view at load
+
+  // Last resort: never leave content invisible indefinitely.
+  setTimeout(revealAll, 4000);
 
   // Animated stat counters
   const counters = document.querySelectorAll('[data-count-to]');
-  if (reduceMotion) {
-    counters.forEach(el => { el.textContent = el.dataset.countTo; });
-    return;
-  }
 
   function animateCounter(el) {
     const target = Number(el.dataset.countTo);

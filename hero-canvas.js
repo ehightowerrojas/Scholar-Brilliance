@@ -10,7 +10,6 @@
   const canvas = document.getElementById('network-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let w, h, dpr;
   function resize() {
@@ -33,7 +32,7 @@
     r: Math.random() * 1.6 + 1.4,
     delay: Math.random() * 1200,
     phase: Math.random() * Math.PI * 2,
-    born: reduceMotion, // reduced motion: everything is already "born", no stagger
+    born: false,
   }));
 
   function drawFrame(elapsed) {
@@ -64,20 +63,13 @@
     nodes.forEach(n => {
       if (!n.born) return;
       const age = elapsed - n.delay;
-      const pop = reduceMotion ? 1 : Math.min(age / 400, 1);
-      const pulse = reduceMotion ? 0.75 : Math.sin(elapsed / 1400 + n.phase) * 0.35 + 0.65;
+      const pop = Math.min(age / 400, 1);
+      const pulse = Math.sin(elapsed / 1400 + n.phase) * 0.35 + 0.65;
       ctx.beginPath();
       ctx.arc(n.x, n.y, n.r * pop, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255,193,7,${0.5 * pop * pulse + 0.2})`;
       ctx.fill();
     });
-  }
-
-  if (reduceMotion) {
-    // Draw once and stop — no continuous animation loop for users who
-    // have asked their system to reduce motion.
-    drawFrame(999999);
-    return;
   }
 
   const start = performance.now();

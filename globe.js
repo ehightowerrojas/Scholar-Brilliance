@@ -14,7 +14,6 @@
   const label = document.getElementById('globe-tracking-label');
   if (!canvas || !label) return;
   const ctx = canvas.getContext('2d');
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let w, h, dpr;
   function resize() {
@@ -63,13 +62,13 @@
 
   function drawFrame(now) {
     if (!lastSwitch) lastSwitch = now;
-    if (!reduceMotion && now - lastSwitch > SWITCH_MS) {
+    if (now - lastSwitch > SWITCH_MS) {
       activeSlot = (activeSlot + 1) % highlightIdx.length;
       lastSwitch = now;
     }
 
     ctx.clearRect(0, 0, w, h);
-    if (!reduceMotion) angle += 0.004;
+    angle += 0.004;
 
     const R = Math.min(w, h) / 2 - 10;
     const cx = w / 2, cy = h / 2;
@@ -110,12 +109,8 @@
       label.style.display = 'none';
     }
 
-    if (!reduceMotion) requestAnimationFrame(drawFrame);
-  }
-
-  if (reduceMotion) {
-    drawFrame(performance.now());
-  } else {
     requestAnimationFrame(drawFrame);
   }
+
+  requestAnimationFrame(drawFrame);
 })();

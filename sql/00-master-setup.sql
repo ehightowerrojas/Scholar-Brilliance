@@ -628,11 +628,18 @@ create table if not exists public.goals (
   student_id uuid not null references auth.users(id) on delete cascade,
   name text not null check (length(name) > 0 and length(name) <= 120),
   target_amount numeric not null check (target_amount > 0 and target_amount <= 1000000),
+  target_date date,
   source text not null default 'self' check (source in ('self','staff')),
   created_by uuid references auth.users(id),
   completed_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Explicit standalone ADD COLUMN — same reasoning as the other
+-- safety-net ALTERs in this file: if goals already existed from an
+-- earlier partial run before target_date existed, the inline
+-- definition above would be silently skipped.
+alter table public.goals add column if not exists target_date date;
 
 alter table public.goals enable row level security;
 
