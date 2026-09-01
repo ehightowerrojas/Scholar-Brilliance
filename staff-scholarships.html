@@ -11,23 +11,32 @@
 </head>
 <body>
 
-<div class="stub-shell">
-  <nav class="stub-nav">
+<div class="app-shell">
+  <aside class="app-sidebar" id="app-sidebar">
     <a href="index.html" class="brand">
       <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z" fill="#5E35B1"/><path d="M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z" fill="#FFC107"/><path d="M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z" fill="#ffffff"/></svg></span>
-      Scholar Brilliance <span style="color:var(--muted); font-weight:400; font-size:13px;">Staff</span>
+      Scholar Brilliance
     </a>
-    <div style="display:flex; align-items:center; gap:24px;">
-      <a href="staff-dashboard.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Dashboard</a>
-      <a href="staff-referrals.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Referral Codes</a>
-      <a href="staff-students.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Student Progress</a>
-      <a href="staff-scholarships.html" style="font-size:14.5px; font-weight:600; color:var(--fg);">Scholarships</a>
-      <a href="account.html" style="font-size:14.5px; font-weight:600; color:var(--muted);">Account</a>
-      <button id="logout-btn" class="btn btn-line">Log out</button>
-    </div>
-  </nav>
+    <span style="padding:0 8px 16px; margin-top:-16px; color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">Staff</span>
+    <nav class="sidebar-nav">
+      <a href="staff-dashboard.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+      <a href="staff-referrals.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><path d="M10.5 9.5l3 3"/></svg>Referral Codes</a>
+      <a href="staff-students.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Student Progress</a>
+      <a href="staff-scholarships.html" class="sidebar-link is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6L3 9l6-1z"/></svg>Scholarships</a>
+      <a href="account.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>Account</a>
+    </nav>
+    <button id="logout-btn" class="sidebar-logout">Log out</button>
+  </aside>
 
-  <main style="flex:1; padding:48px 24px; max-width:900px; margin:0 auto; width:100%;">
+  <div class="app-main-col">
+    <header class="app-header">
+      <div style="display:flex; align-items:center;">
+        <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Open menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <span class="app-header-crumb">Scholarships</span>
+      </div>
+    </header>
+
+    <main class="app-main" style="max-width:900px;">
     <div class="tracker-head">
       <div>
         <span class="eyebrow">Scholarship management</span>
@@ -67,8 +76,8 @@
 
     <div id="scholarships-list" class="catalog-list">Loading…</div>
   </main>
+  </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="utils.js"></script>
@@ -76,6 +85,7 @@
 <script src="staff-common.js"></script>
 <script src="formatters.js"></script>
 <script src="staff-scholarships.js"></script>
+<script src="sidebar-toggle.js"></script>
 
 </body>
 </html>

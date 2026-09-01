@@ -236,6 +236,8 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   transition:transform .25s ease;
 }
 .app-sidebar .brand{ padding:0 8px 20px; }
+.app-sidebar .brand-mark{ width:28px; height:28px; flex-shrink:0; }
+.app-sidebar .brand{ font-size:15.5px; white-space:nowrap; }
 .sidebar-nav{ display:flex; flex-direction:column; gap:2px; flex:1; }
 .sidebar-link{
   display:flex; align-items:center; gap:12px;

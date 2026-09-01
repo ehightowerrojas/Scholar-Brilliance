@@ -74,10 +74,17 @@ async function loadDashboard() {
 function renderWelcomeAvatar(profile, earnedRows, achievements, levels) {
   const pointsMap = Object.fromEntries(achievements.map(a => [a.id, a.points]));
   const totalXP = earnedRows.reduce((sum, r) => sum + (pointsMap[r.achievement_id] || 0), 0);
-  let currentLevel = { level_number: 1 };
+  let currentLevel = { level_number: 1, title: 'Scholarship Rookie' };
   levels.forEach(l => { if (totalXP >= l.xp_threshold) currentLevel = l; });
   const tier = evolutionTierFromLevel(currentLevel.level_number);
-  document.getElementById('welcome-avatar').innerHTML = renderAvatarSVG(profile?.avatar_species_id || 'raptor', tier, 56);
+
+  document.getElementById('welcome-avatar').innerHTML = `
+    ${renderAvatarSVG(profile?.avatar_species_id || 'raptor', tier, 88)}
+    <span style="position:absolute; bottom:-4px; right:-4px; background:var(--amber); color:var(--ink); font-family:var(--font-accent); font-weight:800; font-size:13px; border-radius:999px; padding:3px 9px; border:3px solid var(--paper); box-shadow:var(--shadow-soft);">Lv ${currentLevel.level_number}</span>
+  `;
+
+  const levelBadge = document.getElementById('welcome-level-badge');
+  if (levelBadge) levelBadge.textContent = `Level ${currentLevel.level_number}: ${currentLevel.title}`;
 }
 
 function renderWelcomeSubtext(rows) {
@@ -466,16 +473,5 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
     window.location.href = 'login.html';
   }
 });
-
-const sidebarToggle = document.getElementById('sidebar-toggle');
-const sidebar = document.getElementById('app-sidebar');
-if (sidebarToggle && sidebar) {
-  sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('is-open'));
-  document.addEventListener('click', (e) => {
-    if (sidebar.classList.contains('is-open') && !sidebar.contains(e.target) && e.target !== sidebarToggle && !sidebarToggle.contains(e.target)) {
-      sidebar.classList.remove('is-open');
-    }
-  });
-}
 
 loadDashboard();

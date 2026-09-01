@@ -113,6 +113,35 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+
+-- Safe helper for "what org does the current user staff for, if any" —
+-- SECURITY DEFINER means this bypasses RLS internally, breaking the
+-- infinite-recursion trap that happens when a policy on profiles
+-- queries profiles itself (error 42P17). Every staff-facing policy
+-- below calls this instead of embedding that subquery inline.
+create or replace function public.current_staff_org_id()
+returns uuid
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select org_id from public.profiles where id = auth.uid() and role = 'staff';
+$$;
+
+-- Same reasoning, but for "my own org regardless of role" — used by
+-- policies that don't care whether the viewer is staff or student,
+-- just that they belong to the same org (e.g. the catalog).
+create or replace function public.current_user_org_id()
+returns uuid
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select org_id from public.profiles where id = auth.uid();
+$$;
+
 alter table public.organizations enable row level security;
 alter table public.profiles enable row level security;
 alter table public.referral_codes enable row level security;
@@ -127,29 +156,29 @@ create policy "Staff can view profiles in their org"
   on public.profiles for select to authenticated
   using (
     org_id is not null
-    and org_id = (select p.org_id from public.profiles p where p.id = auth.uid() and p.role = 'staff')
+    and org_id = public.current_staff_org_id()
   );
 
 drop policy if exists "Staff can view own organization" on public.organizations;
 create policy "Staff can view own organization"
   on public.organizations for select to authenticated
-  using (id = (select org_id from public.profiles where id = auth.uid() and role = 'staff'));
+  using (id = public.current_staff_org_id());
 
 drop policy if exists "Staff can view own org referral codes" on public.referral_codes;
 create policy "Staff can view own org referral codes"
   on public.referral_codes for select to authenticated
-  using (org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff'));
+  using (org_id = public.current_staff_org_id());
 
 drop policy if exists "Staff can create referral codes for own org" on public.referral_codes;
 create policy "Staff can create referral codes for own org"
   on public.referral_codes for insert to authenticated
-  with check (org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff'));
+  with check (org_id = public.current_staff_org_id());
 
 drop policy if exists "Staff can update own org referral codes" on public.referral_codes;
 create policy "Staff can update own org referral codes"
   on public.referral_codes for update to authenticated
-  using (org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff'))
-  with check (org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff'));
+  using (org_id = public.current_staff_org_id())
+  with check (org_id = public.current_staff_org_id());
 
 
 -- ============================================================
@@ -224,7 +253,7 @@ create policy "Staff can view scholarships of their org's students"
       select 1 from public.profiles sp
       where sp.id = scholarships.user_id
         and sp.org_id is not null
-        and sp.org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff')
+        and sp.org_id = public.current_staff_org_id()
     )
   );
 
@@ -352,24 +381,24 @@ create policy "Catalog is readable by matching org or global listings"
   on public.scholarships_catalog for select to authenticated
   using (
     org_id is null
-    or org_id = (select org_id from public.profiles where id = auth.uid())
+    or org_id = public.current_user_org_id()
   );
 
 drop policy if exists "Staff can insert catalog items for own org" on public.scholarships_catalog;
 create policy "Staff can insert catalog items for own org"
   on public.scholarships_catalog for insert to authenticated
-  with check (org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff'));
+  with check (org_id = public.current_staff_org_id());
 
 drop policy if exists "Staff can update catalog items for own org" on public.scholarships_catalog;
 create policy "Staff can update catalog items for own org"
   on public.scholarships_catalog for update to authenticated
-  using (org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff'))
-  with check (org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff'));
+  using (org_id = public.current_staff_org_id())
+  with check (org_id = public.current_staff_org_id());
 
 drop policy if exists "Staff can delete catalog items for own org" on public.scholarships_catalog;
 create policy "Staff can delete catalog items for own org"
   on public.scholarships_catalog for delete to authenticated
-  using (org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff'));
+  using (org_id = public.current_staff_org_id());
 
 -- Sample seed data — fixed to actually be idempotent. The original
 -- version used "on conflict do nothing" with no unique constraint to
@@ -434,7 +463,7 @@ create policy "Staff can view essays of their org's students"
       select 1 from public.profiles sp
       where sp.id = essays.user_id
         and sp.org_id is not null
-        and sp.org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff')
+        and sp.org_id = public.current_staff_org_id()
     )
   );
 
@@ -470,7 +499,7 @@ create policy "Staff can view recommendations for their org's students"
       select 1 from public.profiles sp
       where sp.id = scholarship_recommendations.student_id
         and sp.org_id is not null
-        and sp.org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff')
+        and sp.org_id = public.current_staff_org_id()
     )
   );
 
@@ -483,7 +512,7 @@ create policy "Staff can recommend scholarships to their org's students"
       select 1 from public.profiles sp
       where sp.id = scholarship_recommendations.student_id
         and sp.org_id is not null
-        and sp.org_id = (select org_id from public.profiles where id = auth.uid() and role = 'staff')
+        and sp.org_id = public.current_staff_org_id()
     )
   );
 
@@ -658,12 +687,11 @@ drop policy if exists "Staff can view goals for their org's students" on public.
 create policy "Staff can view goals for their org's students"
   on public.goals for select to authenticated
   using (
-    exists (
-      select 1 from public.profiles staff, public.profiles student
-      where staff.id = auth.uid() and staff.role = 'staff'
-        and student.id = goals.student_id
-        and student.org_id = staff.org_id
-        and staff.org_id is not null
+    public.current_staff_org_id() is not null
+    and exists (
+      select 1 from public.profiles student
+      where student.id = goals.student_id
+        and student.org_id = public.current_staff_org_id()
     )
   );
 
@@ -671,12 +699,11 @@ drop policy if exists "Staff can create goals for their org's students" on publi
 create policy "Staff can create goals for their org's students"
   on public.goals for insert to authenticated
   with check (
-    exists (
-      select 1 from public.profiles staff, public.profiles student
-      where staff.id = auth.uid() and staff.role = 'staff'
-        and student.id = goals.student_id
-        and student.org_id = staff.org_id
-        and staff.org_id is not null
+    public.current_staff_org_id() is not null
+    and exists (
+      select 1 from public.profiles student
+      where student.id = goals.student_id
+        and student.org_id = public.current_staff_org_id()
     )
   );
 
