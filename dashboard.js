@@ -196,6 +196,12 @@ function renderActivityStreak(activityRows) {
 
   checkStreakMilestones(streak, userId);
 
+  const nextMilestone = [3, 7, 30].find(n => n > streak);
+  const milestoneNames = { 3: 'On a Roll', 7: 'Week Warrior', 30: 'Unstoppable' };
+  const milestoneLine = nextMilestone
+    ? `<span class="dash-empty" style="font-size:12px;">🔥 ${nextMilestone - streak} more day${nextMilestone - streak === 1 ? '' : 's'} to earn "${milestoneNames[nextMilestone]}"</span>`
+    : `<span class="dash-empty" style="font-size:12px;">🏅 All streak badges earned!</span>`;
+
   const headerStreak = document.getElementById('header-streak');
   if (headerStreak) headerStreak.textContent = `${streak} day${streak === 1 ? '' : 's'}`;
 
@@ -222,6 +228,7 @@ function renderActivityStreak(activityRows) {
         <span style="font-size:13.5px; color:var(--muted);">day${streak === 1 ? '' : 's'} in a row</span>
       </div>
       ${longest > streak ? `<span class="dash-empty" style="font-size:12px;">🏆 Longest streak: ${longest} days</span>` : ''}
+      ${milestoneLine}
     </div>
     <div style="display:flex; justify-content:space-between; gap:8px;">
       ${days.map(day => {
@@ -263,24 +270,25 @@ function renderGoal(goalRows, rows) {
     }
   });
 
-  function showAddForm() {
+  function showGoalForm(existingGoal) {
+    const isEdit = !!existingGoal;
     el.innerHTML = `
-      <p style="color:var(--ink); font-size:15px; font-weight:600; margin-bottom:14px;">🎯 Set your first goal and watch every scholarship you win count toward it.</p>
+      <p style="color:var(--ink); font-size:15px; font-weight:600; margin-bottom:14px;">${isEdit ? `✏️ Editing "${escapeHtml(existingGoal.name)}"` : '🎯 Set your first goal and watch every scholarship you win count toward it.'}</p>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
         <div style="flex:2; min-width:160px;">
           <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">Goal name</label>
-          <input type="text" id="goal-name-input" placeholder="e.g. STEM scholarships" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+          <input type="text" id="goal-name-input" placeholder="e.g. STEM scholarships" value="${isEdit ? escapeHtml(existingGoal.name) : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
         </div>
         <div style="flex:1; min-width:100px;">
           <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">Target ($)</label>
-          <input type="number" id="goal-amount-input" placeholder="5000" min="0" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+          <input type="number" id="goal-amount-input" placeholder="5000" min="0" value="${isEdit ? existingGoal.target_amount : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
         </div>
         <div style="flex:1; min-width:140px;">
           <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">Deadline (optional)</label>
-          <input type="date" id="goal-deadline-input" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+          <input type="date" id="goal-deadline-input" value="${isEdit && existingGoal.target_date ? existingGoal.target_date : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
         </div>
-        <button class="btn btn-gold" id="save-goal-btn" style="padding:10px 18px;">Add goal</button>
-        ${goalRows.length > 0 ? '<button class="btn btn-line" id="cancel-goal-edit-btn" style="padding:10px 18px;">Cancel</button>' : ''}
+        <button class="btn btn-gold" id="save-goal-btn" style="padding:10px 18px;">${isEdit ? 'Save changes' : 'Add goal'}</button>
+        ${(goalRows.length > 0 || isEdit) ? '<button class="btn btn-line" id="cancel-goal-edit-btn" style="padding:10px 18px;">Cancel</button>' : ''}
       </div>
     `;
     document.getElementById('save-goal-btn').addEventListener('click', async () => {
@@ -291,14 +299,16 @@ function renderGoal(goalRows, rows) {
 
       const btn = document.getElementById('save-goal-btn');
       btn.disabled = true;
-      btn.textContent = 'Saving…';
+      btn.textContent = isEdit ? 'Saving…' : 'Saving…';
 
-      const { error } = await supabaseClient.from('goals').insert({ student_id: userId, name, target_amount: amount, target_date: deadline, source: 'self' });
+      const { error } = isEdit
+        ? await supabaseClient.from('goals').update({ name, target_amount: amount, target_date: deadline }).eq('id', existingGoal.id)
+        : await supabaseClient.from('goals').insert({ student_id: userId, name, target_amount: amount, target_date: deadline, source: 'self' });
 
       if (error) {
         console.error(error);
         btn.disabled = false;
-        btn.textContent = 'Add goal';
+        btn.textContent = isEdit ? 'Save changes' : 'Add goal';
         let msg = el.querySelector('.goal-form-error');
         if (!msg) {
           msg = document.createElement('p');
@@ -310,16 +320,16 @@ function renderGoal(goalRows, rows) {
         return;
       }
 
-      await awardAchievement('goal_setter', userId);
+      if (!isEdit) await awardAchievement('goal_setter', userId);
       loadDashboard();
-      showToast('Goal set ✓');
+      showToast(isEdit ? 'Goal updated ✓' : 'Goal set ✓');
     });
     const cancelBtn = document.getElementById('cancel-goal-edit-btn');
     if (cancelBtn) cancelBtn.addEventListener('click', () => loadDashboard());
   }
 
   if (goalRows.length === 0) {
-    showAddForm();
+    showGoalForm();
     return;
   }
 
@@ -348,6 +358,7 @@ function renderGoal(goalRows, rows) {
           <p style="font-size:14px; font-weight:600; color:var(--ink); margin:0;">${escapeHtml(goal.name)}</p>
           <p style="font-size:12px; color:var(--muted); margin:2px 0 0;">${fmtMoney(progress)} of ${fmtMoney(goal.target_amount)} · ${sourceLabel}${deadlineLabel}</p>
         </div>
+        <button class="kanban-delete" data-edit-goal="${goal.id}" aria-label="Edit goal" style="flex-shrink:0; font-size:14px;">✏️</button>
         <button class="kanban-delete" data-delete-goal="${goal.id}" aria-label="Delete goal" style="flex-shrink:0;">×</button>
       </div>
     `;
@@ -364,7 +375,13 @@ function renderGoal(goalRows, rows) {
     ${goalRowsHtml}
     <button class="achv-demo-btn" id="add-goal-btn" style="margin-top:4px;">+ Add a goal</button>
   `;
-  document.getElementById('add-goal-btn').addEventListener('click', showAddForm);
+  document.getElementById('add-goal-btn').addEventListener('click', () => showGoalForm());
+  el.querySelectorAll('[data-edit-goal]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const goal = goalRows.find(g => g.id === btn.dataset.editGoal);
+      if (goal) showGoalForm(goal);
+    });
+  });
   el.querySelectorAll('[data-delete-goal]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (!confirm('Delete this goal? This can\'t be undone.')) return;
