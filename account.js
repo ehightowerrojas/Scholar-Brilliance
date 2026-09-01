@@ -78,8 +78,11 @@ document.getElementById('save-profile-btn').addEventListener('click', async () =
 });
 
 async function loadAvatarSection() {
-  const [{ data: species }, { data: profile }, { data: goals }, { data: earnedRows }, { data: achievements }, { data: levels }] =
-    await Promise.all([
+  const grid = document.getElementById('avatar-grid');
+
+  let species, profile, goals, earnedRows, achievements, levels;
+  try {
+    const results = await Promise.all([
       supabaseClient.from('avatar_species').select('*').order('sort_order'),
       supabaseClient.from('profiles').select('avatar_species_id').eq('id', accountUserId).single(),
       supabaseClient.from('goals').select('completed_at').eq('student_id', accountUserId),
@@ -87,6 +90,17 @@ async function loadAvatarSection() {
       supabaseClient.from('achievements').select('id, points'),
       supabaseClient.from('levels').select('*').order('level_number'),
     ]);
+
+    const firstError = results.find(r => r.error)?.error;
+    if (firstError) throw firstError;
+
+    [{ data: species }, { data: profile }, { data: goals }, { data: earnedRows }, { data: achievements }, { data: levels }] = results;
+  } catch (err) {
+    console.error('Could not load avatar section:', err);
+    grid.innerHTML = '';
+    grid.insertAdjacentHTML('beforebegin', '<p class="dash-empty" style="color:#c62828;">Could not load your avatars right now — please refresh the page.</p>');
+    return;
+  }
 
   const completedGoalsCount = (goals || []).filter(g => g.completed_at).length;
   const pointsMap = Object.fromEntries((achievements || []).map(a => [a.id, a.points]));
@@ -96,7 +110,6 @@ async function loadAvatarSection() {
   const tier = evolutionTierFromLevel(currentLevel.level_number);
 
   const equippedId = profile?.avatar_species_id || 'raptor';
-  const grid = document.getElementById('avatar-grid');
 
   grid.innerHTML = (species || []).map(s => {
     const unlocked = completedGoalsCount >= s.unlock_goals_completed;
