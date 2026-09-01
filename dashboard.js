@@ -199,13 +199,21 @@ function renderActivityStreak(activityRows) {
   const headerStreak = document.getElementById('header-streak');
   if (headerStreak) headerStreak.textContent = `${streak} day${streak === 1 ? '' : 's'}`;
 
+  // Fixed Monday-Sunday week, not a rolling 7-day window — find this
+  // week's Monday (getDay() is 0=Sun..6=Sat, so Sunday needs special
+  // handling since it's 6 days after Monday, not -1 days before it).
+  const dayOfWeek = today.getDay();
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const monday = new Date(today);
+  monday.setDate(monday.getDate() - daysSinceMonday);
+
   const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + i);
     days.push(d);
   }
-  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   document.getElementById('streak-content').innerHTML = `
     <div style="display:flex; align-items:baseline; gap:18px; margin-bottom:14px; flex-wrap:wrap;">
@@ -224,7 +232,7 @@ function renderActivityStreak(activityRows) {
             <div style="width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:${active ? 'var(--teal)' : 'var(--card-soft)'}; ${isToday ? 'box-shadow:0 0 0 2px var(--amber);' : ''} transition:background .3s ease;">
               ${active ? '<span style="color:white; font-size:14px; font-weight:700;">✓</span>' : ''}
             </div>
-            <span style="font-size:10.5px; color:var(--muted); font-weight:${isToday ? '700' : '400'};">${dayLabels[day.getDay()]}</span>
+            <span style="font-size:10.5px; color:var(--muted); font-weight:${isToday ? '700' : '400'};">${dayLabels[(day.getDay() + 6) % 7]}</span>
           </div>
         `;
       }).join('')}
