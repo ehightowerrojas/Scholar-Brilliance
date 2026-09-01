@@ -59,6 +59,7 @@
   let lastSwitch = 0;
   const SWITCH_MS = 2400;
   let angle = 0;
+  let currentHighlightPositions = [];
 
   function drawFrame(now) {
     if (!lastSwitch) lastSwitch = now;
@@ -75,6 +76,7 @@
     const cosA = Math.cos(angle), sinA = Math.sin(angle);
     const activeI = highlightIdx[activeSlot];
     let activePx = null, activePy = null, activeVisible = false;
+    currentHighlightPositions = [];
 
     for (let i = 0; i < points.length; i++) {
       const p = points[i];
@@ -92,6 +94,7 @@
         ? `rgba(255,193,7,${0.55 + 0.45 * depth})`
         : `rgba(255,255,255,${0.15 + 0.35 * depth})`;
       ctx.fill();
+      if (isHighlight) currentHighlightPositions.push({ px, py, label: highlightMap[i] });
       if (i === activeI) { activePx = px; activePy = py; activeVisible = z >= -0.15; }
     }
 
@@ -111,6 +114,27 @@
 
     requestAnimationFrame(drawFrame);
   }
+
+  function getEventPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  function findNearbyDot(x, y) {
+    const HIT_RADIUS = 14;
+    return currentHighlightPositions.find(d => Math.hypot(d.px - x, d.py - y) < HIT_RADIUS);
+  }
+
+  canvas.addEventListener('mousemove', (e) => {
+    const pos = getEventPos(e);
+    canvas.style.cursor = findNearbyDot(pos.x, pos.y) ? 'pointer' : 'default';
+  });
+
+  canvas.addEventListener('click', (e) => {
+    const pos = getEventPos(e);
+    const hit = findNearbyDot(pos.x, pos.y);
+    if (hit) window.location.href = 'login.html';
+  });
 
   requestAnimationFrame(drawFrame);
 })();

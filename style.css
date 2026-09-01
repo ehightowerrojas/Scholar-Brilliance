@@ -305,7 +305,7 @@ a:focus-visible, button:focus-visible, input:focus-visible{
    ============================================================ */
 .hero{
   position:relative;
-  background:radial-gradient(120% 140% at 18% -10%, var(--purple-soft) 0%, var(--purple) 45%, var(--purple-deep) 100%);
+  background:radial-gradient(120% 140% at 18% -10%, #6d4fb0 0%, var(--purple) 45%, var(--purple-deep) 100%);
   color:var(--white);
   overflow:hidden;
   margin-top:-76px;

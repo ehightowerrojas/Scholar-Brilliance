@@ -257,7 +257,7 @@ function renderGoal(goalRows, rows) {
 
   function showAddForm() {
     el.innerHTML = `
-      <p style="color:var(--muted); font-size:13.5px; margin-bottom:14px;">Give it a name, a target, and a deadline to work toward.</p>
+      <p style="color:var(--ink); font-size:15px; font-weight:600; margin-bottom:14px;">🎯 Set your first goal and watch every scholarship you win count toward it.</p>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
         <div style="flex:2; min-width:160px;">
           <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">Goal name</label>
