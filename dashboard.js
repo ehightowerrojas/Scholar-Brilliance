@@ -189,6 +189,9 @@ function renderActivityStreak(activityRows) {
 
   checkStreakMilestones(streak, userId);
 
+  const headerStreak = document.getElementById('header-streak');
+  if (headerStreak) headerStreak.textContent = `${streak} day${streak === 1 ? '' : 's'}`;
+
   const days = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
@@ -398,6 +401,9 @@ function renderAchievements(earnedRows, achievements, levels) {
   let current = levels[0] || { level_number: 1, title: 'Scholarship Rookie' };
   for (const lvl of levels) if (totalXP >= lvl.xp_threshold) current = lvl;
 
+  const headerXP = document.getElementById('header-xp');
+  if (headerXP) headerXP.textContent = totalXP.toLocaleString();
+
   const recent = earnedRows.slice(0, 4);
   const earnedIds = new Set(earnedRows.map(r => r.achievement_id));
   const upNext = achievements
@@ -460,5 +466,16 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
     window.location.href = 'login.html';
   }
 });
+
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebar = document.getElementById('app-sidebar');
+if (sidebarToggle && sidebar) {
+  sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('is-open'));
+  document.addEventListener('click', (e) => {
+    if (sidebar.classList.contains('is-open') && !sidebar.contains(e.target) && e.target !== sidebarToggle && !sidebarToggle.contains(e.target)) {
+      sidebar.classList.remove('is-open');
+    }
+  });
+}
 
 loadDashboard();

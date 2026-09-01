@@ -221,6 +221,67 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 }
 .stub-main{ flex:1; display:flex; align-items:center; justify-content:center; padding:40px 24px; text-align:center; }
 
+/* ============================================================
+   APP SHELL — persistent left sidebar + top header, used on every
+   authenticated page instead of the old horizontal .stub-nav.
+   ============================================================ */
+.app-shell{ min-height:100vh; display:flex; }
+.app-sidebar{
+  width:240px; flex-shrink:0;
+  background:var(--card);
+  border-right:1px solid var(--line);
+  display:flex; flex-direction:column;
+  padding:24px 16px;
+  position:sticky; top:0; height:100vh;
+  transition:transform .25s ease;
+}
+.app-sidebar .brand{ padding:0 8px 20px; }
+.sidebar-nav{ display:flex; flex-direction:column; gap:2px; flex:1; }
+.sidebar-link{
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px; border-radius:var(--radius-sm);
+  font-family:var(--font-display); font-weight:600; font-size:14px;
+  color:var(--muted);
+  transition:background .15s ease, color .15s ease;
+}
+.sidebar-link svg{ width:18px; height:18px; flex-shrink:0; }
+.sidebar-link:hover{ background:var(--card-soft); color:var(--ink); }
+.sidebar-link.is-active{ background:var(--card-soft); color:var(--purple); }
+.sidebar-logout{
+  background:none; border:1px solid var(--line-strong); border-radius:var(--radius-sm);
+  padding:10px 12px; font-family:var(--font-display); font-weight:600; font-size:14px;
+  color:var(--muted); cursor:pointer; margin-top:12px;
+  transition:background .15s ease, color .15s ease;
+}
+.sidebar-logout:hover{ background:var(--card-soft); color:var(--ink); }
+
+.app-main-col{ flex:1; display:flex; flex-direction:column; min-width:0; }
+.app-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 32px; background:var(--card); border-bottom:1px solid var(--line);
+  position:sticky; top:0; z-index:10;
+}
+.app-header-crumb{ font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--ink); }
+.app-header-right{ display:flex; align-items:center; gap:18px; }
+.app-header-stat{ display:flex; align-items:center; gap:6px; font-family:var(--font-accent); font-weight:700; font-size:13.5px; color:var(--ink); }
+.sidebar-toggle{ display:none; background:none; border:none; cursor:pointer; padding:4px; }
+.app-main{ flex:1; padding:40px 32px; max-width:1000px; width:100%; }
+
+@media (max-width:900px){
+  .app-sidebar{
+    position:fixed; left:0; z-index:100;
+    transform:translateX(-100%);
+    box-shadow:0 0 0 100vmax rgba(0,0,0,0);
+  }
+  .app-sidebar.is-open{ transform:translateX(0); box-shadow:0 0 0 100vmax rgba(0,0,0,0.4); }
+  .sidebar-toggle{ display:block; }
+  .app-header-crumb{ margin-left:8px; }
+  .app-main{ padding:28px 20px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .app-sidebar{ transition:transform .01s linear; }
+}
+
 .brand-mark{
   width:34px; height:34px;
   border-radius:9px;
