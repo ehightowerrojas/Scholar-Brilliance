@@ -20,7 +20,6 @@ async function init() {
   accountUserId = session.user.id;
   const role = session.user.user_metadata?.role || 'student';
 
-  document.getElementById('back-link').href = role === 'staff' ? 'staff-dashboard.html' : 'dashboard.html';
   document.getElementById('email-display').value = session.user.email;
   document.getElementById('role-display').value = role === 'staff' ? 'School staff' : 'Student';
   document.getElementById('full-name-input').value = session.user.user_metadata?.full_name || '';
