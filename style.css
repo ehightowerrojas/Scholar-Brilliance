@@ -150,7 +150,9 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   position:sticky; top:0; z-index:50;
   background:transparent;
   transition:background .25s ease;
+  pointer-events:none;
 }
+.site-nav .brand, .site-nav .nav-cta{ pointer-events:auto; }
 .site-nav .brand{ transition:background .25s ease, padding .25s ease; }
 .site-nav .nav-cta{ transition:background .25s ease, padding .25s ease, box-shadow .25s ease; }
 .site-nav.is-scrolled .brand{
@@ -680,9 +682,22 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 .final-cta{
   text-align:center;
   padding:100px 0;
+  background:radial-gradient(120% 160% at 50% 0%, var(--purple-soft), var(--purple) 45%, var(--purple-deep) 100%);
+  position:relative;
+  overflow:hidden;
 }
-.final-cta h2{ font-size:clamp(30px, 4vw, 46px); color:var(--ink); }
-.final-cta p{ margin-top:16px; font-family:var(--font-body); color:var(--muted); font-size:17px; }
+.final-cta::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.5) 1.5px, transparent 1.5px);
+  background-size:38px 38px;
+  opacity:0.12;
+  pointer-events:none;
+}
+.final-cta .wrap{ position:relative; z-index:1; }
+.final-cta .eyebrow{ color:var(--amber); }
+.final-cta h2{ font-size:clamp(30px, 4vw, 46px); color:var(--white); }
+.final-cta p{ margin-top:16px; font-family:var(--font-body); color:rgba(255,255,255,0.75); font-size:17px; }
 .final-cta .hero-actions{ justify-content:center; margin-top:30px; }
 
 /* ---------- footer ----------
@@ -873,6 +888,7 @@ footer.site-footer{
 .back-home{
   display:inline-flex; align-items:center; gap:6px;
   font-family:var(--font-body); font-size:13.5px; font-weight:600; color:rgba(255,255,255,0.85);
+  position:relative; top:-16px;
 }
 .back-home:hover{ color:var(--white); }
 
