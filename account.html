@@ -130,6 +130,15 @@
       <p id="privacy-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
     </div>
 
+    <div class="dash-card" style="margin-bottom:20px;" id="settings-card">
+      <h3>Settings</h3>
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px; color:var(--ink);">
+        <input type="checkbox" id="sound-enabled-input" style="width:18px; height:18px; accent-color:var(--purple);">
+        Play sounds for achievements, goals, and wins
+      </label>
+      <p class="dash-empty" style="margin-top:8px;">A short chime plays when you earn a badge, complete a goal, or mark a scholarship as won.</p>
+    </div>
+
     <div class="dash-card" style="margin-bottom:20px;">
       <h3>Change email</h3>
       <p class="dash-empty" style="margin-bottom:14px;">You'll need to confirm the change via a link sent to your new email address.</p>
@@ -162,6 +171,7 @@
 <script src="config.js"></script>
 <script src="supabase-client.js"></script>
 <script src="avatars.js"></script>
+<script src="sound.js"></script>
 <script src="account.js"></script>
 <script src="sidebar-toggle.js"></script>
 <script src="header-stats.js"></script>

@@ -163,7 +163,7 @@ async function addCatalogItemToTracker(catalogId, btn, itemOverride) {
     amount: item.amount,
     deadline: item.deadline,
     website: item.website,
-    status: 'saved',
+    status: 'backlog',
   });
 
   if (error) {
@@ -233,7 +233,7 @@ document.getElementById('extract-btn').addEventListener('click', async () => {
         title: data.title || 'Untitled scholarship',
         amount: data.amount || null,
         website: data.source,
-        status: 'saved',
+        status: 'backlog',
       });
       if (error) {
         console.error(error);

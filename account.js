@@ -169,6 +169,12 @@ document.getElementById('leaderboard-visible-input').addEventListener('change', 
   showMsg('privacy-msg', error ? 'Could not save — try again.' : 'Saved ✓', Boolean(error));
 });
 
+document.getElementById('sound-enabled-input').checked = !ScholarSound.isMuted();
+document.getElementById('sound-enabled-input').addEventListener('change', (e) => {
+  ScholarSound.setMuted(!e.target.checked);
+  if (e.target.checked) ScholarSound.achievement(); // quick preview so the toggle feels responsive
+});
+
 document.getElementById('change-email-btn').addEventListener('click', async () => {
   const newEmail = document.getElementById('new-email-input').value.trim();
   if (!newEmail) return;

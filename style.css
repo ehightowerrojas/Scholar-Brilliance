@@ -451,10 +451,21 @@ a:focus-visible, button:focus-visible, input:focus-visible{
    STAT / PROBLEM BAND — Charcoal for "analytics contrast" per kit
    ============================================================ */
 .stat-band{
-  background:var(--ink);
+  background:linear-gradient(120deg, var(--purple-deep) 0%, var(--ink) 55%, var(--ink) 100%);
   color:var(--white);
   padding:56px 0;
+  position:relative;
+  overflow:hidden;
 }
+.stat-band::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,193,7,0.35) 1.5px, transparent 1.5px);
+  background-size:34px 34px;
+  opacity:0.25;
+  pointer-events:none;
+}
+.stat-band .wrap{ position:relative; z-index:1; }
 .stat-grid{
   display:grid;
   grid-template-columns:repeat(3, 1fr);
@@ -722,7 +733,7 @@ footer.site-footer{
 }
 .login-brand > *{ position:relative; z-index:2; }
 .login-brand .brand{ color:var(--white); }
-.login-quote{ max-width:380px; margin-top:14px; }
+.login-quote{ max-width:380px; margin-top:14px; margin-left:auto; margin-right:auto; }
 .login-quote .eyebrow{ color:var(--amber); }
 .login-quote h1{
   font-size:clamp(28px,3vw,38px);
@@ -956,10 +967,11 @@ footer.site-footer{
 }
 
 .kanban-board{
-  display:grid;
-  grid-template-columns:repeat(4, 1fr);
+  display:flex;
   gap:16px;
   align-items:start;
+  overflow-x:auto;
+  padding-bottom:8px;
 }
 .kanban-col{
   background:var(--card-soft);
@@ -967,6 +979,8 @@ footer.site-footer{
   border-radius:var(--radius-md);
   padding:16px;
   min-height:120px;
+  width:270px;
+  flex-shrink:0;
 }
 .kanban-col-head{
   display:flex; justify-content:space-between; align-items:center;
@@ -983,11 +997,30 @@ footer.site-footer{
 .kanban-card{
   background:var(--card);
   border:1px solid var(--line);
+  border-left:4px solid transparent;
   border-radius:var(--radius-sm);
   padding:14px;
   cursor:grab;
   box-shadow:0 2px 8px -4px rgba(55,71,79,0.18);
   transition:opacity .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.kanban-card.urgency-overdue{ border-left-color:#c62828; }
+.kanban-card.urgency-soon{ border-left-color:#e53935; }
+.kanban-card.urgency-month{ border-left-color:#fb8c00; }
+.kanban-card.urgency-later{ border-left-color:#fdd835; }
+.funding-tier-badge{
+  display:inline-block; padding:2px 9px; border-radius:999px;
+  font-size:10px; font-weight:700; color:var(--white);
+  font-family:var(--font-display); text-transform:uppercase; letter-spacing:0.03em;
+}
+.funding-tier-badge.tier-high{ background:#43a047; }
+.funding-tier-badge.tier-mid{ background:#1e88e5; }
+.kanban-card-prompt{
+  font-size:12px; font-style:italic; color:var(--muted);
+  margin:8px 0; line-height:1.4;
+}
+.kanban-rec-letters{
+  display:block; font-size:11.5px; color:var(--muted); margin-bottom:8px;
 }
 .kanban-card:hover{ box-shadow:var(--shadow-soft); }
 .kanban-card.dragging{ opacity:.4; }
@@ -1089,6 +1122,33 @@ footer.site-footer{
   .dash-toast{ transition:opacity .01s linear; }
 }
 
+.avatar-companion{
+  position:fixed;
+  bottom:24px; right:24px;
+  width:64px; height:64px;
+  z-index:50;
+  pointer-events:none;
+  animation:companion-idle 2.6s ease-in-out infinite;
+}
+.avatar-companion.is-celebrating{
+  animation:companion-celebrate 1.4s ease-in-out;
+}
+@keyframes companion-idle{
+  0%, 100%{ transform:translateY(0) rotate(-3deg); }
+  50%{ transform:translateY(-8px) rotate(3deg); }
+}
+@keyframes companion-celebrate{
+  0%{ transform:scale(1) rotate(0deg); }
+  20%{ transform:scale(1.3) rotate(-12deg); }
+  40%{ transform:scale(1.2) rotate(12deg); }
+  60%{ transform:scale(1.35) rotate(-8deg); }
+  80%{ transform:scale(1.15) rotate(8deg); }
+  100%{ transform:scale(1) rotate(0deg); }
+}
+@media (max-width:640px){
+  .avatar-companion{ width:48px; height:48px; bottom:16px; right:16px; }
+}
+
 .goal-chip-row{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
 .goal-chip{
   flex:1; min-width:90px; background:var(--card-soft); border-radius:var(--radius-sm);
@@ -1141,6 +1201,7 @@ footer.site-footer{
   font-family:var(--font-accent); font-size:11.5px; color:var(--muted);
 }
 .catalog-card-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+.catalog-card-actions .achv-demo-btn{ width:auto; margin-top:0; padding:8px 16px; }
 
 .resource-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:24px; }
 .resource-item{ display:flex; flex-direction:column; gap:3px; }

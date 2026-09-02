@@ -70,6 +70,16 @@
           <input type="url" id="s-website" placeholder="https://...">
         </div>
         <div class="field" style="grid-column:1 / -1;">
+          <label for="s-essay-prompt">Essay prompt (optional)</label>
+          <textarea id="s-essay-prompt" rows="2" placeholder="Paste the actual essay question here, if there is one"></textarea>
+          <button type="button" class="btn btn-line" id="import-captured-btn" style="margin-top:8px; padding:6px 14px; font-size:12.5px;">📋 Import from extension</button>
+          <div id="captured-picker" style="display:none; margin-top:8px;"></div>
+        </div>
+        <div class="field">
+          <label for="s-rec-letters">Rec. letters needed</label>
+          <input type="number" id="s-rec-letters" placeholder="0" min="0" max="10" step="1">
+        </div>
+        <div class="field" style="grid-column:1 / -1;">
           <label for="s-goal">Which goal is this for? (optional)</label>
           <select id="s-goal">
             <option value="">No specific goal</option>
@@ -83,13 +93,21 @@
     </form>
 
     <div class="kanban-board">
-      <div class="kanban-col" data-status="saved">
-        <div class="kanban-col-head"><span>Saved / Researching</span><span class="kanban-count" id="count-saved">0</span></div>
-        <div class="kanban-drop" id="col-saved"></div>
+      <div class="kanban-col" data-status="backlog">
+        <div class="kanban-col-head"><span>Backlog</span><span class="kanban-count" id="count-backlog">0</span></div>
+        <div class="kanban-drop" id="col-backlog"></div>
       </div>
-      <div class="kanban-col" data-status="working">
-        <div class="kanban-col-head"><span>Working On</span><span class="kanban-count" id="count-working">0</span></div>
-        <div class="kanban-drop" id="col-working"></div>
+      <div class="kanban-col" data-status="researching">
+        <div class="kanban-col-head"><span>Researching & Eligibility</span><span class="kanban-count" id="count-researching">0</span></div>
+        <div class="kanban-drop" id="col-researching"></div>
+      </div>
+      <div class="kanban-col" data-status="writing">
+        <div class="kanban-col-head"><span>Writing & Drafting</span><span class="kanban-count" id="count-writing">0</span></div>
+        <div class="kanban-drop" id="col-writing"></div>
+      </div>
+      <div class="kanban-col" data-status="in_review">
+        <div class="kanban-col-head"><span>In Review</span><span class="kanban-count" id="count-in_review">0</span></div>
+        <div class="kanban-drop" id="col-in_review"></div>
       </div>
       <div class="kanban-col" data-status="submitted">
         <div class="kanban-col-head"><span>Submitted</span><span class="kanban-count" id="count-submitted">0</span></div>
@@ -102,12 +120,17 @@
     </div>
 
   </main>
+
+  <div id="avatar-companion" class="avatar-companion" aria-hidden="true"></div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="utils.js"></script>
 <script src="supabase-client.js"></script>
+<script src="sound.js"></script>
+<script src="avatars.js"></script>
+<script src="avatar-companion.js"></script>
 <script src="achievements-award.js"></script>
 <script src="formatters.js"></script>
 <script src="tracker.js"></script>

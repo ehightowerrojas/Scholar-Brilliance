@@ -24,14 +24,19 @@ function renderStudents() {
     <div class="catalog-card">
       <div class="catalog-card-top">
         <h4>${escapeHtml(s.full_name) || '(No name set)'}</h4>
-        <span class="dash-empty" style="font-size:11.5px;">Joined ${new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+        <div style="text-align:right;">
+          <span class="dash-empty" style="font-size:11.5px; display:block;">Joined ${new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          ${s.streak > 0
+            ? `<span style="font-size:11.5px; font-weight:700; color:var(--teal-deep);">🔥 ${s.streak} day${s.streak === 1 ? '' : 's'} active</span>`
+            : `<span style="font-size:11.5px; font-weight:700; color:#c62828;">No recent activity</span>`}
+        </div>
       </div>
       ${s.interests ? `<p class="catalog-desc"><strong>Interests:</strong> ${escapeHtml(s.interests)}</p>` : `<p class="dash-empty" style="margin-top:6px;">No interests set yet.</p>`}
       <div class="stat-grid-mini stat-grid-mini-4">
-        <div><strong>${s.stats.saved}</strong><span>Saved</span></div>
-        <div><strong>${s.stats.working}</strong><span>Working</span></div>
+        <div><strong>${s.stats.inProgress}</strong><span>In Progress</span></div>
         <div><strong>${s.stats.submitted}</strong><span>Submitted</span></div>
         <div><strong>${s.stats.won}</strong><span>Won</span></div>
+        <div><strong>${s.stats.total}</strong><span>Total</span></div>
       </div>
 
       <div class="dash-empty" style="margin-top:12px;">
@@ -147,16 +152,35 @@ async function loadStudents() {
   let scholarships = [];
   let recommendations = [];
   let goals = [];
+  let activityRows = [];
 
   if (studentIds.length > 0) {
-    const [{ data: schData, error: schErr }, { data: recData, error: recErr }, { data: goalData, error: goalErr }] = await Promise.all([
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+    const [{ data: schData, error: schErr }, { data: recData, error: recErr }, { data: goalData, error: goalErr }, { data: activityData, error: activityErr }] = await Promise.all([
       supabaseClient.from('scholarships').select('user_id, status, outcome').in('user_id', studentIds),
       supabaseClient.from('scholarship_recommendations').select('student_id, scholarships_catalog(title)').in('student_id', studentIds),
       supabaseClient.from('goals').select('student_id, name, target_amount, target_date, source, completed_at').in('student_id', studentIds),
+      supabaseClient.from('daily_activity').select('user_id, activity_date').in('user_id', studentIds).gte('activity_date', sixtyDaysAgo.toISOString().slice(0, 10)),
     ]);
     if (schErr) console.error(schErr); else scholarships = schData;
     if (recErr) console.error(recErr); else recommendations = recData;
     if (goalErr) console.error(goalErr); else goals = goalData;
+    if (activityErr) console.error(activityErr); else activityRows = activityData;
+  }
+
+  function computeStreak(studentId) {
+    const dates = new Set(activityRows.filter(r => r.user_id === studentId).map(r => r.activity_date));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let streak = 0;
+    const cursor = new Date(today);
+    while (dates.has(cursor.toISOString().slice(0, 10))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
   }
 
   allStudents = students.map(s => {
@@ -166,9 +190,9 @@ async function loadStudents() {
       ...s,
       recommendations: recs,
       goals: goals.filter(g => g.student_id === s.id),
+      streak: computeStreak(s.id),
       stats: {
-        saved: own.filter(r => r.status === 'saved').length,
-        working: own.filter(r => r.status === 'working').length,
+        inProgress: own.filter(r => ['backlog', 'researching', 'writing', 'in_review'].includes(r.status)).length,
         submitted: own.filter(r => r.status === 'submitted' && !r.outcome).length,
         won: own.filter(r => r.outcome === 'won' || r.status === 'funds_received').length,
         total: own.length,

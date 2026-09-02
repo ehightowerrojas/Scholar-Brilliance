@@ -2,7 +2,17 @@
 // Dashboard logic
 // ------------------------------------------------------------------
 
+// Set synchronously (before any async work) so avatar-companion.js
+// can reliably know this page will provide its avatar data directly,
+// rather than guessing based on timing.
+window.__sbHasDashboardAvatarData = true;
+
 let userId = null;
+
+const PRE_SUBMISSION_STATUSES = ['backlog', 'researching', 'writing', 'in_review'];
+function isInProgress(scholarship) {
+  return PRE_SUBMISSION_STATUSES.includes(scholarship.status);
+}
 
 function showToast(message) {
   let toast = document.getElementById('dash-toast');
@@ -85,6 +95,13 @@ function renderWelcomeAvatar(profile, earnedRows, achievements, levels) {
 
   const levelBadge = document.getElementById('welcome-level-badge');
   if (levelBadge) levelBadge.textContent = `Level ${currentLevel.level_number}: ${currentLevel.title}`;
+
+  // Dashboard already fetched everything the avatar companion widget
+  // needs — expose it so avatar-companion.js can reuse it instead of
+  // independently re-fetching profile/achievements/levels a second
+  // time on the same page load.
+  window.__sbAvatarData = { speciesId: profile?.avatar_species_id || 'raptor', tier };
+  if (typeof renderCompanionFromData === 'function') renderCompanionFromData();
 }
 
 function renderWelcomeSubtext(rows) {
@@ -107,7 +124,7 @@ function renderWelcomeSubtext(rows) {
 function renderNextStep(goalRows, rows) {
   const goal = goalRows.length > 0;
   const total = rows.length;
-  const savedOrWorking = rows.filter(s => s.status === 'saved' || s.status === 'working').length;
+  const savedOrWorking = rows.filter(isInProgress).length;
   const inFlight = rows.filter(s => s.status === 'submitted' || s.status === 'funds_received').length;
   const won = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').length;
 
@@ -267,6 +284,7 @@ function renderGoal(goalRows, rows) {
     if (!goal.completed_at && goalProgress(goal) >= goal.target_amount) {
       await supabaseClient.from('goals').update({ completed_at: new Date().toISOString() }).eq('id', goal.id);
       await awardAchievement('goal_crusher', userId);
+      if (typeof celebrateCompanion === 'function') celebrateCompanion();
     }
   });
 
@@ -356,7 +374,10 @@ function renderGoal(goalRows, rows) {
         </div>
         <div style="flex:1; min-width:0;">
           <p style="font-size:14px; font-weight:600; color:var(--ink); margin:0;">${escapeHtml(goal.name)}</p>
-          <p style="font-size:12px; color:var(--muted); margin:2px 0 0;">${fmtMoney(progress)} of ${fmtMoney(goal.target_amount)} · ${sourceLabel}${deadlineLabel}</p>
+          <p style="font-size:12px; color:var(--muted); margin:2px 0 6px;">${fmtMoney(progress)} of ${fmtMoney(goal.target_amount)} · ${sourceLabel}${deadlineLabel}</p>
+          <div style="height:6px; border-radius:999px; background:var(--card-soft); overflow:hidden;">
+            <div style="width:${pct}%; height:100%; background:${isDone ? 'var(--teal)' : 'var(--amber)'}; border-radius:999px; transition:width .5s ease;"></div>
+          </div>
         </div>
         <button class="kanban-delete" data-edit-goal="${goal.id}" aria-label="Edit goal" style="flex-shrink:0; font-size:14px;">✏️</button>
         <button class="kanban-delete" data-delete-goal="${goal.id}" aria-label="Delete goal" style="flex-shrink:0;">×</button>
@@ -393,7 +414,7 @@ function renderGoal(goalRows, rows) {
 
 // ---- Compact stats strip ----
 function renderStats(rows) {
-  const inProgress = rows.filter(s => s.status === 'saved' || s.status === 'working').length;
+  const inProgress = rows.filter(isInProgress).length;
   const submitted = rows.filter(s => s.status === 'submitted' && !s.outcome).length;
   const won = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').length;
 
@@ -408,7 +429,7 @@ function renderStats(rows) {
 function renderDeadlines(rows) {
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = rows
-    .filter(s => (s.status === 'saved' || s.status === 'working') && s.deadline && s.deadline >= today)
+    .filter(s => isInProgress(s) && s.deadline && s.deadline >= today)
     .sort((a, b) => a.deadline.localeCompare(b.deadline))
     .slice(0, 4);
 

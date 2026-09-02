@@ -195,7 +195,7 @@ create table if not exists public.scholarships (
   amount numeric,
   deadline date,
   website text,
-  status text not null default 'saved' check (status in ('saved','working','submitted','funds_received')),
+  status text not null default 'backlog' check (status in ('backlog','researching','writing','in_review','submitted','funds_received')),
   outcome text check (outcome in ('won','not_selected')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -209,13 +209,30 @@ begin
 end;
 $$ language plpgsql;
 
+-- Migrate any pre-existing rows from the old 4-status flow to the
+-- new 6-column one, BEFORE tightening the constraint below, so no
+-- row is ever briefly invalid.
+update public.scholarships set status = 'backlog' where status = 'saved';
+update public.scholarships set status = 'writing' where status = 'working';
+
 -- Explicit standalone ALTER, not just relying on the CHECK inside
 -- CREATE TABLE above — that inline version is silently skipped if
 -- this table already existed from an earlier partial migration
 -- (exactly what caused the achievements_category_check error).
 alter table public.scholarships drop constraint if exists scholarships_status_check;
 alter table public.scholarships add constraint scholarships_status_check
-  check (status in ('saved','working','submitted','funds_received'));
+  check (status in ('backlog','researching','writing','in_review','submitted','funds_received'));
+
+-- New standardized card fields.
+alter table public.scholarships add column if not exists essay_prompt text;
+alter table public.scholarships drop constraint if exists scholarships_essay_prompt_check;
+alter table public.scholarships add constraint scholarships_essay_prompt_check
+  check (essay_prompt is null or length(essay_prompt) <= 3000);
+
+alter table public.scholarships add column if not exists rec_letters_needed integer;
+alter table public.scholarships drop constraint if exists scholarships_rec_letters_check;
+alter table public.scholarships add constraint scholarships_rec_letters_check
+  check (rec_letters_needed is null or (rec_letters_needed >= 0 and rec_letters_needed <= 10));
 
 drop trigger if exists set_scholarships_updated_at on public.scholarships;
 create trigger set_scholarships_updated_at
@@ -342,14 +359,29 @@ on conflict (id) do nothing;
 
 insert into public.levels (level_number, title, xp_threshold) values
   (1, 'Scholarship Rookie',      0),
-  (2, 'Scholarship Seeker',      150),
-  (3, 'Scholarship Scout',       400),
-  (4, 'Scholarship Explorer',    800),
-  (5, 'Scholarship Tactician',   1400),
-  (6, 'Scholarship Strategist',  2100),
-  (7, 'Scholarship Master',      4000),
-  (8, 'Scholarship Legend',      7000)
+  (2, 'Scholarship Seeker',      100),
+  (3, 'Scholarship Scout',       250),
+  (4, 'Scholarship Explorer',    450),
+  (5, 'Scholarship Tactician',   700),
+  (6, 'Scholarship Strategist',  950),
+  (7, 'Scholarship Master',      1200),
+  (8, 'Scholarship Legend',      1430)
 on conflict (level_number) do nothing;
+
+-- Explicit UPDATE, same reasoning as the other safety-net ALTERs in
+-- this file — the insert above only sets values for brand-new rows.
+-- The original thresholds here made Levels 6-8 mathematically
+-- unreachable (max achievable XP from every achievement combined is
+-- 1,430), so this guarantees the fix applies even to a database that
+-- already seeded the old, broken values.
+update public.levels set xp_threshold = 0    where level_number = 1;
+update public.levels set xp_threshold = 100  where level_number = 2;
+update public.levels set xp_threshold = 250  where level_number = 3;
+update public.levels set xp_threshold = 450  where level_number = 4;
+update public.levels set xp_threshold = 700  where level_number = 5;
+update public.levels set xp_threshold = 950  where level_number = 6;
+update public.levels set xp_threshold = 1200 where level_number = 7;
+update public.levels set xp_threshold = 1430 where level_number = 8;
 
 
 -- ============================================================
@@ -709,6 +741,10 @@ create policy "Staff can create goals for their org's students"
 
 alter table public.scholarships add column if not exists goal_id uuid references public.goals(id) on delete set null;
 
+alter table public.goals drop constraint if exists goals_target_date_check;
+alter table public.goals add constraint goals_target_date_check
+  check (target_date is null or (target_date >= '2020-01-01' and target_date <= '2050-12-31'));
+
 -- Migrate any pre-existing single financial_goal into a real goal
 -- row. Guarded to only run if that legacy column actually exists —
 -- on a fresh database it never will, so this safely no-ops.
@@ -756,6 +792,27 @@ drop policy if exists "Users can log their own activity" on public.daily_activit
 create policy "Users can log their own activity"
   on public.daily_activity for insert to authenticated
   with check (user_id = auth.uid());
+
+-- Table-level CHECK (enforced regardless of role, unlike the RLS
+-- policy above which only restricts who can insert). Without this, a
+-- technically savvy student could bypass the UI and directly insert
+-- arbitrary backdated rows via the API, instantly fabricating a
+-- 30-day streak. Limits to today or the last 7 days, never future.
+alter table public.daily_activity drop constraint if exists daily_activity_date_range_check;
+alter table public.daily_activity add constraint daily_activity_date_range_check
+  check (activity_date <= current_date and activity_date >= current_date - interval '7 days');
+
+drop policy if exists "Staff can view activity for their org's students" on public.daily_activity;
+create policy "Staff can view activity for their org's students"
+  on public.daily_activity for select to authenticated
+  using (
+    public.current_staff_org_id() is not null
+    and exists (
+      select 1 from public.profiles student
+      where student.id = daily_activity.user_id
+        and student.org_id = public.current_staff_org_id()
+    )
+  );
 
 insert into public.achievements (id, category, title, description, points, icon, sort_order) values
   ('streak_3',  'streak_milestones', 'On a Roll',      'Visit 3 days in a row',  30,  'flame', 1),

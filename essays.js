@@ -204,6 +204,9 @@ form.addEventListener('submit', async (e) => {
     await awardAchievement('document_ready', essayUserId);
   }
 
+  celebrateCompanion();
+  if (typeof ScholarSound !== 'undefined') ScholarSound.achievement();
+
   form.style.display = 'none';
   form.reset();
   init();

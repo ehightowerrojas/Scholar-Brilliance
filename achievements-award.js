@@ -12,10 +12,19 @@ async function awardAchievement(achievementId, userId) {
       if (!session) return;
       uid = session.user.id;
     }
-    await supabaseClient.from('user_achievements').upsert(
+    // .select() lets us tell a genuinely new award apart from a
+    // re-check of one already earned — ignoreDuplicates means an
+    // already-existing row comes back empty, not re-inserted. Sound
+    // should only play the first time, not every dashboard load.
+    const { data } = await supabaseClient.from('user_achievements').upsert(
       { user_id: uid, achievement_id: achievementId },
       { onConflict: 'user_id,achievement_id', ignoreDuplicates: true }
-    );
+    ).select();
+
+    if (data && data.length > 0 && typeof ScholarSound !== 'undefined') {
+      if (achievementId === 'goal_crusher') ScholarSound.goalComplete();
+      else ScholarSound.achievement();
+    }
   } catch (err) {
     console.error('awardAchievement failed:', err);
   }
