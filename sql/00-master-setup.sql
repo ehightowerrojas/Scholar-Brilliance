@@ -212,13 +212,21 @@ $$ language plpgsql;
 -- Migrate any pre-existing rows from the old 4-status flow to the
 -- new 6-column one, BEFORE tightening the constraint below, so no
 -- row is ever briefly invalid.
+-- Widen the constraint FIRST so it accepts both the old and new
+-- values at once — only then is it safe to migrate existing rows.
+-- Getting this order backwards (migrate first, tighten after) is
+-- exactly what caused a real failure: the old constraint doesn't
+-- allow 'backlog' yet, so updating a row to that value while the old
+-- constraint is still active fails immediately.
+alter table public.scholarships drop constraint if exists scholarships_status_check;
+alter table public.scholarships add constraint scholarships_status_check
+  check (status in ('saved','working','backlog','researching','writing','in_review','submitted','funds_received'));
+
 update public.scholarships set status = 'backlog' where status = 'saved';
 update public.scholarships set status = 'writing' where status = 'working';
 
--- Explicit standalone ALTER, not just relying on the CHECK inside
--- CREATE TABLE above — that inline version is silently skipped if
--- this table already existed from an earlier partial migration
--- (exactly what caused the achievements_category_check error).
+-- Now that every row has a valid new-style value, tighten the
+-- constraint to the final 6-status list, dropping the old ones.
 alter table public.scholarships drop constraint if exists scholarships_status_check;
 alter table public.scholarships add constraint scholarships_status_check
   check (status in ('backlog','researching','writing','in_review','submitted','funds_received'));

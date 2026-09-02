@@ -9,11 +9,20 @@
 -- Received. Also adds two new card fields (essay_prompt,
 -- rec_letters_needed) for standardized card templates.
 
--- Migrate existing data BEFORE changing the constraint, so no row
--- ever briefly violates it.
+-- Widen the constraint FIRST so it accepts both the old and new
+-- values at once — only then is it safe to migrate existing rows.
+-- Getting this order backwards (migrate first, tighten after) fails
+-- immediately: the old constraint doesn't allow 'backlog' yet, so
+-- updating a row to that value while it's still active gets rejected.
+alter table public.scholarships drop constraint if exists scholarships_status_check;
+alter table public.scholarships add constraint scholarships_status_check
+  check (status in ('saved','working','backlog','researching','writing','in_review','submitted','funds_received'));
+
 update public.scholarships set status = 'backlog' where status = 'saved';
 update public.scholarships set status = 'writing' where status = 'working';
 
+-- Now that every row has a valid new-style value, tighten to the
+-- final 6-status list, dropping the old ones.
 alter table public.scholarships drop constraint if exists scholarships_status_check;
 alter table public.scholarships add constraint scholarships_status_check
   check (status in ('backlog','researching','writing','in_review','submitted','funds_received'));
