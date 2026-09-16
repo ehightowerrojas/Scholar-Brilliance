@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------
 
 let currentUserId = null;
+let currentScholarships = [];
 
 function outcomeBadge(outcome) {
   if (outcome === 'won') return '<span class="kanban-badge won">Won</span>';
@@ -38,13 +39,15 @@ function renderCard(row) {
       <button class="achv-demo-btn" data-outcome-btn="not_selected" data-id="${row.id}">Not selected</button>
     </div>` : '';
 
-  const fundsControl = (isSubmitted && row.outcome === 'won') ? `
+  const fundsControl = row.status === 'won_awaiting_funds' ? `
     <div class="kanban-card-actions">
       <button class="achv-demo-btn" data-confirm-funds="${row.id}">✓ Confirm funds received</button>
     </div>` : '';
 
   const fundsBadge = row.status === 'funds_received'
     ? '<span class="kanban-badge funds-received">Funds Received</span>'
+    : row.status === 'won_awaiting_funds'
+    ? '<span class="kanban-badge won">Won! Awaiting funds</span>'
     : outcomeBadge(row.outcome);
 
   const essayPromptHtml = row.essay_prompt
@@ -70,7 +73,7 @@ function renderCard(row) {
       ${recLettersHtml}
       <div>
         ${safeLink(row.website, 'Website ↗', 'target="_blank" rel="noopener" class="kanban-link"')}
-        <a href="essays.html?scholarship=${row.id}" class="kanban-link" style="margin-left:12px;">Essay →</a>
+        <a href="essays.html?scholarship=${row.id}" class="kanban-link" style="margin-left:12px;">View essays →</a>
         <a href="application.html?scholarship=${row.id}" class="kanban-link" style="margin-left:12px;">Build Application →</a>
       </div>
       ${fundsBadge}
@@ -120,7 +123,9 @@ async function loadBoard() {
     return;
   }
 
-  ['backlog', 'researching', 'writing', 'in_review', 'submitted', 'funds_received'].forEach(status => {
+  currentScholarships = data;
+
+  ['backlog', 'researching', 'writing', 'in_review', 'submitted', 'won_awaiting_funds', 'funds_received'].forEach(status => {
     const rows = data
       .filter(r => r.status === status)
       .sort((a, b) => {
@@ -133,7 +138,7 @@ async function loadBoard() {
     document.getElementById(`count-${status}`).textContent = rows.length;
   });
 
-  const submittedCount = data.filter(r => r.status === 'submitted' || r.status === 'funds_received').length;
+  const submittedCount = data.filter(r => r.status === 'submitted' || r.status === 'won_awaiting_funds' || r.status === 'funds_received').length;
   await checkApplicationMilestones(submittedCount, currentUserId);
 
   wireCardEvents();
@@ -146,6 +151,11 @@ function wireCardEvents() {
       card.classList.add('dragging');
     });
     card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button, a')) return; // let buttons/links do their own thing
+      openCardModal(card.dataset.id);
+    });
   });
 
   document.querySelectorAll('[data-delete]').forEach(btn => {
@@ -162,7 +172,8 @@ function wireCardEvents() {
       e.stopPropagation();
       const id = btn.dataset.id;
       const outcome = btn.dataset.outcomeBtn;
-      await supabaseClient.from('scholarships').update({ outcome }).eq('id', id).eq('user_id', currentUserId);
+      const update = outcome === 'won' ? { outcome, status: 'won_awaiting_funds' } : { outcome };
+      await supabaseClient.from('scholarships').update(update).eq('id', id).eq('user_id', currentUserId);
       if (outcome === 'won' && typeof ScholarSound !== 'undefined') ScholarSound.won();
       if (outcome === 'won' && typeof celebrateCompanion === 'function') celebrateCompanion();
       loadBoard();
@@ -193,8 +204,8 @@ function wireColumnDrops() {
       const newStatus = col.closest('.kanban-col').dataset.status;
 
       const update = { status: newStatus };
-      if (newStatus === 'funds_received') {
-        update.outcome = 'won'; // only won scholarships end up here
+      if (newStatus === 'funds_received' || newStatus === 'won_awaiting_funds') {
+        update.outcome = 'won'; // only won scholarships end up in either of these
       } else if (newStatus !== 'submitted') {
         update.outcome = null; // moving back to an earlier stage clears any outcome
       }
@@ -271,7 +282,7 @@ document.getElementById('import-captured-btn').addEventListener('click', () => {
     const pages = event.data.capturedPages || [];
     if (pages.length === 0) {
       picker.style.display = 'block';
-      picker.innerHTML = `<p class="dash-empty" style="font-size:12px;">No captured questions yet — open a scholarship's application page, click the Scholar Brilliance Autofill extension icon, then "Capture this page's questions."</p>`;
+      picker.innerHTML = `<p class="dash-empty" style="font-size:12px;">No captured questions yet. Open a scholarship's application page, click the Scholar Brilliance Autofill extension icon, then "Capture this page's questions."</p>`;
       return;
     }
 
@@ -306,7 +317,7 @@ document.getElementById('import-captured-btn').addEventListener('click', () => {
       btn.disabled = false;
       btn.textContent = '📋 Import from extension';
       picker.style.display = 'block';
-      picker.innerHTML = `<p class="dash-empty" style="font-size:12px; color:#c62828;">No extension detected — install the Scholar Brilliance Autofill extension first.</p>`;
+      picker.innerHTML = `<p class="dash-empty" style="font-size:12px; color:#c62828;">No extension detected. Install the Scholar Brilliance Autofill extension first.</p>`;
     }
   }, 800);
 });
@@ -323,5 +334,120 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   }
 });
 
+document.getElementById('tracker-tips-btn').addEventListener('click', () => {
+  const panel = document.getElementById('tracker-tips-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+
 wireColumnDrops();
 loadBoard();
+
+// ------------------------------------------------------------------
+// Card detail / edit modal
+// ------------------------------------------------------------------
+let cachedApplicantInfo = null;
+
+async function openCardModal(id) {
+  const row = currentScholarships.find(r => r.id === id);
+  if (!row) return;
+
+  document.getElementById('cm-title').value = row.title || '';
+  document.getElementById('cm-status').value = row.status;
+  document.getElementById('cm-amount').value = row.amount ?? '';
+  document.getElementById('cm-deadline').value = row.deadline || '';
+  document.getElementById('cm-website').value = row.website || '';
+  document.getElementById('cm-essay-prompt').value = row.essay_prompt || '';
+  document.getElementById('cm-rec-letters').value = row.rec_letters_needed ?? '';
+  document.getElementById('cm-msg').style.display = 'none';
+  document.getElementById('cm-save-btn').dataset.id = id;
+
+  document.getElementById('card-modal-backdrop').style.display = 'flex';
+  renderApplicantInfoReference();
+}
+
+async function renderApplicantInfoReference() {
+  const el = document.getElementById('cm-applicant-info');
+  if (cachedApplicantInfo) {
+    el.innerHTML = applicantInfoHtml(cachedApplicantInfo);
+    return;
+  }
+  const { data: profile, error } = await supabaseClient
+    .from('profiles')
+    .select('phone, address_line1, city, state, zip_code, school_name, graduation_year, gpa, major')
+    .eq('id', currentUserId)
+    .single();
+
+  if (error) {
+    el.innerHTML = `<p class="dash-empty">Could not load your applicant info.</p>`;
+    return;
+  }
+  cachedApplicantInfo = profile;
+  el.innerHTML = applicantInfoHtml(profile);
+}
+
+function applicantInfoHtml(profile) {
+  const rows = [
+    ['Phone', profile.phone],
+    ['Address', profile.address_line1],
+    ['City', profile.city],
+    ['State', profile.state],
+    ['ZIP', profile.zip_code],
+    ['School', profile.school_name],
+    ['Graduation year', profile.graduation_year],
+    ['GPA', profile.gpa],
+    ['Major', profile.major],
+  ];
+  const filled = rows.filter(([, v]) => v);
+  if (filled.length === 0) {
+    return `<p class="dash-empty">Nothing filled in yet. <a href="/account.html" style="color:var(--purple); font-weight:600;">Add your applicant info on Account Settings →</a></p>`;
+  }
+  return `<div class="applicant-info-grid">${filled.map(([label, v]) => `<span><strong>${escapeHtml(label)}:</strong> ${escapeHtml(String(v))}</span>`).join('')}</div>`;
+}
+
+function closeCardModal() {
+  document.getElementById('card-modal-backdrop').style.display = 'none';
+}
+
+document.getElementById('card-modal-close').addEventListener('click', closeCardModal);
+document.getElementById('cm-cancel-btn').addEventListener('click', closeCardModal);
+document.getElementById('card-modal-backdrop').addEventListener('click', (e) => {
+  if (e.target.id === 'card-modal-backdrop') closeCardModal();
+});
+
+document.getElementById('cm-save-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('cm-save-btn');
+  const id = btn.dataset.id;
+  const title = document.getElementById('cm-title').value.trim();
+  if (!title) return;
+
+  btn.disabled = true;
+  const newStatus = document.getElementById('cm-status').value;
+  const update = {
+    title,
+    status: newStatus,
+    amount: document.getElementById('cm-amount').value || null,
+    deadline: document.getElementById('cm-deadline').value || null,
+    website: document.getElementById('cm-website').value.trim() || null,
+    essay_prompt: document.getElementById('cm-essay-prompt').value.trim() || null,
+    rec_letters_needed: document.getElementById('cm-rec-letters').value || null,
+  };
+  // Same outcome-clearing rule used by drag-and-drop: won-related
+  // statuses imply outcome, earlier stages clear it.
+  if (newStatus === 'funds_received' || newStatus === 'won_awaiting_funds') {
+    update.outcome = 'won';
+  } else if (newStatus !== 'submitted') {
+    update.outcome = null;
+  }
+  const { error } = await supabaseClient.from('scholarships').update(update).eq('id', id).eq('user_id', currentUserId);
+  btn.disabled = false;
+
+  const msg = document.getElementById('cm-msg');
+  msg.style.display = 'block';
+  msg.textContent = error ? 'Could not save, try again.' : 'Saved ✓';
+  msg.style.color = error ? '#c62828' : 'var(--teal-deep)';
+
+  if (!error) {
+    loadBoard();
+    setTimeout(closeCardModal, 700);
+  }
+});

@@ -80,7 +80,7 @@ function renderInfo() {
   const missing = rows.filter(r => r.value === '—').length;
 
   el.innerHTML = `
-    ${missing > 0 ? `<p class="dash-empty" style="margin-bottom:10px;">${missing} field${missing > 1 ? 's are' : ' is'} empty — <a href="account.html" style="color:var(--purple); font-weight:600;">fill them in on Account Settings →</a></p>` : ''}
+    ${missing > 0 ? `<p class="dash-empty" style="margin-bottom:10px;">${missing} field${missing > 1 ? 's are' : ' is'} empty. <a href="account.html" style="color:var(--purple); font-weight:600;">Fill them in on Account Settings →</a></p>` : ''}
     ${rows.map(r => `
       <div class="deadline-row">
         <span>${r.label}</span>
@@ -155,7 +155,7 @@ document.getElementById('save-notes-btn').addEventListener('click', async () => 
   btn.disabled = false;
   const msg = document.getElementById('notes-msg');
   msg.style.display = 'block';
-  msg.textContent = error ? 'Could not save — try again.' : 'Saved ✓';
+  msg.textContent = error ? 'Could not save, try again.' : 'Saved ✓';
 });
 
 document.getElementById('send-extension-btn').addEventListener('click', () => {
@@ -198,7 +198,7 @@ document.getElementById('send-extension-btn').addEventListener('click', () => {
     if (!received) {
       window.removeEventListener('message', listener);
       msgEl.style.display = 'block';
-      msgEl.textContent = "No extension detected — install the Scholar Brilliance Autofill extension first, or use the PDF/Copy options instead.";
+      msgEl.textContent = "No extension detected. Install the Scholar Brilliance Autofill extension first, or use the PDF/Copy options instead.";
     }
   }, 800);
 });

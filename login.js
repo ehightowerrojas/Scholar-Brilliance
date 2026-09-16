@@ -43,11 +43,11 @@ function landingPageFor(role) {
 function friendlyAuthError(message) {
   const map = [
     [/invalid login credentials/i, "That email or password doesn't look right. Try again, or use \"Forgot password?\" below."],
-    [/user already registered/i, 'An account with that email already exists — try logging in instead.'],
+    [/user already registered/i, 'An account with that email already exists. Try logging in instead.'],
     [/email not confirmed/i, 'Check your inbox for a confirmation link before logging in.'],
     [/password should be at least/i, 'Choose a password with at least 6 characters.'],
-    [/rate limit/i, "That's a lot of attempts — wait a minute and try again."],
-    [/network/i, "Couldn't reach the server — check your connection and try again."],
+    [/rate limit/i, "That's a lot of attempts. Wait a minute and try again."],
+    [/network/i, "Couldn't reach the server. Check your connection and try again."],
   ];
   const match = map.find(([pattern]) => pattern.test(message));
   return match ? match[1] : message;
@@ -86,7 +86,7 @@ function setMode(next) {
   els.forgotRow.style.display = isLogin ? 'flex' : 'none';
   els.demoNote.style.display = isLogin ? 'block' : 'none';
   els.toggleText.textContent = isLogin ? "New to Scholar Brilliance?" : 'Already have an account?';
-  els.toggleLink.textContent = isLogin ? 'Create a free account' : 'Log in';
+  els.toggleLink.textContent = isLogin ? 'Create an account' : 'Log in';
   clearMessage();
 }
 
@@ -175,10 +175,33 @@ els.form.addEventListener('submit', async (e) => {
       await awardAchievement('profile_builder', data.user.id);
       window.location.href = landingPageFor(selectedRole);
     } else {
-      showMessage(`Check ${email} for a confirmation link to finish creating your account.`, 'success');
-      setMode('login');
+      document.getElementById('confirm-email-address').textContent = email;
+      document.getElementById('login-main-content').style.display = 'none';
+      document.getElementById('email-confirm-state').style.display = 'block';
     }
   }
+});
+
+document.getElementById('back-to-login-btn').addEventListener('click', () => {
+  document.getElementById('email-confirm-state').style.display = 'none';
+  document.getElementById('login-main-content').style.display = 'block';
+  setMode('login');
+});
+
+document.getElementById('resend-confirmation-btn').addEventListener('click', async (e) => {
+  const btn = e.target;
+  const email = document.getElementById('confirm-email-address').textContent;
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const { error } = await supabaseClient.auth.resend({ type: 'signup', email });
+
+  btn.disabled = false;
+  btn.textContent = 'Resend confirmation email';
+  const msg = document.getElementById('resend-msg');
+  msg.style.display = 'block';
+  msg.textContent = error ? 'Could not resend, try again in a moment.' : 'Sent! Check your inbox (and spam folder).';
+  msg.style.color = error ? '#c62828' : 'var(--teal-deep)';
 });
 
 // If someone's already logged in, skip straight to the right dashboard.

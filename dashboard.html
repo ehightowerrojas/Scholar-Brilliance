@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect x=%270%27 y=%270%27 width=%2724%27 height=%2724%27 rx=%276%27 fill=%27white%27/%3E%3Cpath d=%27M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z%27 fill=%27%235E35B1%27/%3E%3Cpath d=%27M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z%27 fill=%27%23FFC107%27/%3E%3Cpath d=%27M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E">
-<title>Dashboard — Scholar Brilliance</title>
+<title>Dashboard: Scholar Brilliance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
@@ -62,12 +62,13 @@
       <a href="#" class="btn btn-gold" id="next-step-cta">Let's go</a>
     </div>
 
-    <div class="dash-card motion-in" style="margin-bottom:24px; border-color:var(--amber); background:linear-gradient(135deg, var(--card-soft), var(--card)); animation-delay:0.08s;">
+    <div class="dash-card motion-in" id="autofill-promo-card" style="margin-bottom:24px; border-color:var(--amber); background:linear-gradient(135deg, var(--card-soft), var(--card)); animation-delay:0.08s; position:relative;">
+      <button id="autofill-promo-dismiss" aria-label="Dismiss" style="position:absolute; top:12px; right:12px; background:none; border:none; font-size:18px; color:var(--muted); cursor:pointer; line-height:1;">×</button>
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
         <div>
           <span class="beta-tag" style="margin-left:0;">Available now (beta)</span>
-          <h3 style="margin-top:10px; margin-bottom:6px; color:var(--purple);">Autofill for real scholarship forms</h3>
-          <p class="dash-empty">Build an application in the Application Builder, then send it to the Scholar Brilliance Autofill browser extension — it fills the real scholarship form's fields for you. You still review everything and hit submit yourself, every time. <a href="/application.html" style="color:var(--purple); font-weight:600;">Try it from a tracked scholarship →</a></p>
+          <h3 style="margin-top:10px; margin-bottom:6px; color:var(--purple);">⚡ Autofill for real scholarship forms</h3>
+          <p class="dash-empty">Build an application in the Application Builder, then send it to the Scholar Brilliance Autofill browser extension. It fills the real scholarship form's fields for you. You still review everything and hit submit yourself, every time. <a href="/application.html" style="color:var(--purple); font-weight:600;">Try it from a tracked scholarship →</a></p>
         </div>
       </div>
     </div>

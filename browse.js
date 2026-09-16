@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------
 
 let browseUserId = null;
+let studentGpa = null;
 let catalogItems = [];
 
 async function init() {
@@ -12,6 +13,8 @@ async function init() {
     return;
   }
   browseUserId = session.user.id;
+  const { data: profile } = await supabaseClient.from('profiles').select('gpa').eq('id', browseUserId).single();
+  studentGpa = profile?.gpa ?? null;
   await loadInterests();
   await loadRecommendations();
   await loadCatalog();
@@ -127,7 +130,14 @@ function renderCatalog(items) {
     el.innerHTML = `<p class="dash-empty">No scholarships match your search.</p>`;
     return;
   }
-  el.innerHTML = items.map(item => `
+  el.innerHTML = items.map(item => {
+    const gpaMatch = item.min_gpa == null ? ''
+      : studentGpa == null
+      ? `<span class="dash-empty" style="font-size:11px;">Requires ${item.min_gpa}+ GPA — add your GPA on Account Settings to see if you qualify</span>`
+      : studentGpa >= item.min_gpa
+      ? `<span style="font-size:11px; font-weight:600; color:var(--teal-deep);">✓ You meet the ${item.min_gpa}+ GPA requirement</span>`
+      : `<span style="font-size:11px; font-weight:600; color:#c62828;">Requires ${item.min_gpa}+ GPA (yours: ${studentGpa})</span>`;
+    return `
     <div class="catalog-card">
       <div class="catalog-card-top">
         <h4>${escapeHtml(item.title)}</h4>
@@ -138,12 +148,14 @@ function renderCatalog(items) {
         ${item.deadline ? `<span>Deadline: ${fmtDateLong(item.deadline)}</span>` : ''}
         <span>${escapeHtml(item.org_name)}</span>
       </div>
+      ${gpaMatch ? `<div style="margin-top:4px;">${gpaMatch}</div>` : ''}
       <div class="catalog-card-actions">
         ${safeLink(item.website, 'Visit Website', 'target="_blank" rel="noopener" class="btn btn-line" style="padding:8px 16px; font-size:13px;"')}
         <button class="btn btn-gold" style="padding:8px 16px; font-size:13px;" data-add-catalog="${item.id}">Add to Tracker</button>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   document.querySelectorAll('[data-add-catalog]').forEach(btn => {
     btn.addEventListener('click', () => addCatalogItemToTracker(btn.dataset.addCatalog, btn));

@@ -110,7 +110,7 @@ async function handleExtract(url) {
     }
     html = await resp.text();
   } catch (err) {
-    return json({ error: "Couldn't reach that page — it may be slow, offline, or blocking automated requests (this happens with sites like Bold.org)." }, 502);
+    return json({ error: "Couldn't reach that page. It may be slow, offline, or blocking automated requests (this happens with sites like Bold.org)." }, 502);
   }
 
   const result = extractInfo(html, target);

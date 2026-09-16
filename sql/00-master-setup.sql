@@ -159,6 +159,18 @@ create policy "Staff can view profiles in their org"
     and org_id = public.current_staff_org_id()
   );
 
+-- This was missing entirely — profiles only had SELECT policies, no
+-- UPDATE. That silently blocked every write to your own profile:
+-- applicant info (phone, address, GPA, major), avatar equipping, the
+-- leaderboard visibility toggle, and the profiles.full_name column
+-- specifically (name changes partially "worked" only because they
+-- also separately update your auth account's own metadata).
+drop policy if exists "Users can update their own profile" on public.profiles;
+create policy "Users can update their own profile"
+  on public.profiles for update to authenticated
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
 drop policy if exists "Staff can view own organization" on public.organizations;
 create policy "Staff can view own organization"
   on public.organizations for select to authenticated
@@ -226,10 +238,15 @@ update public.scholarships set status = 'backlog' where status = 'saved';
 update public.scholarships set status = 'writing' where status = 'working';
 
 -- Now that every row has a valid new-style value, tighten the
--- constraint to the final 6-status list, dropping the old ones.
+-- constraint to the final 7-status list, dropping the old ones.
 alter table public.scholarships drop constraint if exists scholarships_status_check;
 alter table public.scholarships add constraint scholarships_status_check
-  check (status in ('backlog','researching','writing','in_review','submitted','funds_received'));
+  check (status in ('backlog','researching','writing','in_review','submitted','won_awaiting_funds','funds_received'));
+
+-- Existing rows marked won but not yet in funds_received should move
+-- to the new intermediate stage, so the column isn't empty for
+-- anyone who already has scholarships in this state.
+update public.scholarships set status = 'won_awaiting_funds' where status = 'submitted' and outcome = 'won';
 
 -- New standardized card fields.
 alter table public.scholarships add column if not exists essay_prompt text;
@@ -414,6 +431,13 @@ create table if not exists public.scholarships_catalog (
 );
 
 alter table public.scholarships_catalog enable row level security;
+
+-- Optional minimum GPA requirement, letting students see whether
+-- they qualify based on their own applicant info.
+alter table public.scholarships_catalog add column if not exists min_gpa numeric;
+alter table public.scholarships_catalog drop constraint if exists scholarships_catalog_min_gpa_check;
+alter table public.scholarships_catalog add constraint scholarships_catalog_min_gpa_check
+  check (min_gpa is null or (min_gpa >= 0 and min_gpa <= 5.0));
 
 drop policy if exists "Catalog is readable by any authenticated user" on public.scholarships_catalog;
 drop policy if exists "Catalog is readable by matching org or global listings" on public.scholarships_catalog;
@@ -778,8 +802,11 @@ on conflict (id) do nothing;
 
 
 -- ============================================================
--- SECTION 10 — Daily Activity Log + Streak Achievements
+-- SECTION 10 — Weekly Activity Log + Streak Achievements
 -- ============================================================
+-- Originally daily; switched to weekly since scholarship work
+-- genuinely happens on a weekly cadence, not a daily one. Renaming
+-- rather than dropping/recreating preserves existing activity data.
 
 create table if not exists public.daily_activity (
   id uuid primary key default gen_random_uuid(),
@@ -789,44 +816,100 @@ create table if not exists public.daily_activity (
   unique (user_id, activity_date)
 );
 
-alter table public.daily_activity enable row level security;
+alter table if exists public.daily_activity rename to weekly_activity;
+alter table if exists public.weekly_activity rename column activity_date to week_start;
 
-drop policy if exists "Users can view their own activity log" on public.daily_activity;
+-- Drop the OLD constraints FIRST, before touching any data — renaming
+-- a table/column doesn't drop its constraints, and two separate
+-- issues would otherwise surface:
+--
+--  1. The old date-range CHECK still enforces "today or last 7 days"
+--     after the rename, so normalizing older rows would violate it.
+--  2. The original unique(user_id, activity_date) constraint checks
+--     uniqueness row-by-row during an UPDATE — the instant two rows
+--     from the same user in the same week both get set to that
+--     week's Monday, the second one collides with the first, before
+--     the later dedup step ever gets a chance to run.
+--
+-- (This is the third bug found in this one migration — each fix so
+-- far addressed a real failure, but missed the next one down the
+-- line. Dropping both constraints up front, then normalizing +
+-- deduplicating with nothing in the way, then re-adding both at the
+-- end, is the version that actually works start to finish.)
+alter table public.weekly_activity drop constraint if exists daily_activity_date_range_check;
+alter table public.weekly_activity drop constraint if exists daily_activity_user_id_activity_date_key;
+
+-- Normalize any pre-existing daily rows onto their week's Monday,
+-- then drop duplicates that collide once multiple days land on the
+-- same week (date_trunc('week', ...) is Monday-based in Postgres).
+update public.weekly_activity set week_start = date_trunc('week', week_start)::date;
+delete from public.weekly_activity a using public.weekly_activity b
+  where a.ctid < b.ctid and a.user_id = b.user_id and a.week_start = b.week_start;
+
+-- Re-add uniqueness now that duplicates are gone, so the app's own
+-- upsert(onConflict: 'user_id,week_start') keeps working correctly.
+alter table public.weekly_activity drop constraint if exists weekly_activity_user_id_week_start_key;
+alter table public.weekly_activity add constraint weekly_activity_user_id_week_start_key unique (user_id, week_start);
+
+alter table public.weekly_activity enable row level security;
+
+drop policy if exists "Users can view their own activity log" on public.weekly_activity;
 create policy "Users can view their own activity log"
-  on public.daily_activity for select to authenticated
+  on public.weekly_activity for select to authenticated
   using (user_id = auth.uid());
 
-drop policy if exists "Users can log their own activity" on public.daily_activity;
+drop policy if exists "Users can log their own activity" on public.weekly_activity;
 create policy "Users can log their own activity"
-  on public.daily_activity for insert to authenticated
+  on public.weekly_activity for insert to authenticated
   with check (user_id = auth.uid());
 
--- Table-level CHECK (enforced regardless of role, unlike the RLS
--- policy above which only restricts who can insert). Without this, a
--- technically savvy student could bypass the UI and directly insert
--- arbitrary backdated rows via the API, instantly fabricating a
--- 30-day streak. Limits to today or the last 7 days, never future.
-alter table public.daily_activity drop constraint if exists daily_activity_date_range_check;
-alter table public.daily_activity add constraint daily_activity_date_range_check
-  check (activity_date <= current_date and activity_date >= current_date - interval '7 days');
+-- Now that duplicates are cleaned up, add the FINAL weekly
+-- constraint. Table-level CHECK (enforced regardless of role, unlike
+-- the RLS policy above which only restricts who can insert) —
+-- without this, a technically savvy student could bypass the UI and
+-- directly insert arbitrary backdated rows via the API, instantly
+-- fabricating a long streak. Limits future writes to this week's
+-- Monday or last week's, never future.
+--
+-- Added as NOT VALID: a plain ADD CONSTRAINT validates against every
+-- existing row by default, and real historical activity data
+-- (anything more than a week old) would fail that check even though
+-- it predates the constraint entirely — this isn't fabricated data,
+-- it's genuine history. NOT VALID enforces the rule for every new
+-- write going forward without retroactively rejecting rows that came
+-- before the rule existed.
+alter table public.weekly_activity drop constraint if exists weekly_activity_date_range_check;
+alter table public.weekly_activity add constraint weekly_activity_date_range_check
+  check (week_start <= date_trunc('week', current_date)::date
+     and week_start >= date_trunc('week', current_date)::date - interval '7 days')
+  not valid;
 
-drop policy if exists "Staff can view activity for their org's students" on public.daily_activity;
+drop policy if exists "Staff can view activity for their org's students" on public.weekly_activity;
 create policy "Staff can view activity for their org's students"
-  on public.daily_activity for select to authenticated
+  on public.weekly_activity for select to authenticated
   using (
     public.current_staff_org_id() is not null
     and exists (
       select 1 from public.profiles student
-      where student.id = daily_activity.user_id
+      where student.id = weekly_activity.user_id
         and student.org_id = public.current_staff_org_id()
     )
   );
 
 insert into public.achievements (id, category, title, description, points, icon, sort_order) values
-  ('streak_3',  'streak_milestones', 'On a Roll',      'Visit 3 days in a row',  30,  'flame', 1),
-  ('streak_7',  'streak_milestones', 'Week Warrior',   'Visit 7 days in a row',  75,  'flame', 2),
-  ('streak_30', 'streak_milestones', 'Unstoppable',    'Visit 30 days in a row', 200, 'flame', 3)
+  ('streak_3',  'streak_milestones', 'On a Roll',        'Visit 2 weeks in a row',  30,  'flame', 1),
+  ('streak_7',  'streak_milestones', 'Consistent Effort', 'Visit 4 weeks in a row',  75,  'flame', 2),
+  ('streak_30', 'streak_milestones', 'Unstoppable',      'Visit 10 weeks in a row', 200, 'flame', 3)
 on conflict (id) do nothing;
+
+-- Explicit UPDATEs, same reasoning as elsewhere in this file — the
+-- INSERT above only sets values for brand-new rows. These IDs kept
+-- their original names (streak_3/7/30) to avoid touching every place
+-- in the app that already awards them, but their thresholds and
+-- copy are now weekly, not daily.
+update public.achievements set description = 'Visit 2 weeks in a row' where id = 'streak_3';
+update public.achievements set title = 'Consistent Effort', description = 'Visit 4 weeks in a row' where id = 'streak_7';
+update public.achievements set description = 'Visit 10 weeks in a row' where id = 'streak_30';
 
 
 -- ============================================================

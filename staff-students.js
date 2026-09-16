@@ -27,7 +27,7 @@ function renderStudents() {
         <div style="text-align:right;">
           <span class="dash-empty" style="font-size:11.5px; display:block;">Joined ${new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
           ${s.streak > 0
-            ? `<span style="font-size:11.5px; font-weight:700; color:var(--teal-deep);">🔥 ${s.streak} day${s.streak === 1 ? '' : 's'} active</span>`
+            ? `<span style="font-size:11.5px; font-weight:700; color:var(--teal-deep);">🔥 ${s.streak} week${s.streak === 1 ? '' : 's'} active</span>`
             : `<span style="font-size:11.5px; font-weight:700; color:#c62828;">No recent activity</span>`}
         </div>
       </div>
@@ -42,7 +42,7 @@ function renderStudents() {
       <div class="dash-empty" style="margin-top:12px;">
         <strong style="color:var(--ink);">Goals:</strong>
         ${s.goals.length > 0
-          ? s.goals.map(g => `<span style="display:inline-block; margin:4px 6px 0 0;">${escapeHtml(g.name)} — $${Number(g.target_amount).toLocaleString()}${g.target_date ? ' · due ' + fmtDateShort(g.target_date) : ''} ${g.source === 'staff' ? '(set by school)' : '(set by student)'}${g.completed_at ? ' ✓' : ''}</span>`).join('<br>')
+          ? s.goals.map(g => `<span style="display:inline-block; margin:4px 6px 0 0;">${escapeHtml(g.name)}: $${Number(g.target_amount).toLocaleString()}${g.target_date ? ' · due ' + fmtDateShort(g.target_date) : ''} ${g.source === 'staff' ? '(set by school)' : '(set by student)'}${g.completed_at ? ' ✓' : ''}</span>`).join('<br>')
           : ' Not set yet'}
       </div>
 
@@ -86,7 +86,7 @@ function renderStudents() {
       msg.style.display = 'block';
       if (error) {
         console.error(error);
-        msg.textContent = 'Could not assign this goal — please try again.';
+        msg.textContent = 'Could not assign this goal, please try again.';
         msg.style.color = '#c62828';
         return;
       }
@@ -155,14 +155,14 @@ async function loadStudents() {
   let activityRows = [];
 
   if (studentIds.length > 0) {
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const twelveWeeksAgo = new Date();
+    twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84);
 
     const [{ data: schData, error: schErr }, { data: recData, error: recErr }, { data: goalData, error: goalErr }, { data: activityData, error: activityErr }] = await Promise.all([
       supabaseClient.from('scholarships').select('user_id, status, outcome').in('user_id', studentIds),
       supabaseClient.from('scholarship_recommendations').select('student_id, scholarships_catalog(title)').in('student_id', studentIds),
       supabaseClient.from('goals').select('student_id, name, target_amount, target_date, source, completed_at').in('student_id', studentIds),
-      supabaseClient.from('daily_activity').select('user_id, activity_date').in('user_id', studentIds).gte('activity_date', sixtyDaysAgo.toISOString().slice(0, 10)),
+      supabaseClient.from('weekly_activity').select('user_id, week_start').in('user_id', studentIds).gte('week_start', twelveWeeksAgo.toISOString().slice(0, 10)),
     ]);
     if (schErr) console.error(schErr); else scholarships = schData;
     if (recErr) console.error(recErr); else recommendations = recData;
@@ -171,14 +171,21 @@ async function loadStudents() {
   }
 
   function computeStreak(studentId) {
-    const dates = new Set(activityRows.filter(r => r.user_id === studentId).map(r => r.activity_date));
+    function weekStr(d) {
+      const date = new Date(d);
+      const dow = date.getDay();
+      const sinceMonday = dow === 0 ? 6 : dow - 1;
+      date.setDate(date.getDate() - sinceMonday);
+      return date.toISOString().slice(0, 10);
+    }
+    const weeks = new Set(activityRows.filter(r => r.user_id === studentId).map(r => r.week_start));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     let streak = 0;
     const cursor = new Date(today);
-    while (dates.has(cursor.toISOString().slice(0, 10))) {
+    while (weeks.has(weekStr(cursor))) {
       streak++;
-      cursor.setDate(cursor.getDate() - 1);
+      cursor.setDate(cursor.getDate() - 7);
     }
     return streak;
   }

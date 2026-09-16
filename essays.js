@@ -54,19 +54,30 @@ async function init() {
   renderStats();
   applyFiltersAndRender();
 
-  // Pre-select a scholarship if arriving from the Tracker with ?scholarship=<id>
+  // Arriving from the Tracker with ?scholarship=<id> should show that
+  // scholarship's essays, nothing more — not pop open a new-essay
+  // form. Reuses the existing search box, which already matches
+  // against scholarship title.
   const params = new URLSearchParams(window.location.search);
   const preselect = params.get('scholarship');
   if (preselect && scholarshipMap[preselect]) {
-    openForm();
-    document.getElementById('essay-scholarship').value = preselect;
-    document.getElementById('essay-title').focus();
+    document.getElementById('essay-search').value = scholarshipMap[preselect].title;
+    applyFiltersAndRender();
+
+    const banner = document.getElementById('filter-confirm-banner');
+    banner.style.display = 'block';
+    banner.innerHTML = `Showing essays for <strong>${escapeHtml(scholarshipMap[preselect].title)}</strong>. <button id="clear-filter-btn" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:var(--purple); font-weight:600; padding:0;">Show all essays</button>`;
+    document.getElementById('clear-filter-btn').addEventListener('click', () => {
+      document.getElementById('essay-search').value = '';
+      banner.style.display = 'none';
+      applyFiltersAndRender();
+    });
   }
 }
 
 function populateScholarshipDropdown() {
   const select = document.getElementById('essay-scholarship');
-  select.innerHTML = '<option value="">Not linked yet — standalone draft</option>' +
+  select.innerHTML = '<option value="">Not linked yet, standalone draft</option>' +
     userScholarships.map(s => `<option value="${s.id}">${escapeHtml(s.title)}</option>`).join('');
 }
 

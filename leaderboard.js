@@ -25,7 +25,7 @@ async function init() {
   }
 
   if (!data || data.length === 0) {
-    el.innerHTML = `<p class="dash-empty">Leaderboards are available once you're connected to a school — use a referral code from your counselor to join one.</p>`;
+    el.innerHTML = `<p class="dash-empty">Leaderboards are available once you're connected to a school. Use a referral code from your counselor to join one.</p>`;
     return;
   }
 

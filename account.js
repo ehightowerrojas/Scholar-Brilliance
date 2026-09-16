@@ -21,7 +21,7 @@ async function init() {
   const role = session.user.user_metadata?.role || 'student';
 
   document.getElementById('email-display').value = session.user.email;
-  document.getElementById('role-display').value = role === 'staff' ? 'School staff' : 'Student';
+  document.getElementById('role-display').value = role === 'staff' ? 'Counselor' : 'Student';
   document.getElementById('full-name-input').value = session.user.user_metadata?.full_name || '';
 
   if (role === 'staff') {
@@ -73,7 +73,7 @@ document.getElementById('save-profile-btn').addEventListener('click', async () =
   ]);
 
   btn.disabled = false;
-  showMsg('profile-msg', authErr || profileErr ? 'Could not save — try again.' : 'Saved ✓', Boolean(authErr || profileErr));
+  showMsg('profile-msg', authErr || profileErr ? 'Could not save, try again.' : 'Saved ✓', Boolean(authErr || profileErr));
 });
 
 async function loadAvatarSection() {
@@ -97,7 +97,7 @@ async function loadAvatarSection() {
   } catch (err) {
     console.error('Could not load avatar section:', err);
     grid.innerHTML = '';
-    grid.insertAdjacentHTML('beforebegin', '<p class="dash-empty" style="color:#c62828;">Could not load your avatars right now — please refresh the page.</p>');
+    grid.insertAdjacentHTML('beforebegin', '<p class="dash-empty" style="color:#c62828;">Could not load your avatars right now. Please refresh the page.</p>');
     return;
   }
 
@@ -114,6 +114,10 @@ async function loadAvatarSection() {
     const unlocked = completedGoalsCount >= s.unlock_goals_completed;
     const isEquipped = s.id === equippedId;
     const svg = renderAvatarSVG(s.id, unlocked ? tier : 1, 72);
+    const tierPreviewHtml = [1, 2, 3, 4].map(t => {
+      const label = t === 1 ? 'Lv 1-2' : t === 2 ? 'Lv 3-4' : t === 3 ? 'Lv 5-6' : 'Lv 7-8';
+      return `<div style="text-align:center;">${renderAvatarSVG(s.id, t, 48)}<p style="font-size:9.5px; color:var(--muted); margin-top:2px;">${label}</p></div>`;
+    }).join('');
     return `
       <div style="text-align:center; opacity:${unlocked ? 1 : 0.4};">
         <div style="position:relative; display:inline-block;">
@@ -125,16 +129,27 @@ async function loadAvatarSection() {
         ${unlocked
           ? (isEquipped ? '' : `<button class="achv-demo-btn" data-equip="${s.id}" style="width:auto; padding:4px 10px; font-size:11px; margin-top:2px;">Equip</button>`)
           : `<p style="font-size:10px; color:var(--muted);">${s.unlock_goals_completed} goal${s.unlock_goals_completed === 1 ? '' : 's'} completed to unlock</p>`}
+        <button class="dash-empty" data-preview-toggle="${s.id}" style="background:none; border:none; text-decoration:underline; cursor:pointer; font-size:10.5px; margin-top:4px; display:block; width:100%;">Preview stages</button>
+        <div id="preview-${s.id}" style="display:none; margin-top:8px; gap:6px; justify-content:center;">${tierPreviewHtml}</div>
       </div>
     `;
   }).join('');
+
+  grid.querySelectorAll('[data-preview-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = document.getElementById(`preview-${btn.dataset.previewToggle}`);
+      const isOpen = el.style.display === 'flex';
+      el.style.display = isOpen ? 'none' : 'flex';
+      btn.textContent = isOpen ? 'Preview stages' : 'Hide stages';
+    });
+  });
 
   grid.querySelectorAll('[data-equip]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const { error } = await supabaseClient.from('profiles').update({ avatar_species_id: btn.dataset.equip }).eq('id', accountUserId);
       const msg = document.getElementById('avatar-msg');
       msg.style.display = 'block';
-      msg.textContent = error ? 'Could not equip — try again.' : 'Avatar updated ✓';
+      msg.textContent = error ? 'Could not equip, try again.' : 'Avatar updated ✓';
       if (!error) loadAvatarSection();
     });
   });
@@ -157,7 +172,7 @@ document.getElementById('save-appinfo-btn').addEventListener('click', async () =
   }).eq('id', accountUserId);
 
   btn.disabled = false;
-  showMsg('appinfo-msg', error ? 'Could not save — try again.' : 'Saved ✓', Boolean(error));
+  showMsg('appinfo-msg', error ? 'Could not save, try again.' : 'Saved ✓', Boolean(error));
 });
 
 document.getElementById('leaderboard-visible-input').addEventListener('change', async (e) => {
@@ -166,7 +181,7 @@ document.getElementById('leaderboard-visible-input').addEventListener('change', 
     .update({ leaderboard_visible: e.target.checked })
     .eq('id', accountUserId);
 
-  showMsg('privacy-msg', error ? 'Could not save — try again.' : 'Saved ✓', Boolean(error));
+  showMsg('privacy-msg', error ? 'Could not save, try again.' : 'Saved ✓', Boolean(error));
 });
 
 document.getElementById('sound-enabled-input').checked = !ScholarSound.isMuted();

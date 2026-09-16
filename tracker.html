@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect x=%270%27 y=%270%27 width=%2724%27 height=%2724%27 rx=%276%27 fill=%27white%27/%3E%3Cpath d=%27M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z%27 fill=%27%235E35B1%27/%3E%3Cpath d=%27M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z%27 fill=%27%23FFC107%27/%3E%3Cpath d=%27M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E">
-<title>Application Tracker — Scholar Brilliance</title>
+<title>Application Tracker: Scholar Brilliance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
@@ -46,9 +46,22 @@
     <div class="tracker-head">
       <div>
         <span class="eyebrow">Application tracker</span>
-        <h1>Drag scholarships across the board as you make progress.</h1>
+        <h1>Drag a card, or click into it, to move it forward.</h1>
       </div>
-      <button class="btn btn-gold" id="add-toggle-btn">+ Add scholarship</button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-line" id="tracker-tips-btn">? Tips</button>
+        <button class="btn btn-gold" id="add-toggle-btn">+ Add scholarship</button>
+      </div>
+    </div>
+
+    <div id="tracker-tips-panel" class="dash-card" style="display:none; margin-bottom:20px; font-size:13.5px; color:var(--muted); line-height:1.5;">
+      <h3>How to use this board</h3>
+      <p style="margin-bottom:10px;"><strong style="color:var(--ink);">Backlog:</strong> Drop every potential scholarship here. Don't filter yet, just collect options, links, and amounts.</p>
+      <p style="margin-bottom:10px;"><strong style="color:var(--ink);">Researching & Eligibility:</strong> Check criteria (GPA, essays, references). If you don't qualify, delete the card.</p>
+      <p style="margin-bottom:10px;"><strong style="color:var(--ink);">Writing & Drafting:</strong> Move cards here when actively writing. Try capping this at 2-3 at once, so you submit strong work instead of rushing five.</p>
+      <p style="margin-bottom:10px;"><strong style="color:var(--ink);">In Review:</strong> A buffer column for anything waiting on someone else, a teacher's recommendation letter, proofreading, a parent's signature.</p>
+      <p style="margin-bottom:10px;"><strong style="color:var(--ink);">Submitted:</strong> Confirm you got a submission confirmation email before moving on.</p>
+      <p style="margin-bottom:0;"><strong style="color:var(--ink);">Colors already do some of this for you:</strong> the left border shows deadline urgency (red = 2 weeks or less), and the badge shows funding tier (green = $5k+, blue = $1k+).</p>
     </div>
 
     <form id="add-form" class="add-form" style="display:none;">
@@ -113,6 +126,10 @@
         <div class="kanban-col-head"><span>Submitted</span><span class="kanban-count" id="count-submitted">0</span></div>
         <div class="kanban-drop" id="col-submitted"></div>
       </div>
+      <div class="kanban-col" data-status="won_awaiting_funds">
+        <div class="kanban-col-head"><span>Won, Awaiting Funds</span><span class="kanban-count" id="count-won_awaiting_funds">0</span></div>
+        <div class="kanban-drop" id="col-won_awaiting_funds"></div>
+      </div>
       <div class="kanban-col" data-status="funds_received">
         <div class="kanban-col-head"><span>Funds Received</span><span class="kanban-count" id="count-funds_received">0</span></div>
         <div class="kanban-drop" id="col-funds_received"></div>
@@ -122,6 +139,43 @@
   </main>
 
   <div id="avatar-companion" class="avatar-companion" aria-hidden="true"></div>
+
+  <div id="card-modal-backdrop" class="card-modal-backdrop" style="display:none;">
+    <div class="card-modal">
+      <button class="card-modal-close" id="card-modal-close" aria-label="Close">×</button>
+      <h3 id="card-modal-title">Edit Scholarship</h3>
+      <div class="field" style="margin-bottom:14px;">
+        <label for="cm-status">Status</label>
+        <select id="cm-status">
+          <option value="backlog">Backlog</option>
+          <option value="researching">Researching & Eligibility</option>
+          <option value="writing">Writing & Drafting</option>
+          <option value="in_review">In Review</option>
+          <option value="submitted">Submitted</option>
+          <option value="won_awaiting_funds">Won, Awaiting Funds</option>
+          <option value="funds_received">Funds Received</option>
+        </select>
+      </div>
+      <div class="add-form-grid">
+        <div class="field"><label for="cm-title">Title</label><input type="text" id="cm-title"></div>
+        <div class="field"><label for="cm-amount">Amount ($)</label><input type="number" id="cm-amount" min="0"></div>
+        <div class="field"><label for="cm-deadline">Deadline</label><input type="date" id="cm-deadline"></div>
+        <div class="field"><label for="cm-website">Website</label><input type="url" id="cm-website"></div>
+        <div class="field" style="grid-column:1 / -1;"><label for="cm-essay-prompt">Essay prompt</label><textarea id="cm-essay-prompt" rows="2"></textarea></div>
+        <div class="field"><label for="cm-rec-letters">Rec. letters needed</label><input type="number" id="cm-rec-letters" min="0" max="10"></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-gold" id="cm-save-btn" style="padding:10px 20px;">Save changes</button>
+        <button class="btn btn-line" id="cm-cancel-btn" style="padding:10px 20px;">Cancel</button>
+      </div>
+      <p id="cm-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+
+      <div class="card-modal-applicant-info">
+        <h4>Your Applicant Info <span class="dash-empty" style="font-weight:400;">(reference while filling out the real application)</span></h4>
+        <div id="cm-applicant-info">Loading…</div>
+      </div>
+    </div>
+  </div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

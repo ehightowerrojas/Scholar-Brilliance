@@ -18,7 +18,7 @@ async function loadScholarships() {
     return;
   }
   if (data.length === 0) {
-    el.innerHTML = `<p class="dash-empty">No scholarships added yet — use "Add New Scholarship" above.</p>`;
+    el.innerHTML = `<p class="dash-empty">No scholarships added yet. Use "Add New Scholarship" above.</p>`;
     return;
   }
 
@@ -82,6 +82,7 @@ addForm.addEventListener('submit', async (e) => {
     amount: document.getElementById('s-amount').value || null,
     deadline: document.getElementById('s-deadline').value || null,
     website: document.getElementById('s-website').value.trim() || null,
+    min_gpa: document.getElementById('s-min-gpa').value || null,
   });
 
   if (error) {

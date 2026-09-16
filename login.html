@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect x=%270%27 y=%270%27 width=%2724%27 height=%2724%27 rx=%276%27 fill=%27white%27/%3E%3Cpath d=%27M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z%27 fill=%27%235E35B1%27/%3E%3Cpath d=%27M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z%27 fill=%27%23FFC107%27/%3E%3Cpath d=%27M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E">
-<title>Log in — Scholar Brilliance</title>
+<title>Log in: Scholar Brilliance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
@@ -23,7 +23,7 @@
     <div class="login-quote">
       <span class="eyebrow">Welcome back</span>
       <h1>Every finished application is a level up.</h1>
-      <p>Pick up your quest exactly where you left it — matches, drafts, and deadlines are all waiting in your dashboard.</p>
+      <p>Pick up your quest exactly where you left it. Matches, drafts, and deadlines are all waiting in your dashboard.</p>
 
       <div class="login-milestones">
         <div class="login-milestone done">
@@ -51,9 +51,19 @@
       <h2 id="form-heading">Log in to your account</h2>
       <p class="sub" id="form-sub">Choose how you're joining us today.</p>
 
+      <div id="email-confirm-state" style="display:none; text-align:center; padding:12px 0;">
+        <div style="width:64px; height:64px; border-radius:999px; background:var(--card-soft); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; font-size:28px;">📧</div>
+        <h2>Check your email</h2>
+        <p class="sub" style="margin-bottom:20px;">We sent a confirmation link to <strong id="confirm-email-address"></strong>. Click it to activate your account, then come back here to log in.</p>
+        <button type="button" class="btn btn-line" id="resend-confirmation-btn" style="width:100%; padding:12px 0; margin-bottom:10px;">Resend confirmation email</button>
+        <button type="button" class="btn btn-gold btn-block" id="back-to-login-btn">Back to login</button>
+        <p id="resend-msg" class="dash-empty" style="margin-top:12px; display:none;"></p>
+      </div>
+
+      <div id="login-main-content">
       <div class="role-toggle" role="group" aria-label="Choose account type">
         <button type="button" id="tab-student" aria-pressed="true">Student</button>
-        <button type="button" id="tab-staff" aria-pressed="false">School staff</button>
+        <button type="button" id="tab-staff" aria-pressed="false">Counselor</button>
       </div>
 
       <div id="form-message" class="form-message" role="alert" style="display:none;"></div>
@@ -101,7 +111,8 @@
         <span id="demo-cred">student@demo.org · password123</span>
       </div>
 
-      <p class="login-foot"><span id="toggle-mode-text">New to Scholar Brilliance?</span> <a href="#" id="toggle-mode-link">Create a free account</a></p>
+      <p class="login-foot"><span id="toggle-mode-text">New to Scholar Brilliance?</span> <a href="#" id="toggle-mode-link">Create an account</a></p>
+      </div>
     </div>
   </div>
 

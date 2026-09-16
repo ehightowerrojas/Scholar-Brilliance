@@ -31,7 +31,7 @@ async function loadCodes() {
     return;
   }
   if (data.length === 0) {
-    el.innerHTML = `<p class="dash-empty">No referral codes yet — generate your first one.</p>`;
+    el.innerHTML = `<p class="dash-empty">No referral codes yet. Generate your first one.</p>`;
     return;
   }
 
@@ -77,7 +77,7 @@ document.getElementById('generate-btn').addEventListener('click', async () => {
   const resultEl = document.getElementById('generate-result');
   if (error) {
     console.error(error);
-    resultEl.innerHTML = `<p class="dash-empty">Could not generate a code — try again.</p>`;
+    resultEl.innerHTML = `<p class="dash-empty">Could not generate a code, try again.</p>`;
     return;
   }
   resultEl.innerHTML = `<p class="dash-empty">Created code: <strong style="color:var(--fg);">${code}</strong></p>`;

@@ -45,14 +45,19 @@ async function loadDashboard() {
     awardAchievement('profile_builder', userId);
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  await supabaseClient.from('daily_activity').upsert(
-    { user_id: userId, activity_date: todayStr },
-    { onConflict: 'user_id,activity_date', ignoreDuplicates: true }
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const monday = new Date(today);
+  monday.setDate(monday.getDate() - daysSinceMonday);
+  const mondayStr = monday.toISOString().slice(0, 10);
+  await supabaseClient.from('weekly_activity').upsert(
+    { user_id: userId, week_start: mondayStr },
+    { onConflict: 'user_id,week_start', ignoreDuplicates: true }
   );
 
-  const sixtyDaysAgo = new Date();
-  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+  const twelveWeeksAgo = new Date();
+  twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84);
 
   const [{ data: scholarships, error: schErr }, { data: earnedRows }, { data: achievements }, { data: levels }, { data: profile }, { data: goals }, { data: activityRows }] =
     await Promise.all([
@@ -62,7 +67,7 @@ async function loadDashboard() {
       supabaseClient.from('levels').select('*').order('level_number'),
       supabaseClient.from('profiles').select('avatar_species_id').eq('id', userId).single(),
       supabaseClient.from('goals').select('*').eq('student_id', userId).order('created_at'),
-      supabaseClient.from('daily_activity').select('activity_date').eq('user_id', userId).gte('activity_date', sixtyDaysAgo.toISOString().slice(0, 10)),
+      supabaseClient.from('weekly_activity').select('week_start').eq('user_id', userId).gte('week_start', twelveWeeksAgo.toISOString().slice(0, 10)),
     ]);
 
   if (schErr) console.error(schErr);
@@ -110,11 +115,11 @@ function renderWelcomeSubtext(rows) {
   const el = document.getElementById('welcome-subtext');
 
   if (won > 0) {
-    el.textContent = `You've won ${won} scholarship${won > 1 ? 's' : ''} so far — that momentum is real. Let's keep it going.`;
+    el.textContent = `You've won ${won} scholarship${won > 1 ? 's' : ''} so far. That momentum is real. Let's keep it going.`;
   } else if (inFlight > 0) {
     el.textContent = `You have ${inFlight} application${inFlight > 1 ? 's' : ''} waiting on a decision. Nice work getting them in.`;
   } else if (rows.length > 0) {
-    el.textContent = `You're building your pipeline — every scholarship you add is a step closer to funding.`;
+    el.textContent = `You're building your pipeline. Every scholarship you add is a step closer to funding.`;
   } else {
     el.textContent = `Let's find your first scholarship match and get your pipeline started.`;
   }
@@ -132,7 +137,7 @@ function renderNextStep(goalRows, rows) {
   if (!goal) {
     step = {
       title: 'Set your first goal',
-      body: "Give yourself a target — it turns every application into visible progress toward something real.",
+      body: "Give yourself a target. It turns every application into visible progress toward something real.",
       cta: 'Set a goal',
       href: '#goal-content',
     };
@@ -146,7 +151,7 @@ function renderNextStep(goalRows, rows) {
   } else if (savedOrWorking > 0 && inFlight === 0) {
     step = {
       title: `You have ${savedOrWorking} application${savedOrWorking > 1 ? 's' : ''} ready to move`,
-      body: "Submitting is the biggest step in the whole process — even one this week keeps things moving.",
+      body: "Submitting is the biggest step in the whole process. Even one this week keeps things moving.",
       cta: 'Open your tracker',
       href: 'tracker.html',
     };
@@ -160,7 +165,7 @@ function renderNextStep(goalRows, rows) {
   } else {
     step = {
       title: `🎉 You've won ${won} scholarship${won > 1 ? 's' : ''}!`,
-      body: "Keep the streak going — find your next match and add it to your tracker.",
+      body: "Keep the streak going. Find your next match and add it to your tracker.",
       cta: 'Browse scholarships',
       href: 'browse.html',
     };
@@ -173,90 +178,88 @@ function renderNextStep(goalRows, rows) {
   ctaEl.href = step.href;
 }
 
-// ---- This week's activity + real consecutive-day streak ----
+// ---- This week's activity + real consecutive-week streak ----
 function renderActivityStreak(activityRows) {
-  const activeDates = new Set(activityRows.map(r => r.activity_date));
+  function weekStr(d) {
+    const date = new Date(d);
+    const dayOfWeek = date.getDay();
+    const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    date.setDate(date.getDate() - daysSinceMonday);
+    return date.toISOString().slice(0, 10);
+  }
+
+  const activeWeeks = new Set(activityRows.map(r => r.week_start));
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const thisWeekStr = weekStr(today);
 
-  function dateStr(d) { return d.toISOString().slice(0, 10); }
-
-  // Walk backward from today, counting consecutive active days. Since
-  // today was just logged by loadDashboard, this always includes
-  // today itself — a streak only breaks once a full day passes with
-  // no visit at all.
+  // Walk backward from this week, counting consecutive active weeks.
+  // Since this week was just logged by loadDashboard, this always
+  // includes the current week — a streak only breaks once a full
+  // week passes with no visit at all.
   let streak = 0;
   const cursor = new Date(today);
-  while (activeDates.has(dateStr(cursor))) {
+  while (activeWeeks.has(weekStr(cursor))) {
     streak++;
-    cursor.setDate(cursor.getDate() - 1);
+    cursor.setDate(cursor.getDate() - 7);
   }
 
-  // Longest streak ever within the fetched window — walks every date
-  // present (not just the trailing-from-today run), so a past streak
-  // that's since broken still shows up here for context.
-  const sortedDates = [...activeDates].sort();
+  // Longest streak ever within the fetched window.
+  const sortedWeeks = [...activeWeeks].sort();
   let longest = 0;
   let running = 0;
-  let prevDate = null;
-  for (const d of sortedDates) {
-    if (prevDate) {
-      const gapDays = (new Date(d) - new Date(prevDate)) / 86400000;
-      running = gapDays === 1 ? running + 1 : 1;
+  let prevWeek = null;
+  for (const w of sortedWeeks) {
+    if (prevWeek) {
+      const gapDays = (new Date(w) - new Date(prevWeek)) / 86400000;
+      running = gapDays === 7 ? running + 1 : 1;
     } else {
       running = 1;
     }
     longest = Math.max(longest, running);
-    prevDate = d;
+    prevWeek = w;
   }
 
   checkStreakMilestones(streak, userId);
 
-  const nextMilestone = [3, 7, 30].find(n => n > streak);
-  const milestoneNames = { 3: 'On a Roll', 7: 'Week Warrior', 30: 'Unstoppable' };
+  const nextMilestone = [2, 4, 10].find(n => n > streak);
+  const milestoneNames = { 2: 'On a Roll', 4: 'Consistent Effort', 10: 'Unstoppable' };
   const milestoneLine = nextMilestone
-    ? `<span class="dash-empty" style="font-size:12px;">🔥 ${nextMilestone - streak} more day${nextMilestone - streak === 1 ? '' : 's'} to earn "${milestoneNames[nextMilestone]}"</span>`
+    ? `<span class="dash-empty" style="font-size:12px;">🔥 ${nextMilestone - streak} more week${nextMilestone - streak === 1 ? '' : 's'} to earn "${milestoneNames[nextMilestone]}"</span>`
     : `<span class="dash-empty" style="font-size:12px;">🏅 All streak badges earned!</span>`;
 
   const headerStreak = document.getElementById('header-streak');
-  if (headerStreak) headerStreak.textContent = `${streak} day${streak === 1 ? '' : 's'}`;
+  if (headerStreak) headerStreak.textContent = `${streak} week${streak === 1 ? '' : 's'}`;
 
-  // Fixed Monday-Sunday week, not a rolling 7-day window — find this
-  // week's Monday (getDay() is 0=Sun..6=Sat, so Sunday needs special
-  // handling since it's 6 days after Monday, not -1 days before it).
-  const dayOfWeek = today.getDay();
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const monday = new Date(today);
-  monday.setDate(monday.getDate() - daysSinceMonday);
-
-  const days = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monday);
-    d.setDate(d.getDate() + i);
-    days.push(d);
+  // Last 8 weeks, oldest to newest, ending with this week.
+  const weeks = [];
+  for (let i = 7; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i * 7);
+    weeks.push(d);
   }
-  const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   document.getElementById('streak-content').innerHTML = `
     <div style="display:flex; align-items:baseline; gap:18px; margin-bottom:14px; flex-wrap:wrap;">
       <div style="display:flex; align-items:baseline; gap:8px;">
         <span style="font-family:var(--font-accent); font-weight:800; font-size:28px; color:var(--amber-deep);">${streak}</span>
-        <span style="font-size:13.5px; color:var(--muted);">day${streak === 1 ? '' : 's'} in a row</span>
+        <span style="font-size:13.5px; color:var(--muted);">week${streak === 1 ? '' : 's'} in a row</span>
       </div>
-      ${longest > streak ? `<span class="dash-empty" style="font-size:12px;">🏆 Longest streak: ${longest} days</span>` : ''}
+      ${longest > streak ? `<span class="dash-empty" style="font-size:12px;">🏆 Longest streak: ${longest} weeks</span>` : ''}
       ${milestoneLine}
     </div>
     <div style="display:flex; justify-content:space-between; gap:8px;">
-      ${days.map(day => {
-        const active = activeDates.has(dateStr(day));
-        const isToday = dateStr(day) === dateStr(today);
+      ${weeks.map((week, i) => {
+        const wStr = weekStr(week);
+        const active = activeWeeks.has(wStr);
+        const isThisWeek = wStr === thisWeekStr;
         return `
           <div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex:1;">
-            <div style="width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:${active ? 'var(--teal)' : 'var(--card-soft)'}; ${isToday ? 'box-shadow:0 0 0 2px var(--amber);' : ''} transition:background .3s ease;">
-              ${active ? '<span style="color:white; font-size:14px; font-weight:700;">✓</span>' : ''}
+            <div style="width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:${active ? 'var(--teal)' : 'var(--card-soft)'}; ${isThisWeek ? 'box-shadow:0 0 0 2px var(--amber);' : ''} transition:background .3s ease;">
+              ${active ? '<span style="color:white; font-size:12px; font-weight:700;">✓</span>' : ''}
             </div>
-            <span style="font-size:10.5px; color:var(--muted); font-weight:${isToday ? '700' : '400'};">${dayLabels[(day.getDay() + 6) % 7]}</span>
+            <span style="font-size:9.5px; color:var(--muted); font-weight:${isThisWeek ? '700' : '400'};">${isThisWeek ? 'This wk' : `-${8 - 1 - i}w`}</span>
           </div>
         `;
       }).join('')}
@@ -334,7 +337,7 @@ function renderGoal(goalRows, rows) {
           msg.style.cssText = 'color:#c62828; font-size:12.5px; margin-top:8px;';
           document.getElementById('save-goal-btn').closest('div').after(msg);
         }
-        msg.textContent = 'Could not save your goal — please try again in a moment.';
+        msg.textContent = 'Could not save your goal, please try again in a moment.';
         return;
       }
 
@@ -394,7 +397,7 @@ function renderGoal(goalRows, rows) {
       <div class="level-track"><div class="level-fill" style="width:${aggregatePct}%;"></div></div>
     </div>
     ${goalRowsHtml}
-    <button class="achv-demo-btn" id="add-goal-btn" style="margin-top:4px;">+ Add a goal</button>
+    <button class="achv-demo-btn" id="add-goal-btn" style="margin-top:4px; width:auto; padding:8px 18px;">+ Add a goal</button>
   `;
   document.getElementById('add-goal-btn').addEventListener('click', () => showGoalForm());
   el.querySelectorAll('[data-edit-goal]').forEach(btn => {
@@ -471,7 +474,7 @@ function renderAchievements(earnedRows, achievements, levels) {
     <p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin:14px 0 6px;">Up next</p>
     ${upNext.map(a => `
       <div class="recent-achv-row" style="opacity:0.65;">
-        <span>${a.title} <span style="font-weight:400; color:var(--muted);">— ${a.description}</span></span>
+        <span>${a.title}: <span style="font-weight:400; color:var(--muted);">${a.description}</span></span>
         <span class="recent-achv-pts">+${a.points}</span>
       </div>
     `).join('')}
@@ -479,7 +482,7 @@ function renderAchievements(earnedRows, achievements, levels) {
   ` : '';
 
   if (recent.length === 0) {
-    el.innerHTML = levelLine + `<p class="dash-empty">No badges earned yet — start by adding a scholarship to your tracker!</p>` + upNextHtml;
+    el.innerHTML = levelLine + `<p class="dash-empty">No badges earned yet. Start by adding a scholarship to your tracker!</p>` + upNextHtml;
     return;
   }
 
@@ -519,5 +522,19 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
     window.location.href = 'login.html';
   }
 });
+
+// Dismissible promo card, remembered across visits via localStorage
+// (this is a real production site, not a chat artifact, so
+// localStorage is the right tool here).
+const autofillPromoCard = document.getElementById('autofill-promo-card');
+if (autofillPromoCard) {
+  if (localStorage.getItem('sb_dismissed_autofill_promo') === 'true') {
+    autofillPromoCard.style.display = 'none';
+  }
+  document.getElementById('autofill-promo-dismiss').addEventListener('click', () => {
+    localStorage.setItem('sb_dismissed_autofill_promo', 'true');
+    autofillPromoCard.style.display = 'none';
+  });
+}
 
 loadDashboard();

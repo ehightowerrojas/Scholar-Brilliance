@@ -49,12 +49,14 @@ async function checkApplicationMilestones(submittedCount, userId) {
   }
 }
 
-// Streak Milestones, checked against the real consecutive-day streak
-// (idempotent — safe to call every time the dashboard loads).
+// Streak Milestones, checked against the real consecutive-week streak
+// (idempotent — safe to call every time the dashboard loads). IDs
+// kept as streak_3/7/30 even though the thresholds are now weeks, not
+// days, to avoid touching every place in the app that awards them.
 const STREAK_MILESTONES = [
-  { count: 3, id: 'streak_3' },
-  { count: 7, id: 'streak_7' },
-  { count: 30, id: 'streak_30' },
+  { count: 2, id: 'streak_3' },
+  { count: 4, id: 'streak_7' },
+  { count: 10, id: 'streak_30' },
 ];
 
 async function checkStreakMilestones(streakCount, userId) {
