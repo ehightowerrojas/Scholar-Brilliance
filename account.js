@@ -29,6 +29,7 @@ async function init() {
     document.getElementById('appinfo-card').style.display = 'none';
     document.getElementById('avatar-card').style.display = 'none';
   } else {
+    document.getElementById('school-connection-card').style.display = 'block';
     loadAvatarSection();
   }
 
@@ -58,6 +59,75 @@ async function init() {
       document.getElementById('org-display').value = org.name;
     }
   }
+
+  if (role !== 'staff') {
+    renderSchoolConnection(profile?.org_id);
+  }
+}
+
+function renderSchoolConnection(orgId) {
+  const el = document.getElementById('school-connection-content');
+  if (orgId) {
+    el.innerHTML = `<p class="dash-empty">✓ You're connected to a school through a referral code. Your counselor can see your progress and recommend scholarships to you.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <p class="dash-empty" style="margin-bottom:12px;">Not connected to a school yet. If your counselor gave you a referral code, enter it here to connect your account.</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input type="text" id="referral-code-input" placeholder="Referral code" style="flex:1; min-width:160px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+      <button class="btn btn-gold" id="connect-school-btn" style="padding:10px 20px;">Connect</button>
+    </div>
+    <p id="school-connect-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+  `;
+
+  document.getElementById('connect-school-btn').addEventListener('click', async () => {
+    const code = document.getElementById('referral-code-input').value.trim();
+    const msg = document.getElementById('school-connect-msg');
+    if (!code) return;
+
+    const btn = document.getElementById('connect-school-btn');
+    btn.disabled = true;
+    btn.textContent = 'Connecting…';
+
+    const { data: match, error: lookupError } = await supabaseClient
+      .from('referral_codes')
+      .select('org_id, active, expires_at')
+      .eq('code', code)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (lookupError || !match) {
+      btn.disabled = false;
+      btn.textContent = 'Connect';
+      msg.style.display = 'block';
+      msg.textContent = 'That code isn\'t valid or has been deactivated. Double-check it with your counselor.';
+      msg.style.color = '#c62828';
+      return;
+    }
+
+    if (match.expires_at && new Date(match.expires_at) < new Date()) {
+      btn.disabled = false;
+      btn.textContent = 'Connect';
+      msg.style.display = 'block';
+      msg.textContent = 'That code has expired. Ask your counselor for a new one.';
+      msg.style.color = '#c62828';
+      return;
+    }
+
+    const { error: updateError } = await supabaseClient.from('profiles').update({ org_id: match.org_id }).eq('id', accountUserId);
+
+    btn.disabled = false;
+    btn.textContent = 'Connect';
+    msg.style.display = 'block';
+    if (updateError) {
+      msg.textContent = 'Could not connect right now, try again.';
+      msg.style.color = '#c62828';
+    } else {
+      msg.textContent = 'Connected ✓';
+      msg.style.color = 'var(--teal-deep)';
+      setTimeout(() => renderSchoolConnection(match.org_id), 700);
+    }
+  });
 }
 
 document.getElementById('save-profile-btn').addEventListener('click', async () => {

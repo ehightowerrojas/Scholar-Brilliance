@@ -133,7 +133,7 @@ function renderCatalog(items) {
   el.innerHTML = items.map(item => {
     const gpaMatch = item.min_gpa == null ? ''
       : studentGpa == null
-      ? `<span class="dash-empty" style="font-size:11px;">Requires ${item.min_gpa}+ GPA — add your GPA on Account Settings to see if you qualify</span>`
+      ? `<span class="dash-empty" style="font-size:11px;">Requires ${item.min_gpa}+ GPA. Add your GPA on Account Settings to see if you qualify</span>`
       : studentGpa >= item.min_gpa
       ? `<span style="font-size:11px; font-weight:600; color:var(--teal-deep);">✓ You meet the ${item.min_gpa}+ GPA requirement</span>`
       : `<span style="font-size:11px; font-weight:600; color:#c62828;">Requires ${item.min_gpa}+ GPA (yours: ${studentGpa})</span>`;
