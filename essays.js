@@ -37,7 +37,7 @@ async function init() {
 
   const [{ data: essays, error: essaysErr }, { data: scholarships }] = await Promise.all([
     supabaseClient.from('essays').select('*').eq('user_id', essayUserId).order('updated_at', { ascending: false }),
-    supabaseClient.from('scholarships').select('id, title, status, outcome').eq('user_id', essayUserId),
+    supabaseClient.from('scholarships').select('id, title, status, outcome, essay_prompt').eq('user_id', essayUserId),
   ]);
 
   if (essaysErr) {
@@ -174,6 +174,21 @@ function renderEssays(list) {
 
 // ---- Add/Edit form ----
 const form = document.getElementById('essay-form');
+function updatePromptReference() {
+  const scholarshipId = document.getElementById('essay-scholarship').value;
+  const box = document.getElementById('essay-prompt-reference');
+  const text = document.getElementById('essay-prompt-reference-text');
+  const scholarship = userScholarships.find(s => s.id === scholarshipId);
+
+  if (scholarship?.essay_prompt) {
+    box.style.display = 'block';
+    text.textContent = scholarship.essay_prompt;
+  } else {
+    box.style.display = 'none';
+  }
+}
+document.getElementById('essay-scholarship').addEventListener('change', updatePromptReference);
+
 function openForm(essay) {
   form.style.display = 'block';
   document.getElementById('essay-id').value = essay?.id || '';
@@ -181,6 +196,7 @@ function openForm(essay) {
   document.getElementById('essay-scholarship').value = essay?.scholarship_id || '';
   document.getElementById('essay-content').value = essay?.content || '';
   document.getElementById('essay-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  updatePromptReference();
 }
 document.getElementById('add-toggle-btn').addEventListener('click', () => {
   if (form.style.display === 'none') openForm();
