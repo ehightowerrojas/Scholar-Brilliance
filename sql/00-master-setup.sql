@@ -176,6 +176,16 @@ create policy "Staff can view own organization"
   on public.organizations for select to authenticated
   using (id = public.current_staff_org_id());
 
+-- Lets a student see the name of the org they're linked to (shown as
+-- "Connected to X" on Account Settings). Students previously had no
+-- read access to organizations at all.
+drop policy if exists "Students can view their own linked organization" on public.organizations;
+create policy "Students can view their own linked organization"
+  on public.organizations for select to authenticated
+  using (
+    id in (select org_id from public.profiles where id = auth.uid())
+  );
+
 drop policy if exists "Staff can view own org referral codes" on public.referral_codes;
 create policy "Staff can view own org referral codes"
   on public.referral_codes for select to authenticated
@@ -191,6 +201,17 @@ create policy "Staff can update own org referral codes"
   on public.referral_codes for update to authenticated
   using (org_id = public.current_staff_org_id())
   with check (org_id = public.current_staff_org_id());
+
+-- Lets a student validate a code they type in (e.g. adding one after
+-- signup, on Account Settings), without granting staff-level access
+-- to the table. Scoped to active codes only — an inactive code
+-- shouldn't be discoverable this way. Active codes are meant to be
+-- shared with students anyway, so this isn't a meaningful exposure
+-- beyond what the referral system already assumes.
+drop policy if exists "Any authenticated user can look up an active code" on public.referral_codes;
+create policy "Any authenticated user can look up an active code"
+  on public.referral_codes for select to authenticated
+  using (active = true);
 
 
 -- ============================================================

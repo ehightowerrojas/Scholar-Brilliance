@@ -59,7 +59,7 @@ async function loadDashboard() {
   const twelveWeeksAgo = new Date();
   twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84);
 
-  const [{ data: scholarships, error: schErr }, { data: earnedRows }, { data: achievements }, { data: levels }, { data: profile }, { data: goals }, { data: activityRows }] =
+  const [{ data: scholarships, error: schErr }, { data: earnedRows }, { data: achievements }, { data: levels }, { data: profile }, { data: goals }, { data: activityRows }, { data: recommendations }] =
     await Promise.all([
       supabaseClient.from('scholarships').select('*').eq('user_id', userId),
       supabaseClient.from('user_achievements').select('achievement_id, earned_at').eq('user_id', userId).order('earned_at', { ascending: false }),
@@ -68,6 +68,7 @@ async function loadDashboard() {
       supabaseClient.from('profiles').select('avatar_species_id').eq('id', userId).single(),
       supabaseClient.from('goals').select('*').eq('student_id', userId).order('created_at'),
       supabaseClient.from('weekly_activity').select('week_start').eq('user_id', userId).gte('week_start', twelveWeeksAgo.toISOString().slice(0, 10)),
+      supabaseClient.from('scholarship_recommendations').select('*, scholarships_catalog(*)').eq('student_id', userId),
     ]);
 
   if (schErr) console.error(schErr);
@@ -79,10 +80,41 @@ async function loadDashboard() {
   renderNextStep(goalRows, rows);
   renderGoal(goalRows, rows);
   renderActivityStreak(activityRows || []);
+  renderCounselorPicks(recommendations || []);
   renderStats(rows);
   renderDeadlines(rows);
   renderAchievements(earnedRows || [], achievements || [], levels || []);
   renderActivity(rows);
+}
+
+// ---- Counselor-recommended scholarships, surfaced on the Dashboard
+// itself rather than only living on Browse where a student would
+// have to go looking for them ----
+function renderCounselorPicks(recommendations) {
+  const card = document.getElementById('counselor-picks-card');
+  const el = document.getElementById('counselor-picks-content');
+  const valid = recommendations.filter(r => r.scholarships_catalog);
+  if (valid.length === 0) return; // card stays hidden (display:none from the HTML default)
+
+  card.style.display = 'block';
+  const shown = valid.slice(0, 3);
+  el.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      ${shown.map(r => {
+        const item = r.scholarships_catalog;
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 12px; background:var(--card-soft); border-radius:var(--radius-sm);">
+            <div>
+              <p style="font-size:13.5px; font-weight:600; color:var(--ink); margin:0;">${escapeHtml(item.title)}</p>
+              <p style="font-size:12px; color:var(--muted); margin:2px 0 0;">${fmtMoney(item.amount)}${item.deadline ? ' · due ' + fmtDateShort(item.deadline) : ''}</p>
+            </div>
+            <a href="/browse.html" class="btn btn-line" style="padding:6px 14px; font-size:12.5px; white-space:nowrap;">View</a>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    ${valid.length > 3 ? `<p class="dash-empty" style="margin-top:10px;"><a href="/browse.html" style="color:var(--purple); font-weight:600;">See all ${valid.length} recommendations on Browse →</a></p>` : ''}
+  `;
 }
 
 // ---- Encouraging one-liner under the heading ----
