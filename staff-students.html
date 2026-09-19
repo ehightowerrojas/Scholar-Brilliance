@@ -40,14 +40,23 @@
     <span class="eyebrow">Student progress tracking</span>
     <h1 style="font-size:clamp(24px,3.2vw,32px); margin-top:8px; margin-bottom:24px;">Students in your organization.</h1>
 
-    <div class="role-toggle" role="group" aria-label="Filter students" style="max-width:420px; margin-bottom:24px;">
+    <div class="role-toggle" role="group" aria-label="Filter students" style="max-width:420px; margin-bottom:16px;">
       <button type="button" id="tab-all" aria-pressed="true">All Students</button>
       <button type="button" id="tab-active" aria-pressed="false">Active</button>
       <button type="button" id="tab-new" aria-pressed="false">New (7 days)</button>
     </div>
 
+    <input type="text" id="student-search" placeholder="Search your students by name…" style="width:100%; max-width:420px; padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); margin-bottom:24px;">
+
     <div id="students-list" class="catalog-list">Loading…</div>
   </main>
+
+  <div id="student-modal-backdrop" class="card-modal-backdrop" style="display:none;">
+    <div class="card-modal">
+      <button class="card-modal-close" id="student-modal-close" aria-label="Close">×</button>
+      <div id="student-modal-content">Loading…</div>
+    </div>
+  </div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

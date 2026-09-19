@@ -4,6 +4,7 @@
 
 let allStudents = [];
 let currentFilter = 'all';
+let currentSearch = '';
 let orgCatalog = [];
 let staffId = null;
 
@@ -11,6 +12,10 @@ function renderStudents() {
   let list = allStudents;
   if (currentFilter === 'active') list = list.filter(s => s.stats.total > 0);
   if (currentFilter === 'new') list = list.filter(s => daysAgo(s.created_at) <= 7);
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    list = list.filter(s => (s.full_name || '').toLowerCase().includes(q));
+  }
 
   const el = document.getElementById('students-list');
   if (list.length === 0) {
@@ -18,10 +23,8 @@ function renderStudents() {
     return;
   }
 
-  const catalogOptions = orgCatalog.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
-
   el.innerHTML = list.map(s => `
-    <div class="catalog-card">
+    <div class="catalog-card" data-student-row="${s.id}" style="cursor:pointer;">
       <div class="catalog-card-top">
         <h4>${escapeHtml(s.full_name) || '(No name set)'}</h4>
         <div style="text-align:right;">
@@ -31,96 +34,136 @@ function renderStudents() {
             : `<span style="font-size:11.5px; font-weight:700; color:#c62828;">No recent activity</span>`}
         </div>
       </div>
-      ${s.interests ? `<p class="catalog-desc"><strong>Interests:</strong> ${escapeHtml(s.interests)}</p>` : `<p class="dash-empty" style="margin-top:6px;">No interests set yet.</p>`}
       <div class="stat-grid-mini stat-grid-mini-4">
         <div><strong>${s.stats.inProgress}</strong><span>In Progress</span></div>
         <div><strong>${s.stats.submitted}</strong><span>Submitted</span></div>
         <div><strong>${s.stats.won}</strong><span>Won</span></div>
         <div><strong>${s.stats.total}</strong><span>Total</span></div>
       </div>
-
-      <div class="dash-empty" style="margin-top:12px;">
-        <strong style="color:var(--ink);">Goals:</strong>
-        ${s.goals.length > 0
-          ? s.goals.map(g => `<span style="display:inline-block; margin:4px 6px 0 0;">${escapeHtml(g.name)}: $${Number(g.target_amount).toLocaleString()}${g.target_date ? ' · due ' + fmtDateShort(g.target_date) : ''} ${g.source === 'staff' ? '(set by school)' : '(set by student)'}${g.completed_at ? ' ✓' : ''}</span>`).join('<br>')
-          : ' Not set yet'}
-      </div>
-
-      ${s.recommendations.length > 0 ? `
-        <div style="margin-top:12px;">
-          ${s.recommendations.map(r => `<span class="kanban-badge" style="margin-right:6px;">⭐ ${escapeHtml(r)}</span>`).join('')}
-        </div>` : ''}
-
-      <div class="catalog-card-actions" style="margin-top:14px;">
-        <select id="rec-select-${s.id}" style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
-          <option value="">Recommend a scholarship…</option>
-          ${catalogOptions}
-        </select>
-        <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-recommend="${s.id}">Recommend</button>
-      </div>
-
-      <div class="catalog-card-actions" style="margin-top:10px; flex-wrap:wrap;">
-        <input type="text" id="goal-name-${s.id}" placeholder="Goal name (e.g. STEM scholarships)" style="flex:1; min-width:160px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
-        <input type="number" id="goal-amount-${s.id}" placeholder="Target ($)" min="0" style="width:100px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
-        <input type="date" id="goal-deadline-${s.id}" style="width:140px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
-        <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-assign-goal="${s.id}">Assign goal</button>
-      </div>
-      <p class="dash-empty" id="goal-msg-${s.id}" style="display:none; margin-top:6px; font-size:12px;"></p>
+      <p class="dash-empty" style="margin-top:10px; font-size:12.5px;">Click to view goals, interests, and recommend a scholarship →</p>
     </div>
   `).join('');
 
-  document.querySelectorAll('[data-assign-goal]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const studentId = btn.dataset.assignGoal;
-      const name = document.getElementById(`goal-name-${studentId}`).value.trim();
-      const amount = Number(document.getElementById(`goal-amount-${studentId}`).value);
-      const deadline = document.getElementById(`goal-deadline-${studentId}`).value || null;
-      const msg = document.getElementById(`goal-msg-${studentId}`);
-      if (!name || !amount || amount <= 0) return;
-
-      btn.disabled = true;
-      const { error } = await supabaseClient.from('goals')
-        .insert({ student_id: studentId, name, target_amount: amount, target_date: deadline, source: 'staff', created_by: staffId });
-      btn.disabled = false;
-
-      msg.style.display = 'block';
-      if (error) {
-        console.error(error);
-        msg.textContent = 'Could not assign this goal, please try again.';
-        msg.style.color = '#c62828';
-        return;
-      }
-      msg.textContent = 'Goal assigned ✓';
-      msg.style.color = 'var(--teal-deep)';
-      await awardAchievement('goal_setter', studentId);
-      setTimeout(loadStudents, 900);
-    });
-  });
-
-  document.querySelectorAll('[data-recommend]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const studentId = btn.dataset.recommend;
-      const select = document.getElementById(`rec-select-${studentId}`);
-      const catalogId = select.value;
-      if (!catalogId) return;
-
-      btn.disabled = true;
-      const { error } = await supabaseClient.from('scholarship_recommendations').insert({
-        student_id: studentId,
-        catalog_id: catalogId,
-        recommended_by: staffId,
-      });
-      btn.disabled = false;
-
-      if (error) {
-        console.error(error);
-        return;
-      }
-      select.value = '';
-      loadStudents();
-    });
+  document.querySelectorAll('[data-student-row]').forEach(row => {
+    row.addEventListener('click', () => openStudentModal(row.dataset.studentRow));
   });
 }
+
+function openStudentModal(studentId) {
+  const s = allStudents.find(st => st.id === studentId);
+  if (!s) return;
+
+  const catalogOptions = orgCatalog.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+  const content = document.getElementById('student-modal-content');
+
+  content.innerHTML = `
+    <h3 style="margin-bottom:4px;">${escapeHtml(s.full_name) || '(No name set)'}</h3>
+    <p class="dash-empty" style="margin-bottom:16px;">Joined ${new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} · ${s.streak > 0 ? `🔥 ${s.streak} week${s.streak === 1 ? '' : 's'} active` : 'No recent activity'}</p>
+
+    ${s.interests ? `<p class="catalog-desc"><strong>Interests:</strong> ${escapeHtml(s.interests)}</p>` : `<p class="dash-empty">No interests set yet.</p>`}
+
+    <div class="stat-grid-mini stat-grid-mini-4" style="margin-top:14px;">
+      <div><strong>${s.stats.inProgress}</strong><span>In Progress</span></div>
+      <div><strong>${s.stats.submitted}</strong><span>Submitted</span></div>
+      <div><strong>${s.stats.won}</strong><span>Won</span></div>
+      <div><strong>${s.stats.total}</strong><span>Total</span></div>
+    </div>
+
+    <div class="dash-empty" style="margin-top:14px;">
+      <strong style="color:var(--ink);">Goals:</strong>
+      ${s.goals.length > 0
+        ? s.goals.map(g => `<span style="display:inline-block; margin:4px 6px 0 0;">${escapeHtml(g.name)}: $${Number(g.target_amount).toLocaleString()}${g.target_date ? ' · due ' + fmtDateShort(g.target_date) : ''} ${g.source === 'staff' ? '(set by school)' : '(set by student)'}${g.completed_at ? ' ✓' : ''}</span>`).join('<br>')
+        : ' Not set yet'}
+    </div>
+
+    ${s.recommendations.length > 0 ? `
+      <div style="margin-top:12px;">
+        ${s.recommendations.map(r => `<span class="kanban-badge" style="margin-right:6px;">⭐ ${escapeHtml(r)}</span>`).join('')}
+      </div>` : ''}
+
+    <div class="catalog-card-actions" style="margin-top:16px;">
+      <select id="rec-select-${s.id}" style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+        <option value="">Recommend a scholarship…</option>
+        ${catalogOptions}
+      </select>
+      <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-recommend="${s.id}">Recommend</button>
+    </div>
+
+    <div class="catalog-card-actions" style="margin-top:10px; flex-wrap:wrap;">
+      <input type="text" id="goal-name-${s.id}" placeholder="Goal name (e.g. STEM scholarships)" style="flex:1; min-width:160px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+      <input type="number" id="goal-amount-${s.id}" placeholder="Target ($)" min="0" style="width:100px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+      <input type="date" id="goal-deadline-${s.id}" style="width:140px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+      <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-assign-goal="${s.id}">Assign goal</button>
+    </div>
+    <p class="dash-empty" id="goal-msg-${s.id}" style="display:none; margin-top:6px; font-size:12px;"></p>
+  `;
+
+  document.getElementById('student-modal-backdrop').style.display = 'flex';
+  wireStudentModalActions(s.id);
+}
+
+function closeStudentModal() {
+  document.getElementById('student-modal-backdrop').style.display = 'none';
+}
+document.getElementById('student-modal-close').addEventListener('click', closeStudentModal);
+document.getElementById('student-modal-backdrop').addEventListener('click', (e) => {
+  if (e.target.id === 'student-modal-backdrop') closeStudentModal();
+});
+
+function wireStudentModalActions(studentId) {
+  const assignBtn = document.querySelector(`[data-assign-goal="${studentId}"]`);
+  if (assignBtn) assignBtn.addEventListener('click', async () => {
+    const name = document.getElementById(`goal-name-${studentId}`).value.trim();
+    const amount = Number(document.getElementById(`goal-amount-${studentId}`).value);
+    const deadline = document.getElementById(`goal-deadline-${studentId}`).value || null;
+    const msg = document.getElementById(`goal-msg-${studentId}`);
+    if (!name || !amount || amount <= 0) return;
+
+    assignBtn.disabled = true;
+    const { error } = await supabaseClient.from('goals')
+      .insert({ student_id: studentId, name, target_amount: amount, target_date: deadline, source: 'staff', created_by: staffId });
+    assignBtn.disabled = false;
+
+    msg.style.display = 'block';
+    if (error) {
+      console.error(error);
+      msg.textContent = 'Could not assign this goal, please try again.';
+      msg.style.color = '#c62828';
+      return;
+    }
+    msg.textContent = 'Goal assigned ✓';
+    msg.style.color = 'var(--teal-deep)';
+    await awardAchievement('goal_setter', studentId);
+    setTimeout(async () => { await loadStudents(); openStudentModal(studentId); }, 900);
+  });
+
+  const recommendBtn = document.querySelector(`[data-recommend="${studentId}"]`);
+  if (recommendBtn) recommendBtn.addEventListener('click', async () => {
+    const select = document.getElementById(`rec-select-${studentId}`);
+    const catalogId = select.value;
+    if (!catalogId) return;
+
+    recommendBtn.disabled = true;
+    const { error } = await supabaseClient.from('scholarship_recommendations').insert({
+      student_id: studentId,
+      catalog_id: catalogId,
+      recommended_by: staffId,
+    });
+    recommendBtn.disabled = false;
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+    await loadStudents();
+    openStudentModal(studentId);
+  });
+}
+
+document.getElementById('student-search').addEventListener('input', (e) => {
+  currentSearch = e.target.value.trim();
+  renderStudents();
+});
 
 document.getElementById('tab-all').addEventListener('click', () => setFilter('all'));
 document.getElementById('tab-active').addEventListener('click', () => setFilter('active'));
