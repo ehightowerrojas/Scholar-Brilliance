@@ -120,6 +120,7 @@ async function loadBoard() {
 
   if (error) {
     console.error(error);
+    document.querySelector('.kanban-board').innerHTML = `<p class="dash-empty" style="padding:20px;">Could not load your tracker right now: ${error.message}. Try refreshing the page.</p>`;
     return;
   }
 
@@ -243,6 +244,9 @@ addForm.addEventListener('submit', async (e) => {
 
   if (!title) return;
 
+  const msg = document.getElementById('add-scholarship-msg');
+  msg.style.display = 'none';
+
   const { error } = await supabaseClient.from('scholarships').insert({
     user_id: currentUserId,
     title,
@@ -257,6 +261,9 @@ addForm.addEventListener('submit', async (e) => {
 
   if (error) {
     console.error(error);
+    msg.style.display = 'block';
+    msg.style.color = '#c62828';
+    msg.textContent = `Could not save: ${error.message}`;
     return;
   }
 
@@ -330,6 +337,14 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   } finally {
     // Always redirect, even if the server-side sign-out call failed —
     // otherwise a network hiccup makes the button look completely broken.
+    // Belt-and-suspenders: explicitly clear any Supabase session
+    // keys directly, on top of signOut() above. Guards against a
+    // stale session persisting into the next login on this device,
+    // which could otherwise show one account's data under a
+    // different one that just logged in.
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) localStorage.removeItem(key);
+    });
     window.location.href = 'login.html';
   }
 });

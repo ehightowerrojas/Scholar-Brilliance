@@ -88,6 +88,7 @@ function openStudentModal(studentId) {
       </select>
       <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-recommend="${s.id}">Recommend</button>
     </div>
+    <p class="dash-empty" id="recommend-msg-${s.id}" style="display:none; margin-top:6px; font-size:12px;"></p>
 
     <div class="catalog-card-actions" style="margin-top:10px; flex-wrap:wrap;">
       <input type="text" id="goal-name-${s.id}" placeholder="Goal name (e.g. STEM scholarships)" style="flex:1; min-width:160px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
@@ -141,6 +142,7 @@ function wireStudentModalActions(studentId) {
   if (recommendBtn) recommendBtn.addEventListener('click', async () => {
     const select = document.getElementById(`rec-select-${studentId}`);
     const catalogId = select.value;
+    const recMsg = document.getElementById(`recommend-msg-${studentId}`);
     if (!catalogId) return;
 
     recommendBtn.disabled = true;
@@ -153,6 +155,9 @@ function wireStudentModalActions(studentId) {
 
     if (error) {
       console.error(error);
+      recMsg.style.display = 'block';
+      recMsg.style.color = '#c62828';
+      recMsg.textContent = `Could not recommend: ${error.message}`;
       return;
     }
     await loadStudents();

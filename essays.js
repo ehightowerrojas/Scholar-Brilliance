@@ -215,15 +215,30 @@ form.addEventListener('submit', async (e) => {
   const content = document.getElementById('essay-content').value;
   if (!title) return;
 
+  const msg = document.getElementById('essay-save-msg');
+  msg.style.display = 'none';
+
   if (id) {
     const { error } = await supabaseClient.from('essays')
       .update({ title, scholarship_id: scholarshipId, content })
       .eq('id', id).eq('user_id', essayUserId);
-    if (error) { console.error(error); return; }
+    if (error) {
+      console.error(error);
+      msg.style.display = 'block';
+      msg.style.color = '#c62828';
+      msg.textContent = `Could not save: ${error.message}`;
+      return;
+    }
   } else {
     const { error } = await supabaseClient.from('essays')
       .insert({ user_id: essayUserId, title, scholarship_id: scholarshipId, content });
-    if (error) { console.error(error); return; }
+    if (error) {
+      console.error(error);
+      msg.style.display = 'block';
+      msg.style.color = '#c62828';
+      msg.textContent = `Could not save: ${error.message}`;
+      return;
+    }
     await awardAchievement('draft_master', essayUserId);
   }
 
@@ -283,6 +298,14 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   } finally {
     // Always redirect, even if the server-side sign-out call failed —
     // otherwise a network hiccup makes the button look completely broken.
+    // Belt-and-suspenders: explicitly clear any Supabase session
+    // keys directly, on top of signOut() above. Guards against a
+    // stale session persisting into the next login on this device,
+    // which could otherwise show one account's data under a
+    // different one that just logged in.
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) localStorage.removeItem(key);
+    });
     window.location.href = 'login.html';
   }
 });
