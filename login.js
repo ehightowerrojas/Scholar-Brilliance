@@ -142,6 +142,13 @@ els.form.addEventListener('submit', async (e) => {
   els.submitBtn.textContent = mode === 'login' ? 'Logging in…' : 'Creating account…';
 
   if (mode === 'login') {
+    // Defensive: clear any residual session before signing in, in
+    // case a previous session wasn't fully cleared on logout (or the
+    // user navigated here directly without logging out properly).
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) localStorage.removeItem(key);
+    });
+
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
       showMessage(friendlyAuthError(error.message), 'error');
@@ -209,3 +216,41 @@ document.getElementById('resend-confirmation-btn').addEventListener('click', asy
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) window.location.href = landingPageFor(session.user.user_metadata?.role);
 })();
+
+// Aligns the two headings ("Every finished application is a level
+// up." / "Log in to your account") without breaking the vertical
+// centering that makes the page scale correctly on tall viewports.
+// A plain margin-top would get re-absorbed by the flex container's
+// own centering (it would just re-center around the new, taller
+// box), so this uses a transform instead, which shifts the element
+// visually without affecting layout/centering math at all.
+function alignLoginHeadings() {
+  const questHeading = document.getElementById('quest-heading');
+  const formHeading = document.getElementById('form-heading');
+  const questBlock = document.querySelector('.login-quote');
+  const formBlock = document.querySelector('.login-card');
+  if (!questHeading || !formHeading || !questBlock || !formBlock) return;
+
+  // Reset first, so repeated calls (e.g. on resize) measure real
+  // positions rather than compounding a previous correction.
+  questBlock.style.transform = '';
+  formBlock.style.transform = '';
+
+  const questTop = questHeading.getBoundingClientRect().top;
+  const formTop = formHeading.getBoundingClientRect().top;
+  const diff = questTop - formTop;
+
+  if (Math.abs(diff) < 1) return; // already aligned, nothing to do
+  if (diff > 0) {
+    formBlock.style.transform = `translateY(${diff}px)`;
+  } else {
+    questBlock.style.transform = `translateY(${-diff}px)`;
+  }
+}
+
+window.addEventListener('load', alignLoginHeadings);
+let alignResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(alignResizeTimer);
+  alignResizeTimer = setTimeout(alignLoginHeadings, 150);
+});

@@ -219,7 +219,7 @@ async function loadAvatarSection() {
       const { error } = await supabaseClient.from('profiles').update({ avatar_species_id: btn.dataset.equip }).eq('id', accountUserId);
       const msg = document.getElementById('avatar-msg');
       msg.style.display = 'block';
-      msg.textContent = error ? 'Could not equip, try again.' : 'Avatar updated ✓';
+      msg.textContent = error ? `Could not equip: ${error.message}` : 'Avatar updated ✓';
       if (!error) loadAvatarSection();
     });
   });
@@ -310,6 +310,14 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   } catch (err) {
     console.error('Sign out failed, forcing local logout:', err);
   } finally {
+    // Belt-and-suspenders: explicitly clear any Supabase session
+    // keys directly, on top of signOut() above. Guards against a
+    // stale session persisting into the next login on this device,
+    // which could otherwise show one account's data under a
+    // different one that just logged in.
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) localStorage.removeItem(key);
+    });
     window.location.href = 'login.html';
   }
 });
