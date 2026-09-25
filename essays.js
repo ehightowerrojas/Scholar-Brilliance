@@ -124,6 +124,7 @@ function renderEssays(list) {
           <span class="kanban-badge ${badgeClass(status.key)}">${status.label}</span>
         </div>
         <p class="dash-empty" style="margin-top:4px; font-weight:600; color:var(--fg);">${escapeHtml(e.title)}</p>
+        ${e.scholarship?.essay_prompt ? `<p style="font-size:13px; font-style:italic; color:var(--muted); background:var(--card-soft); padding:8px 10px; border-radius:var(--radius-sm); margin-top:8px;"><strong style="font-style:normal;">Prompt:</strong> ${escapeHtml(e.scholarship.essay_prompt)}</p>` : ''}
         <p class="catalog-desc" id="preview-${e.id}">${escapeHtml(preview)}${e.content.length > 160 ? '…' : ''}</p>
         <div class="catalog-card-meta">
           <span>${wordCount(e.content)} words</span>
