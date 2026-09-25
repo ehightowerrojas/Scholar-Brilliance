@@ -369,6 +369,17 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 .hero-proof span{ font-size:12.5px; font-family:var(--font-body); color:rgba(255,255,255,0.7); }
 
 /* ---- quest path signature visual ---- */
+.hero-photo{
+  position:relative;
+  border-radius:32px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.18);
+  aspect-ratio:3/4;
+  max-width:82%;
+  margin-left:auto;
+  margin-right:auto;
+  box-shadow:0 20px 50px rgba(0,0,0,0.25);
+}
 .quest{
   position:relative;
   background:rgba(255,255,255,0.07);
