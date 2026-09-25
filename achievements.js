@@ -110,6 +110,14 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   } finally {
     // Always redirect, even if the server-side sign-out call failed —
     // otherwise a network hiccup makes the button look completely broken.
+    // Belt-and-suspenders: explicitly clear any Supabase session
+    // keys directly, on top of signOut() above. Guards against a
+    // stale session persisting into the next login on this device,
+    // which could otherwise show one account's data under a
+    // different one that just logged in.
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) localStorage.removeItem(key);
+    });
     window.location.href = 'login.html';
   }
 });

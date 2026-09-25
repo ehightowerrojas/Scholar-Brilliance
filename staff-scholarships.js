@@ -88,7 +88,12 @@ async function loadScholarships() {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.toggleActive;
       const isActive = btn.dataset.active === 'true';
-      await supabaseClient.from('scholarships_catalog').update({ active: !isActive }).eq('id', id);
+      const { error } = await supabaseClient.from('scholarships_catalog').update({ active: !isActive }).eq('id', id);
+      if (error) {
+        console.error(error);
+        alert(`Could not update: ${error.message}`);
+        return;
+      }
       loadScholarships();
     });
   });
@@ -96,7 +101,12 @@ async function loadScholarships() {
   document.querySelectorAll('[data-delete-scholarship]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.deleteScholarship;
-      await supabaseClient.from('scholarships_catalog').delete().eq('id', id);
+      const { error } = await supabaseClient.from('scholarships_catalog').delete().eq('id', id);
+      if (error) {
+        console.error(error);
+        alert(`Could not delete: ${error.message}`);
+        return;
+      }
       loadScholarships();
     });
   });
@@ -117,6 +127,11 @@ addForm.addEventListener('submit', async (e) => {
   const title = document.getElementById('s-title').value.trim();
   if (!title) return;
 
+  const msg = document.getElementById('add-scholarship-msg');
+  const submitBtn = addForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  msg.style.display = 'none';
+
   const { error } = await supabaseClient.from('scholarships_catalog').insert({
     org_id: staffOrgId,
     title,
@@ -127,12 +142,24 @@ addForm.addEventListener('submit', async (e) => {
     min_gpa: document.getElementById('s-min-gpa').value || null,
   });
 
+  submitBtn.disabled = false;
+
   if (error) {
     console.error(error);
+    msg.style.display = 'block';
+    msg.style.color = '#c62828';
+    msg.textContent = `Could not save: ${error.message}`;
     return;
   }
+
+  msg.style.display = 'block';
+  msg.style.color = 'var(--teal-deep)';
+  msg.textContent = 'Saved ✓';
   addForm.reset();
-  addForm.style.display = 'none';
+  setTimeout(() => {
+    addForm.style.display = 'none';
+    msg.style.display = 'none';
+  }, 900);
   loadScholarships();
 });
 

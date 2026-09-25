@@ -485,17 +485,17 @@ create policy "Staff can delete catalog items for own org"
   on public.scholarships_catalog for delete to authenticated
   using (org_id = public.current_staff_org_id());
 
--- Sample seed data — fixed to actually be idempotent. The original
--- version used "on conflict do nothing" with no unique constraint to
--- match against, meaning it would have silently duplicated on every
--- re-run; this uses a real existence check instead.
-insert into public.scholarships_catalog (org_name, title, description, amount, deadline, website)
-select 'Sample Educational Foundation', 'Future Leaders Scholarship', 'Support for students demonstrating exceptional leadership skills and community involvement.', 4500, '2027-09-01', 'https://example.org/future-leaders'
-where not exists (select 1 from public.scholarships_catalog where title = 'Future Leaders Scholarship');
-
-insert into public.scholarships_catalog (org_name, title, description, amount, deadline, website)
-select 'Sample Educational Foundation', 'First-Generation College Student Grant', 'Financial aid for students who are the first in their family to attend college.', 6000, '2027-07-15', 'https://example.org/first-gen-grant'
-where not exists (select 1 from public.scholarships_catalog where title = 'First-Generation College Student Grant');
+-- Sample seed data has been removed entirely — this was demo/
+-- placeholder data ("Sample Educational Foundation") that had no
+-- business being visible to real users. If you're setting up a fresh
+-- database and want example data to test with, add it manually
+-- through the Scholarship Manager UI instead.
+--
+-- Also actively removes the two demo rows if an earlier run of this
+-- script already inserted them — otherwise they'd stay in the
+-- database forever even after this update, since simply not
+-- re-inserting them doesn't remove what's already there.
+delete from public.scholarships_catalog where org_name = 'Sample Educational Foundation' and org_id is null;
 
 
 -- ============================================================
@@ -829,16 +829,30 @@ on conflict (id) do nothing;
 -- genuinely happens on a weekly cadence, not a daily one. Renaming
 -- rather than dropping/recreating preserves existing activity data.
 
-create table if not exists public.daily_activity (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  activity_date date not null default current_date,
-  created_at timestamptz not null default now(),
-  unique (user_id, activity_date)
-);
-
-alter table if exists public.daily_activity rename to weekly_activity;
-alter table if exists public.weekly_activity rename column activity_date to week_start;
+do $$
+begin
+  if to_regclass('public.weekly_activity') is null then
+    if to_regclass('public.daily_activity') is null then
+      execute '
+        create table public.daily_activity (
+          id uuid primary key default gen_random_uuid(),
+          user_id uuid not null references auth.users(id) on delete cascade,
+          activity_date date not null default current_date,
+          created_at timestamptz not null default now(),
+          unique (user_id, activity_date)
+        )
+      ';
+    end if;
+    execute 'alter table public.daily_activity rename to weekly_activity';
+    execute 'alter table public.weekly_activity rename column activity_date to week_start';
+  elsif to_regclass('public.daily_activity') is not null then
+    -- Dangling leftover from an earlier failed run of this exact
+    -- migration (create succeeded, then rename failed because
+    -- weekly_activity already existed) — safe to drop since it's
+    -- guaranteed empty in that scenario.
+    execute 'drop table public.daily_activity';
+  end if;
+end $$;
 
 -- Drop the OLD constraints FIRST, before touching any data — renaming
 -- a table/column doesn't drop its constraints, and two separate
@@ -978,6 +992,142 @@ alter table public.profiles add constraint profiles_interests_check
 alter table public.organizations drop constraint if exists organizations_name_check;
 alter table public.organizations add constraint organizations_name_check
   check (length(name) > 0 and length(name) <= 200);
+
+-- ============================================================
+-- SECTION 12 — Classes, Named Invites & Seat Pools (Phase 1)
+-- ============================================================
+-- Phase 1 covers everything that doesn't require live payment
+-- processing: the data model, classes, named invites, CSV-driven
+-- bulk invites, and seat tracking. Actual seat purchasing, org
+-- subscription billing, and the automated grace-period/lapse
+-- workflow (Workflow 4) need Stripe (or similar) wired up first —
+-- that's Phase 2, deliberately not built here.
+
+-- Seat pool: nullable on purpose. Existing orgs have no seat concept
+-- yet, and null means "no limit set" so nothing breaks for them
+-- until a real number is entered.
+alter table public.organizations add column if not exists seats_purchased integer;
+alter table public.organizations drop constraint if exists organizations_seats_check;
+alter table public.organizations add constraint organizations_seats_check
+  check (seats_purchased is null or seats_purchased >= 0);
+
+create table if not exists public.classes (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.organizations(id) on delete cascade,
+  counselor_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  term text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.classes drop constraint if exists classes_name_check;
+alter table public.classes add constraint classes_name_check
+  check (length(name) > 0 and length(name) <= 150);
+
+alter table public.classes enable row level security;
+
+drop policy if exists "Staff can manage classes in their own org" on public.classes;
+create policy "Staff can manage classes in their own org"
+  on public.classes for all to authenticated
+  using (org_id = public.current_staff_org_id())
+  with check (org_id = public.current_staff_org_id());
+
+-- Student-side additions. class_id/is_org_member are the
+-- "who coached this student" facts — kept separate from billing so
+-- Phase 2's lapse workflow can flip is_org_member without ever
+-- touching roster/attribution history (the core design principle
+-- from the source proposal: attribution and billing are two
+-- separate fields, never conflated).
+alter table public.profiles add column if not exists class_id uuid references public.classes(id) on delete set null;
+alter table public.profiles add column if not exists is_org_member boolean not null default true;
+alter table public.profiles add column if not exists coverage_at_risk boolean not null default false;
+
+create table if not exists public.pending_students (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.organizations(id) on delete cascade,
+  counselor_id uuid not null references auth.users(id) on delete cascade,
+  class_id uuid references public.classes(id) on delete set null,
+  email text not null,
+  full_name text,
+  invite_token uuid not null default gen_random_uuid() unique,
+  status text not null default 'invited' check (status in ('invited','accepted')),
+  created_at timestamptz not null default now()
+);
+
+alter table public.pending_students drop constraint if exists pending_students_email_check;
+alter table public.pending_students add constraint pending_students_email_check
+  check (length(email) > 0 and length(email) <= 255);
+
+alter table public.pending_students enable row level security;
+
+drop policy if exists "Staff can manage pending students in their own org" on public.pending_students;
+create policy "Staff can manage pending students in their own org"
+  on public.pending_students for all to authenticated
+  using (org_id = public.current_staff_org_id())
+  with check (org_id = public.current_staff_org_id());
+
+-- Extend the signup trigger to also resolve an invite_token (named
+-- invite / CSV row), the same server-side way it already resolves a
+-- referral_code — no client-side RLS lookup needed for an
+-- unauthenticated visitor, since this runs security definer at
+-- signup time. An invite_token sets org_id, counselor_id, AND
+-- class_id all at once (a referral code only ever set org_id),
+-- and marks the pending_students row accepted.
+create or replace function public.handle_new_user()
+returns trigger
+security definer
+set search_path = public
+as $$
+declare
+  v_org_id uuid;
+  v_counselor_id uuid;
+  v_class_id uuid;
+  v_role text;
+  v_org_name text;
+  v_referral_code text;
+  v_invite_token text;
+  v_pending_id uuid;
+begin
+  v_role := coalesce(new.raw_user_meta_data->>'role', 'student');
+  v_org_name := new.raw_user_meta_data->>'org_name';
+  v_referral_code := new.raw_user_meta_data->>'referral_code';
+  v_invite_token := new.raw_user_meta_data->>'invite_token';
+
+  if v_role = 'staff' then
+    if v_org_name is not null and length(trim(v_org_name)) > 0 then
+      insert into public.organizations (name, created_by)
+      values (trim(v_org_name), new.id)
+      returning id into v_org_id;
+    end if;
+  else
+    if v_invite_token is not null and v_invite_token ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+      select id, org_id, counselor_id, class_id
+        into v_pending_id, v_org_id, v_counselor_id, v_class_id
+        from public.pending_students
+        where invite_token = trim(v_invite_token)::uuid
+          and status = 'invited'
+        limit 1;
+
+      if v_pending_id is not null then
+        update public.pending_students set status = 'accepted' where id = v_pending_id;
+      end if;
+    elsif v_referral_code is not null and length(trim(v_referral_code)) > 0 then
+      select org_id into v_org_id
+        from public.referral_codes
+        where code = trim(v_referral_code)
+          and active = true
+          and (expires_at is null or expires_at >= current_date)
+        limit 1;
+    end if;
+  end if;
+
+  insert into public.profiles (id, full_name, role, org_id, class_id)
+  values (new.id, new.raw_user_meta_data->>'full_name', v_role, v_org_id, v_class_id);
+
+  return new;
+end;
+$$ language plpgsql;
+
 
 -- ============================================================
 -- Done. Kept separate on purpose:

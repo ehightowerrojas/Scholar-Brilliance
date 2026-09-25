@@ -37,6 +37,15 @@ function wireLogout() {
     } catch (err) {
       console.error('Sign out failed, forcing local logout:', err);
     } finally {
+      // Belt-and-suspenders: explicitly clear any Supabase session
+      // keys directly, on top of signOut() above. Guards against a
+      // stale session persisting into the next login on this device
+      // (e.g. from a multi-tab sync quirk), which could otherwise
+      // show one account's data under a different one that just
+      // logged in.
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) localStorage.removeItem(key);
+      });
       window.location.href = 'login.html';
     }
   });

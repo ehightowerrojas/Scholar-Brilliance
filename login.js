@@ -30,6 +30,7 @@ const els = {
 
 let mode = 'login';           // 'login' | 'signup'
 let selectedRole = 'student'; // 'student' | 'staff'
+const inviteToken = new URLSearchParams(window.location.search).get('invite');
 
 function landingPageFor(role) {
   return role === 'staff' ? 'staff-dashboard.html' : 'dashboard.html';
@@ -167,6 +168,7 @@ els.form.addEventListener('submit', async (e) => {
           role: selectedRole,
           org_name: selectedRole === 'staff' ? els.orgInput.value.trim() : null,
           referral_code: selectedRole === 'student' ? els.referralInput.value.trim() : null,
+          invite_token: inviteToken || null,
         },
       },
     });
@@ -216,6 +218,13 @@ document.getElementById('resend-confirmation-btn').addEventListener('click', asy
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) window.location.href = landingPageFor(session.user.user_metadata?.role);
 })();
+
+// An invite link (?invite=token) always means a student signing up.
+if (inviteToken) {
+  setRole('student');
+  setMode('signup');
+  showMessage("You've been invited by your school — just set a password to finish joining.", 'success');
+}
 
 // Aligns the two headings ("Every finished application is a level
 // up." / "Log in to your account") without breaking the vertical

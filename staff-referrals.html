@@ -20,7 +20,7 @@
     <span style="padding:0 8px 16px; margin-top:-16px; color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">Counselor</span>
     <nav class="sidebar-nav">
       <a href="/staff-dashboard.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
-      <a href="/staff-referrals.html" class="sidebar-link is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><path d="M10.5 9.5l3 3"/></svg>Referral Codes</a>
+      <a href="/staff-referrals.html" class="sidebar-link is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><path d="M10.5 9.5l3 3"/></svg>Add Students</a>
       <a href="/staff-students.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Student Progress</a>
       <a href="/staff-scholarships.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6L3 9l6-1z"/></svg>Scholarships</a>
       <a href="/account.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>Account</a>
@@ -32,13 +32,80 @@
     <header class="app-header">
       <div style="display:flex; align-items:center;">
         <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Open menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-        <span class="app-header-crumb">Referral Codes</span>
+        <span class="app-header-crumb">Add Students</span>
       </div>
     </header>
 
-    <main class="app-main" style="max-width:800px;">
-    <span class="eyebrow">Manage referral codes</span>
-    <h1 style="font-size:clamp(24px,3.2vw,32px); margin-top:8px; margin-bottom:28px;">Generate and manage referral codes for student registration.</h1>
+    <main class="app-main" style="max-width:900px;">
+    <span class="eyebrow">Add students</span>
+    <h1 style="font-size:clamp(24px,3.2vw,32px); margin-top:8px; margin-bottom:28px;">Bring students into your organization.</h1>
+
+    <div class="dash-card" style="margin-bottom:24px;">
+      <h3>Seats</h3>
+      <div id="seats-content">Loading…</div>
+    </div>
+
+    <div class="dash-grid-2" style="margin-bottom:24px;">
+      <div class="dash-card">
+        <h3>Your Classes</h3>
+        <div id="classes-list">Loading…</div>
+      </div>
+      <div class="dash-card">
+        <h3>New Class</h3>
+        <div class="field" style="margin-top:0;">
+          <label for="class-name-input">Class name</label>
+          <input type="text" id="class-name-input" placeholder="e.g. Fall 2026 Seniors">
+        </div>
+        <div class="field">
+          <label for="class-term-input">Term (optional)</label>
+          <input type="text" id="class-term-input" placeholder="e.g. Fall 2026">
+        </div>
+        <button class="btn btn-teal btn-block" id="create-class-btn" style="margin-top:12px;">Create Class</button>
+        <p id="create-class-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+      </div>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:24px;">
+      <h3>Invite a Student</h3>
+      <p class="dash-empty" style="margin-bottom:14px;">Reserves a seat immediately and sends the student a link to accept — you'll always know who's in and who hasn't joined yet, without a code floating around uncapped.</p>
+      <div class="add-form-grid">
+        <div class="field">
+          <label for="invite-name-input">Student name (optional)</label>
+          <input type="text" id="invite-name-input" placeholder="Jane Doe">
+        </div>
+        <div class="field">
+          <label for="invite-email-input">Student email</label>
+          <input type="email" id="invite-email-input" placeholder="jane@school.edu" required>
+        </div>
+        <div class="field">
+          <label for="invite-class-select">Class (optional)</label>
+          <select id="invite-class-select">
+            <option value="">No specific class</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-teal" id="send-invite-btn" style="margin-top:12px; padding:10px 20px;">Send Invite</button>
+      <p id="invite-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:24px;">
+      <h3>Bulk Import (CSV)</h3>
+      <p class="dash-empty" style="margin-bottom:14px;">Upload a CSV with <strong>name</strong> and <strong>email</strong> columns. Checked against your available seats before anything is imported — if there aren't enough seats for the whole file, nothing is imported and you'll see exactly how many you're short.</p>
+      <div class="field" style="margin-top:0;">
+        <label for="csv-class-select">Assign to class (optional)</label>
+        <select id="csv-class-select">
+          <option value="">No specific class</option>
+        </select>
+      </div>
+      <input type="file" id="csv-file-input" accept=".csv" style="margin-top:8px;">
+      <button class="btn btn-teal" id="csv-upload-btn" style="margin-top:12px; padding:10px 20px;">Import CSV</button>
+      <div id="csv-msg" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:24px;">
+      <h3>Pending Invites</h3>
+      <div id="pending-list">Loading…</div>
+    </div>
 
     <div class="dash-grid-2" style="margin-bottom:28px;">
       <div class="dash-card">
@@ -57,20 +124,18 @@
     </div>
 
     <div class="dash-card">
-      <strong style="font-size:13.5px;">How to use referral codes</strong>
-      <ol style="margin-top:12px; padding-left:18px; color:var(--muted); font-size:13px; display:flex; flex-direction:column; gap:6px;">
-        <li>Generate a new referral code using the form above.</li>
-        <li>Share the code with your students.</li>
-        <li>Students enter the code when creating their account.</li>
-        <li>The code links that student to your organization automatically.</li>
-      </ol>
-      <p class="dash-empty" style="margin-top:14px;">⚠️ For security, deactivate codes that are no longer in use.</p>
+      <strong style="font-size:13.5px;">Which should I use?</strong>
+      <p class="dash-empty" style="margin-top:10px;"><strong style="color:var(--ink);">Invites / CSV</strong> — best when you want an accurate, live roster: you'll always know exactly who's joined and who hasn't, and seats are reserved the moment you send the invite, not left uncapped.</p>
+      <p class="dash-empty" style="margin-top:8px;"><strong style="color:var(--ink);">Referral codes</strong> — simplest for low-friction, verbal/handout distribution, but a code can be shared beyond who you intended, so there's less certainty about who's actually using it.</p>
+      <p class="dash-empty" style="margin-top:14px;">⚠️ For security, deactivate referral codes that are no longer in use.</p>
     </div>
   </main>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="/config.js"></script>
+<script src="/utils.js"></script>
 <script src="/supabase-client.js"></script>
 <script src="/staff-common.js"></script>
 <script src="/formatters.js"></script>
