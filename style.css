@@ -152,6 +152,13 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   transition:background .25s ease;
   pointer-events:none;
 }
+/* For standalone pages (about, privacy, terms) with no dark hero
+   behind the nav to give the white brand text contrast - a gradient
+   across the whole bar rather than a shadow on just the text, so
+   everything in the nav benefits consistently. */
+.site-nav--shadowed{
+  background:linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0));
+}
 .site-nav .brand, .site-nav .nav-cta{ pointer-events:auto; }
 .site-nav .brand{ transition:background .25s ease, padding .25s ease; }
 .site-nav .nav-cta{ transition:background .25s ease, padding .25s ease, box-shadow .25s ease; }
@@ -171,7 +178,7 @@ a:focus-visible, button:focus-visible, input:focus-visible{
   display:flex; align-items:center; justify-content:space-between;
   height:76px;
 }
-.site-nav .brand{ color:var(--white); transition:color .25s ease; text-shadow:0 1px 4px rgba(0,0,0,0.45); }
+.site-nav .brand{ color:var(--white); transition:color .25s ease; }
 .site-subnav{
   position:absolute; top:0; left:0; right:0; z-index:40;
   height:76px;
