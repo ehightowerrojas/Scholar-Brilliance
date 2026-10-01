@@ -24,6 +24,16 @@ async function init() {
   document.getElementById('role-display').value = role === 'staff' ? 'Counselor' : 'Student';
   document.getElementById('full-name-input').value = session.user.user_metadata?.full_name || '';
 
+  const deleteLink = document.getElementById('delete-account-link');
+  const deleteSubject = encodeURIComponent('Account deletion request');
+  const deleteBody = encodeURIComponent(`I would like to request deletion of my Scholar Brilliance account.\n\nEmail: ${session.user.email}\nAccount ID: ${accountUserId}`);
+  deleteLink.href = `mailto:evangel@scholarbrilliance.com?subject=${deleteSubject}&body=${deleteBody}`;
+  deleteLink.addEventListener('click', (e) => {
+    if (!confirm('This will open an email requesting permanent deletion of your account and all its data. This action, once processed, is irreversible. Continue?')) {
+      e.preventDefault();
+    }
+  });
+
   if (role === 'staff') {
     document.getElementById('privacy-card').style.display = 'none';
     document.getElementById('appinfo-card').style.display = 'none';

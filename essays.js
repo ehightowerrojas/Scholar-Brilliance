@@ -167,7 +167,13 @@ function renderEssays(list) {
 
   document.querySelectorAll('[data-delete]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      await supabaseClient.from('essays').delete().eq('id', btn.dataset.delete).eq('user_id', essayUserId);
+      if (!confirm('Delete this essay? This action is irreversible and cannot be undone.')) return;
+      const { error } = await supabaseClient.from('essays').delete().eq('id', btn.dataset.delete).eq('user_id', essayUserId);
+      if (error) {
+        console.error(error);
+        alert(`Could not delete: ${error.message}`);
+        return;
+      }
       init();
     });
   });
@@ -288,7 +294,15 @@ function downloadEssayPDF(title, content) {
   });
 
   const filename = (title || 'essay').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  doc.save(`${filename}.pdf`);
+  const blob = doc.output('blob');
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 document.getElementById('logout-btn').addEventListener('click', async () => {

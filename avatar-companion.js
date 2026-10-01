@@ -13,7 +13,7 @@
 function renderCompanionFromData() {
   const el = document.getElementById('avatar-companion');
   if (!el || !window.__sbAvatarData) return;
-  el.innerHTML = renderAvatarSVG(window.__sbAvatarData.speciesId, window.__sbAvatarData.tier, 64);
+  el.innerHTML = renderAvatarSVG(window.__sbAvatarData.speciesId, window.__sbAvatarData.tier, 38);
 }
 
 async function loadCompanionAvatar() {
@@ -44,7 +44,7 @@ async function loadCompanionAvatar() {
   (levels || []).forEach(l => { if (totalXP >= l.xp_threshold) currentLevel = l; });
   const tier = evolutionTierFromLevel(currentLevel.level_number);
 
-  el.innerHTML = renderAvatarSVG(profile?.avatar_species_id || 'raptor', tier, 64);
+  el.innerHTML = renderAvatarSVG(profile?.avatar_species_id || 'raptor', tier, 38);
 }
 
 function celebrateCompanion() {

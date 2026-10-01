@@ -36,6 +36,7 @@
         <span class="app-header-crumb">Dashboard</span>
       </div>
       <div class="app-header-right">
+        <div id="avatar-companion" class="avatar-companion" aria-hidden="true"></div>
         <span class="app-header-stat">🔥 <span id="header-streak">–</span></span>
         <span class="app-header-stat">⭐ <span id="header-xp">–</span> XP</span>
       </div>
@@ -67,7 +68,7 @@
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
         <div>
           <span class="beta-tag" style="margin-left:0;">Available now (beta)</span>
-          <h3 style="margin-top:10px; margin-bottom:6px; color:var(--purple);">⚡ Autofill for real scholarship forms</h3>
+          <h3 style="margin-top:10px; margin-bottom:6px; color:var(--purple);">Autofill for real scholarship forms</h3>
           <p class="dash-empty">Build an application in the Application Builder, then send it to the Scholar Brilliance Autofill browser extension. It fills the real scholarship form's fields for you. You still review everything and hit submit yourself, every time. <a href="/application.html" style="color:var(--purple); font-weight:600;">Try it from a tracked scholarship →</a></p>
         </div>
       </div>
@@ -85,7 +86,7 @@
     </div>
 
     <div class="dash-card motion-in" style="margin-bottom:24px; display:none; border-color:var(--purple); animation-delay:0.24s;" id="counselor-picks-card">
-      <h3>🎓 Picked for you by your counselor</h3>
+      <h3>Picked for you by your counselor</h3>
       <div id="counselor-picks-content"></div>
     </div>
 
@@ -112,8 +113,7 @@
 
     </main>
 
-    <div id="avatar-companion" class="avatar-companion" aria-hidden="true"></div>
-  </div>
+      </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config.js"></script>

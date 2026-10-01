@@ -1145,15 +1145,17 @@ footer.site-footer{
   display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:24px;
 }
 .stat-chip{
-  background:var(--card); border:1px solid var(--line); border-radius:var(--radius-md);
-  padding:16px 18px; border-top:3px solid var(--line);
+  background:var(--line); border:1px solid var(--line); border-radius:var(--radius-md);
+  padding:16px 18px;
   display:flex; flex-direction:column; gap:2px;
 }
-.stat-chip.purple{ border-top-color:var(--purple); }
-.stat-chip.teal{ border-top-color:var(--teal); }
-.stat-chip.amber{ border-top-color:var(--amber); }
+.stat-chip.purple{ background:var(--purple); border-color:var(--purple); }
+.stat-chip.teal{ background:var(--teal-deep); border-color:var(--teal-deep); }
+.stat-chip.amber{ background:var(--amber-text); border-color:var(--amber-text); }
 .stat-chip strong{ font-family:var(--font-accent); font-weight:800; font-size:24px; color:var(--ink); }
+.stat-chip.purple strong, .stat-chip.teal strong, .stat-chip.amber strong{ color:var(--white); }
 .stat-chip span{ font-size:12px; color:var(--muted); }
+.stat-chip.purple span, .stat-chip.teal span, .stat-chip.amber span{ color:rgba(255,255,255,0.9); }
 
 .stat-grid-mini{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .stat-grid-mini-4{ grid-template-columns:repeat(4, 1fr); margin-top:14px; }
@@ -1183,10 +1185,8 @@ footer.site-footer{
 }
 
 .avatar-companion{
-  position:fixed;
-  bottom:24px; right:24px;
-  width:64px; height:64px;
-  z-index:50;
+  width:38px; height:38px;
+  flex-shrink:0;
   pointer-events:none;
   animation:companion-idle 2.6s ease-in-out infinite;
 }
@@ -1205,9 +1205,7 @@ footer.site-footer{
   80%{ transform:scale(1.15) rotate(8deg); }
   100%{ transform:scale(1) rotate(0deg); }
 }
-@media (max-width:640px){
-  .avatar-companion{ width:48px; height:48px; bottom:16px; right:16px; }
-}
+
 
 .goal-chip-row{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
 .goal-chip{

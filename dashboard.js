@@ -196,7 +196,7 @@ function renderNextStep(goalRows, rows) {
     };
   } else {
     step = {
-      title: `🎉 You've won ${won} scholarship${won > 1 ? 's' : ''}!`,
+      title: `You've won ${won} scholarship${won > 1 ? 's' : ''}!`,
       body: "Keep the streak going. Find your next match and add it to your tracker.",
       cta: 'Browse scholarships',
       href: 'browse.html',
@@ -259,7 +259,7 @@ function renderActivityStreak(activityRows) {
   const milestoneNames = { 2: 'On a Roll', 4: 'Consistent Effort', 10: 'Unstoppable' };
   const milestoneLine = nextMilestone
     ? `<span class="dash-empty" style="font-size:12px;">🔥 ${nextMilestone - streak} more week${nextMilestone - streak === 1 ? '' : 's'} to earn "${milestoneNames[nextMilestone]}"</span>`
-    : `<span class="dash-empty" style="font-size:12px;">🏅 All streak badges earned!</span>`;
+    : `<span class="dash-empty" style="font-size:12px;">All streak badges earned!</span>`;
 
   const headerStreak = document.getElementById('header-streak');
   if (headerStreak) headerStreak.textContent = `${streak} week${streak === 1 ? '' : 's'}`;
@@ -278,7 +278,7 @@ function renderActivityStreak(activityRows) {
         <span style="font-family:var(--font-accent); font-weight:800; font-size:28px; color:var(--amber-deep);">${streak}</span>
         <span style="font-size:13.5px; color:var(--muted);">week${streak === 1 ? '' : 's'} in a row</span>
       </div>
-      ${longest > streak ? `<span class="dash-empty" style="font-size:12px;">🏆 Longest streak: ${longest} weeks</span>` : ''}
+      ${longest > streak ? `<span class="dash-empty" style="font-size:12px;">Longest streak: ${longest} weeks</span>` : ''}
       ${milestoneLine}
     </div>
     <div style="display:flex; justify-content:space-between; gap:8px;">
@@ -302,21 +302,34 @@ function renderActivityStreak(activityRows) {
 // ---- Progress toward financial goal ----
 function renderGoal(goalRows, rows) {
   const el = document.getElementById('goal-content');
-  const wonAmount = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').reduce((sum, s) => sum + Number(s.amount || 0), 0);
 
   // Progress toward each individual goal comes only from scholarships
-  // explicitly tagged to it — untagged scholarships still count
-  // toward the aggregate ring below, just not any specific goal.
+  // explicitly tagged to it. A money goal counts dollars won; a count
+  // goal counts scholarships submitted (or further along) — applying
+  // is the thing a count goal is meant to track, not just winning.
   function goalProgress(goal) {
+    if (goal.goal_type === 'count') {
+      return rows.filter(s => s.goal_id === goal.id && ['submitted', 'won_awaiting_funds', 'funds_received'].includes(s.status)).length;
+    }
     return rows
       .filter(s => s.goal_id === goal.id && (s.outcome === 'won' || s.status === 'funds_received'))
       .reduce((sum, s) => sum + Number(s.amount || 0), 0);
+  }
+  function goalTarget(goal) {
+    return goal.goal_type === 'count' ? goal.target_count : goal.target_amount;
+  }
+  // 0-100 for one goal, regardless of its type - this is what makes
+  // the aggregate below meaningful across a mix of money and count
+  // goals, which can't otherwise be summed (different units).
+  function goalPercent(goal) {
+    const target = goalTarget(goal);
+    return target > 0 ? Math.min(100, (goalProgress(goal) / target) * 100) : 0;
   }
 
   // Check for any goal that just crossed its own target and hasn't
   // been marked complete yet — award the bonus once, quietly.
   goalRows.forEach(async (goal) => {
-    if (!goal.completed_at && goalProgress(goal) >= goal.target_amount) {
+    if (!goal.completed_at && goalProgress(goal) >= goalTarget(goal)) {
       await supabaseClient.from('goals').update({ completed_at: new Date().toISOString() }).eq('id', goal.id);
       await awardAchievement('goal_crusher', userId);
       if (typeof celebrateCompanion === 'function') celebrateCompanion();
@@ -325,16 +338,24 @@ function renderGoal(goalRows, rows) {
 
   function showGoalForm(existingGoal) {
     const isEdit = !!existingGoal;
+    const initialType = isEdit ? existingGoal.goal_type : 'money';
     el.innerHTML = `
-      <p style="color:var(--ink); font-size:15px; font-weight:600; margin-bottom:14px;">${isEdit ? `✏️ Editing "${escapeHtml(existingGoal.name)}"` : '🎯 Set your first goal and watch every scholarship you win count toward it.'}</p>
+      <p style="color:var(--ink); font-size:15px; font-weight:600; margin-bottom:14px;">${isEdit ? `Editing "${escapeHtml(existingGoal.name)}"` : 'Set your first goal and watch every scholarship you win count toward it.'}</p>
+      <div style="margin-bottom:10px;">
+        <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">What should this goal track?</label>
+        <div class="role-toggle" style="max-width:340px;">
+          <button type="button" id="goal-type-money" aria-pressed="${initialType === 'money'}">Money won</button>
+          <button type="button" id="goal-type-count" aria-pressed="${initialType === 'count'}">Scholarships applied to</button>
+        </div>
+      </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
         <div style="flex:2; min-width:160px;">
           <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">Goal name</label>
           <input type="text" id="goal-name-input" placeholder="e.g. STEM scholarships" value="${isEdit ? escapeHtml(existingGoal.name) : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
         </div>
         <div style="flex:1; min-width:100px;">
-          <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">Target ($)</label>
-          <input type="number" id="goal-amount-input" placeholder="5000" min="0" value="${isEdit ? existingGoal.target_amount : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+          <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;" id="goal-target-label">Target ($)</label>
+          <input type="number" id="goal-amount-input" placeholder="5000" min="0" value="${isEdit ? goalTarget(existingGoal) : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
         </div>
         <div style="flex:1; min-width:140px;">
           <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">Deadline (optional)</label>
@@ -344,19 +365,37 @@ function renderGoal(goalRows, rows) {
         ${(goalRows.length > 0 || isEdit) ? '<button class="btn btn-line" id="cancel-goal-edit-btn" style="padding:10px 18px;">Cancel</button>' : ''}
       </div>
     `;
+    let selectedType = initialType;
+    function updateTypeUI() {
+      document.getElementById('goal-type-money').setAttribute('aria-pressed', String(selectedType === 'money'));
+      document.getElementById('goal-type-count').setAttribute('aria-pressed', String(selectedType === 'count'));
+      document.getElementById('goal-target-label').textContent = selectedType === 'count' ? 'Target (# of scholarships)' : 'Target ($)';
+      document.getElementById('goal-amount-input').placeholder = selectedType === 'count' ? '10' : '5000';
+    }
+    document.getElementById('goal-type-money').addEventListener('click', () => { selectedType = 'money'; updateTypeUI(); });
+    document.getElementById('goal-type-count').addEventListener('click', () => { selectedType = 'count'; updateTypeUI(); });
+    updateTypeUI();
+
     document.getElementById('save-goal-btn').addEventListener('click', async () => {
       const name = document.getElementById('goal-name-input').value.trim();
-      const amount = Number(document.getElementById('goal-amount-input').value);
+      const targetValue = Number(document.getElementById('goal-amount-input').value);
       const deadline = document.getElementById('goal-deadline-input').value || null;
-      if (!name || !amount || amount <= 0) return;
+      if (!name || !targetValue || targetValue <= 0) return;
 
       const btn = document.getElementById('save-goal-btn');
       btn.disabled = true;
       btn.textContent = isEdit ? 'Saving…' : 'Saving…';
 
+      const payload = {
+        name,
+        target_date: deadline,
+        goal_type: selectedType,
+        target_amount: selectedType === 'money' ? targetValue : null,
+        target_count: selectedType === 'count' ? Math.round(targetValue) : null,
+      };
       const { error } = isEdit
-        ? await supabaseClient.from('goals').update({ name, target_amount: amount, target_date: deadline }).eq('id', existingGoal.id)
-        : await supabaseClient.from('goals').insert({ student_id: userId, name, target_amount: amount, target_date: deadline, source: 'self' });
+        ? await supabaseClient.from('goals').update(payload).eq('id', existingGoal.id)
+        : await supabaseClient.from('goals').insert({ student_id: userId, source: 'self', ...payload });
 
       if (error) {
         console.error(error);
@@ -386,14 +425,24 @@ function renderGoal(goalRows, rows) {
     return;
   }
 
-  const totalTarget = goalRows.reduce((sum, g) => sum + Number(g.target_amount), 0);
-  const aggregatePct = totalTarget > 0 ? Math.min(100, (wonAmount / totalTarget) * 100) : 0;
+  // Average each goal's own percentage rather than summing raw
+  // progress/target values — those have different units (dollars vs.
+  // scholarship counts) once count-type goals exist, so they can't be
+  // added together directly. This also keeps the aggregate honest:
+  // if every individual goal is at 0%, the aggregate is too.
+  const aggregatePct = goalRows.length > 0
+    ? goalRows.reduce((sum, g) => sum + goalPercent(g), 0) / goalRows.length
+    : 0;
 
   const goalRowsHtml = goalRows.map(goal => {
     const progress = goalProgress(goal);
-    const pct = Math.min(100, (progress / goal.target_amount) * 100);
-    const isDone = progress >= goal.target_amount;
+    const target = goalTarget(goal);
+    const pct = goalPercent(goal);
+    const isDone = progress >= target;
     const sourceLabel = goal.source === 'staff' ? 'set by your school' : 'set by you';
+    const progressLabel = goal.goal_type === 'count'
+      ? `${progress} of ${target} scholarship${target === 1 ? '' : 's'}`
+      : `${fmtMoney(progress)} of ${fmtMoney(target)}`;
     let deadlineLabel = '';
     if (goal.target_date) {
       const overdue = !isDone && new Date(goal.target_date) < new Date(new Date().toDateString());
@@ -409,12 +458,12 @@ function renderGoal(goalRows, rows) {
         </div>
         <div style="flex:1; min-width:0;">
           <p style="font-size:14px; font-weight:600; color:var(--ink); margin:0;">${escapeHtml(goal.name)}</p>
-          <p style="font-size:12px; color:var(--muted); margin:2px 0 6px;">${fmtMoney(progress)} of ${fmtMoney(goal.target_amount)} · ${sourceLabel}${deadlineLabel}</p>
+          <p style="font-size:12px; color:var(--muted); margin:2px 0 6px;">${progressLabel} · ${sourceLabel}${deadlineLabel}</p>
           <div style="height:6px; border-radius:999px; background:var(--card-soft); overflow:hidden;">
             <div style="width:${pct}%; height:100%; background:${isDone ? 'var(--teal)' : 'var(--amber)'}; border-radius:999px; transition:width .5s ease;"></div>
           </div>
         </div>
-        <button class="kanban-delete" data-edit-goal="${goal.id}" aria-label="Edit goal" style="flex-shrink:0; font-size:14px;">✏️</button>
+        <button class="kanban-delete" data-edit-goal="${goal.id}" aria-label="Edit goal" style="flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
         <button class="kanban-delete" data-delete-goal="${goal.id}" aria-label="Delete goal" style="flex-shrink:0;">×</button>
       </div>
     `;
@@ -451,12 +500,18 @@ function renderGoal(goalRows, rows) {
 function renderStats(rows) {
   const inProgress = rows.filter(isInProgress).length;
   const submitted = rows.filter(s => s.status === 'submitted' && !s.outcome).length;
-  const won = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received').length;
+  const wonRows = rows.filter(s => s.outcome === 'won' || s.status === 'funds_received');
+  const won = wonRows.length;
+  const wonAmount = wonRows.reduce((sum, s) => sum + Number(s.amount || 0), 0);
+  const receivedAmount = rows.filter(s => s.status === 'funds_received').reduce((sum, s) => sum + Number(s.amount || 0), 0);
 
   document.getElementById('stats-content').innerHTML = `
     <div class="stat-chip purple"><strong>${inProgress}</strong><span>In Progress</span></div>
     <div class="stat-chip purple"><strong>${submitted}</strong><span>Submitted</span></div>
-    <div class="stat-chip teal"><strong>${won}</strong><span>Won</span></div>
+    <div class="stat-chip teal">
+      <strong>${won}</strong><span>Won</span>
+      ${won > 0 ? `<span style="margin-top:4px; font-size:11px;">${fmtMoney(wonAmount)} won · ${fmtMoney(receivedAmount)} received</span>` : ''}
+    </div>
   `;
 }
 

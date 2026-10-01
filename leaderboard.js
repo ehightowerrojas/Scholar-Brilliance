@@ -2,8 +2,6 @@
 // Leaderboard logic
 // ------------------------------------------------------------------
 
-const MEDALS = ['🥇', '🥈', '🥉'];
-
 async function init() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
@@ -47,7 +45,7 @@ async function init() {
 
     return `
       <div class="${rowClasses.join(' ')}">
-        <span class="leaderboard-rank">${isTop3 ? MEDALS[rank - 1] : `#${rank}`}</span>
+        <span class="leaderboard-rank">#${rank}</span>
         ${avatarSvg ? `<span style="flex-shrink:0;">${avatarSvg}</span>` : ''}
         <span class="leaderboard-name">${escapeHtml(row.display_name) || 'Unnamed student'}${isMe ? ' <span class="leaderboard-you-tag">You</span>' : ''}</span>
         <span class="leaderboard-points">${Number(row.total_points).toLocaleString()} pts</span>

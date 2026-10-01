@@ -55,7 +55,7 @@ function renderCard(row) {
     : '';
 
   const recLettersHtml = (row.rec_letters_needed != null && row.rec_letters_needed > 0)
-    ? `<span class="kanban-rec-letters">✉️ ${row.rec_letters_needed} rec. letter${row.rec_letters_needed === 1 ? '' : 's'}</span>`
+    ? `<span class="kanban-rec-letters">${row.rec_letters_needed} rec. letter${row.rec_letters_needed === 1 ? '' : 's'}</span>`
     : '';
 
   return `
@@ -284,7 +284,7 @@ document.getElementById('import-captured-btn').addEventListener('click', () => {
     if (event.source !== window || event.data?.type !== 'SCHOLAR_BRILLIANCE_CAPTURED_QUESTIONS') return;
     window.removeEventListener('message', listener);
     btn.disabled = false;
-    btn.textContent = '📋 Import from extension';
+    btn.textContent = 'Import from extension';
 
     const pages = event.data.capturedPages || [];
     if (pages.length === 0) {
@@ -322,7 +322,7 @@ document.getElementById('import-captured-btn').addEventListener('click', () => {
     if (btn.disabled) {
       window.removeEventListener('message', listener);
       btn.disabled = false;
-      btn.textContent = '📋 Import from extension';
+      btn.textContent = 'Import from extension';
       picker.style.display = 'block';
       picker.innerHTML = `<p class="dash-empty" style="font-size:12px; color:#c62828;">No extension detected. Install the Scholar Brilliance Autofill extension first.</p>`;
     }

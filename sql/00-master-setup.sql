@@ -741,13 +741,38 @@ create table if not exists public.goals (
   id uuid primary key default gen_random_uuid(),
   student_id uuid not null references auth.users(id) on delete cascade,
   name text not null check (length(name) > 0 and length(name) <= 120),
-  target_amount numeric not null check (target_amount > 0 and target_amount <= 1000000),
+  target_amount numeric check (target_amount > 0 and target_amount <= 1000000),
+  target_count integer check (target_count > 0 and target_count <= 1000),
+  goal_type text not null default 'money' check (goal_type in ('money','count')),
   target_date date,
   source text not null default 'self' check (source in ('self','staff')),
   created_by uuid references auth.users(id),
   completed_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Existing databases: target_amount was NOT NULL before count-type goals
+-- existed. Drop that so count-type goals (which use target_count
+-- instead) can leave it null. Also add the two new columns for
+-- databases that already had this table before this update.
+alter table public.goals alter column target_amount drop not null;
+alter table public.goals add column if not exists target_count integer;
+alter table public.goals add column if not exists goal_type text not null default 'money';
+alter table public.goals drop constraint if exists goals_target_count_check;
+alter table public.goals add constraint goals_target_count_check
+  check (target_count is null or (target_count > 0 and target_count <= 1000));
+alter table public.goals drop constraint if exists goals_goal_type_check;
+alter table public.goals add constraint goals_goal_type_check
+  check (goal_type in ('money','count'));
+-- Exactly one of target_amount/target_count must be set, matching
+-- the goal's declared type - keeps the two fields from drifting out
+-- of sync with goal_type.
+alter table public.goals drop constraint if exists goals_target_matches_type_check;
+alter table public.goals add constraint goals_target_matches_type_check
+  check (
+    (goal_type = 'money' and target_amount is not null and target_count is null)
+    or (goal_type = 'count' and target_count is not null and target_amount is null)
+  );
 
 -- Explicit standalone ADD COLUMN — same reasoning as the other
 -- safety-net ALTERs in this file: if goals already existed from an
@@ -873,6 +898,7 @@ end $$;
 -- end, is the version that actually works start to finish.)
 alter table public.weekly_activity drop constraint if exists daily_activity_date_range_check;
 alter table public.weekly_activity drop constraint if exists daily_activity_user_id_activity_date_key;
+alter table public.weekly_activity drop constraint if exists weekly_activity_date_range_check;
 
 -- Normalize any pre-existing daily rows onto their week's Monday,
 -- then drop duplicates that collide once multiple days land on the
@@ -913,7 +939,6 @@ create policy "Users can log their own activity"
 -- it's genuine history. NOT VALID enforces the rule for every new
 -- write going forward without retroactively rejecting rows that came
 -- before the rule existed.
-alter table public.weekly_activity drop constraint if exists weekly_activity_date_range_check;
 alter table public.weekly_activity add constraint weekly_activity_date_range_check
   check (week_start <= date_trunc('week', current_date)::date
      and week_start >= date_trunc('week', current_date)::date - interval '7 days')

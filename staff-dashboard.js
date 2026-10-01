@@ -56,7 +56,7 @@
       } else {
         recentEl.innerHTML = recent.map(s => `
           <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line); font-size:13.5px;">
-            <span>${escapeHtml(nameMap[s.user_id])} submitted <strong>${escapeHtml(s.title)}</strong>${s.outcome === 'won' ? ' 🏆' : ''}</span>
+            <span>${escapeHtml(nameMap[s.user_id])} submitted <strong>${escapeHtml(s.title)}</strong>${s.outcome === 'won' ? ' <strong style="color:var(--teal-deep);">· Won</strong>' : ''}</span>
             <span class="dash-empty">${fmtDateShort(s.updated_at)}</span>
           </div>
         `).join('');

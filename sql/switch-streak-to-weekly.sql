@@ -37,6 +37,7 @@ alter table if exists public.weekly_activity rename column activity_date to week
 -- that actually works start to finish.)
 alter table public.weekly_activity drop constraint if exists daily_activity_date_range_check;
 alter table public.weekly_activity drop constraint if exists daily_activity_user_id_activity_date_key;
+alter table public.weekly_activity drop constraint if exists weekly_activity_date_range_check;
 
 update public.weekly_activity set week_start = date_trunc('week', week_start)::date;
 delete from public.weekly_activity a using public.weekly_activity b
@@ -57,7 +58,6 @@ alter table public.weekly_activity add constraint weekly_activity_user_id_week_s
 -- entirely. NOT VALID enforces the rule for every new write going
 -- forward without retroactively rejecting rows that came before the
 -- rule existed.
-alter table public.weekly_activity drop constraint if exists weekly_activity_date_range_check;
 alter table public.weekly_activity add constraint weekly_activity_date_range_check
   check (week_start <= date_trunc('week', current_date)::date
      and week_start >= date_trunc('week', current_date)::date - interval '7 days')
