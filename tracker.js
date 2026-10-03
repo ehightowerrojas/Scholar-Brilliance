@@ -24,13 +24,6 @@ function urgencyClass(deadline) {
   return '';
 }
 
-function fundingTierBadge(amount) {
-  if (amount == null) return '';
-  if (amount >= 5000) return '<span class="funding-tier-badge tier-high">High value</span>';
-  if (amount >= 1000) return '<span class="funding-tier-badge tier-mid">Mid value</span>';
-  return '';
-}
-
 function renderCard(row) {
   const isSubmitted = row.status === 'submitted';
   const outcomeControls = isSubmitted && !row.outcome ? `
@@ -67,13 +60,11 @@ function renderCard(row) {
       <div class="kanban-card-meta">
         ${row.amount != null ? `<span>${fmtMoney(row.amount)}</span>` : ''}
         ${row.deadline ? `<span>${fmtDateLong(row.deadline)}</span>` : ''}
-        ${fundingTierBadge(row.amount)}
       </div>
       ${essayPromptHtml}
       ${recLettersHtml}
       <div>
         ${safeLink(row.website, 'Website ↗', 'target="_blank" rel="noopener" class="kanban-link"')}
-        <a href="essays.html?scholarship=${row.id}" class="kanban-link" style="margin-left:12px;">View essays →</a>
         <a href="application.html?scholarship=${row.id}" class="kanban-link" style="margin-left:12px;">Build Application →</a>
       </div>
       ${fundsBadge}

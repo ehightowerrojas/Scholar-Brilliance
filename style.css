@@ -1023,8 +1023,8 @@ footer.site-footer{
 .kanban-drop.drag-over{ background:rgba(94,53,177,0.08); }
 
 .kanban-card{
-  background:var(--card);
-  border:1px solid var(--line);
+  background:#fbf6ec;
+  border:1px solid #e8dfc8;
   border-left:4px solid transparent;
   border-radius:var(--radius-sm);
   padding:14px;
@@ -1036,13 +1036,6 @@ footer.site-footer{
 .kanban-card.urgency-soon{ border-left-color:#e53935; }
 .kanban-card.urgency-month{ border-left-color:#fb8c00; }
 .kanban-card.urgency-later{ border-left-color:#fdd835; }
-.funding-tier-badge{
-  display:inline-block; padding:2px 9px; border-radius:999px;
-  font-size:10px; font-weight:700; color:var(--white);
-  font-family:var(--font-display); text-transform:uppercase; letter-spacing:0.03em;
-}
-.funding-tier-badge.tier-high{ background:#43a047; }
-.funding-tier-badge.tier-mid{ background:#1e88e5; }
 .kanban-card-prompt{
   font-size:12px; font-style:italic; color:var(--muted);
   margin:8px 0; line-height:1.4;

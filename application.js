@@ -21,14 +21,6 @@ const INFO_FIELDS = [
 let appUserEmail = '';
 
 async function init() {
-  const params = new URLSearchParams(window.location.search);
-  const scholarshipId = params.get('scholarship');
-  if (!scholarshipId) {
-    document.getElementById('scholarship-title').textContent = 'No scholarship selected';
-    document.getElementById('scholarship-sub').textContent = 'Open this page from a scholarship card in your Tracker.';
-    return;
-  }
-
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
     window.location.href = 'login.html';
@@ -36,6 +28,14 @@ async function init() {
   }
   appUserId = session.user.id;
   appUserEmail = session.user.email;
+
+  const params = new URLSearchParams(window.location.search);
+  const scholarshipId = params.get('scholarship');
+
+  if (!scholarshipId) {
+    await showScholarshipPicker();
+    return;
+  }
 
   const [{ data: scholarship, error: schErr }, { data: profile }, { data: essays }] = await Promise.all([
     supabaseClient.from('scholarships').select('*').eq('id', scholarshipId).eq('user_id', appUserId).single(),
@@ -58,6 +58,8 @@ async function init() {
     ? `$${Number(scholarship.amount).toLocaleString()}${scholarship.deadline ? ' · Deadline: ' + new Date(scholarship.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}`
     : '';
 
+  document.getElementById('builder-content').style.display = 'block';
+
   renderInfo();
   renderEssay();
   document.getElementById('notes-input').value = scholarship.application_notes || '';
@@ -68,6 +70,39 @@ async function init() {
   } else {
     visitBtn.style.display = 'none';
   }
+}
+
+// Shown when Application Builder is opened directly from the sidebar,
+// with no specific scholarship picked yet — lets the student choose
+// which one to work on, same role the old "My Essays" list used to
+// serve, but scoped to scholarships rather than standalone essays.
+async function showScholarshipPicker() {
+  document.getElementById('scholarship-title').textContent = 'Which scholarship are you working on?';
+  document.getElementById('scholarship-picker').style.display = 'block';
+  const listEl = document.getElementById('scholarship-picker-list');
+
+  const { data: scholarships, error } = await supabaseClient
+    .from('scholarships')
+    .select('id, title, amount, deadline, status')
+    .eq('user_id', appUserId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    listEl.innerHTML = `<p class="dash-empty">Could not load your scholarships right now.</p>`;
+    return;
+  }
+  if (!scholarships || scholarships.length === 0) {
+    listEl.innerHTML = `<p class="dash-empty">You haven't added any scholarships yet. <a href="tracker.html" style="color:var(--purple); font-weight:600;">Add one in your Tracker →</a></p>`;
+    return;
+  }
+
+  listEl.innerHTML = scholarships.map(s => `
+    <a href="application.html?scholarship=${s.id}" class="dash-card" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease;">
+      <p style="font-weight:600; color:var(--ink); margin:0;">${escapeHtml(s.title)}</p>
+      <p class="dash-empty" style="margin-top:4px;">${s.amount ? '$' + Number(s.amount).toLocaleString() : 'No amount set'}${s.deadline ? ' · due ' + new Date(s.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}</p>
+    </a>
+  `).join('');
 }
 
 function renderInfo() {
@@ -90,24 +125,59 @@ function renderInfo() {
   `;
 }
 
+// Populates the inline essay editor with whatever's already saved for
+// this scholarship (if anything) - writing now happens directly here
+// rather than linking out to a separate page.
 function renderEssay() {
-  const el = document.getElementById('essay-content');
-  const link = document.getElementById('edit-essay-link');
+  document.getElementById('essay-title-input').value = currentEssay?.title || '';
+  document.getElementById('essay-content-input').value = currentEssay?.content || '';
+}
 
-  if (!currentEssay) {
-    el.innerHTML = `<p class="dash-empty">No essay linked to this scholarship yet.</p>`;
-    link.href = `essays.html?scholarship=${currentScholarship.id}`;
-    link.textContent = 'Write one in My Essays →';
+document.getElementById('save-essay-btn').addEventListener('click', async () => {
+  const title = document.getElementById('essay-title-input').value.trim();
+  const content = document.getElementById('essay-content-input').value;
+  const msg = document.getElementById('essay-msg');
+  if (!title) return;
+
+  const btn = document.getElementById('save-essay-btn');
+  btn.disabled = true;
+  msg.style.display = 'none';
+
+  let error;
+  if (currentEssay) {
+    ({ error } = await supabaseClient.from('essays')
+      .update({ title, content })
+      .eq('id', currentEssay.id).eq('user_id', appUserId));
+    if (!error) {
+      currentEssay.title = title;
+      currentEssay.content = content;
+    }
+  } else {
+    const { data, error: insertError } = await supabaseClient.from('essays')
+      .insert({ user_id: appUserId, title, content, scholarship_id: currentScholarship.id })
+      .select().single();
+    error = insertError;
+    if (!error) {
+      currentEssay = data;
+      await awardAchievement('draft_master', appUserId);
+    }
+  }
+
+  btn.disabled = false;
+  msg.style.display = 'block';
+  if (error) {
+    console.error(error);
+    msg.style.color = '#c62828';
+    msg.textContent = `Could not save: ${error.message}`;
     return;
   }
 
-  link.href = `essays.html?scholarship=${currentScholarship.id}`;
-  const preview = (currentEssay.content || '').slice(0, 300);
-  el.innerHTML = `
-    <p style="font-weight:600; color:var(--ink); margin-bottom:6px;">${escapeHtml(currentEssay.title)}</p>
-    <p class="dash-empty">${escapeHtml(preview)}${currentEssay.content.length > 300 ? '…' : ''}</p>
-  `;
-}
+  msg.style.color = 'var(--teal-deep)';
+  msg.textContent = 'Saved ✓';
+  if (content.trim().length > 0) await awardAchievement('document_ready', appUserId);
+  if (typeof celebrateCompanion === 'function') celebrateCompanion();
+  if (typeof ScholarSound !== 'undefined') ScholarSound.achievement();
+});
 
 function buildApplicationText() {
   const lines = [];
@@ -232,7 +302,15 @@ document.getElementById('export-pdf-btn').addEventListener('click', () => {
   });
 
   const filename = currentScholarship.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  doc.save(`${filename}-application.pdf`);
+  const blob = doc.output('blob');
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}-application.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 });
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
