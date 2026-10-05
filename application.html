@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect x=%270%27 y=%270%27 width=%2724%27 height=%2724%27 rx=%276%27 fill=%27white%27/%3E%3Cpath d=%27M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z%27 fill=%27%235E35B1%27/%3E%3Cpath d=%27M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z%27 fill=%27%23FFC107%27/%3E%3Cpath d=%27M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E">
-<title>Build Application: Scholar Brilliance</title>
+<title>Account Settings: Scholar Brilliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 </head>
@@ -23,7 +24,7 @@
       <a href="/application.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Application Builder</a>
       <a href="/achievements.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4h8v4a4 4 0 0 1-8 0V4z"/><path d="M6 6H4a2 2 0 0 0 2 4M18 6h2a2 2 0 0 1-2 4M10 15h4v3h-4zM8 21h8"/></svg>Achievements</a>
       <a href="/leaderboard.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>Leaderboard</a>
-      <a href="/account.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>Account</a>
+      <a href="/account.html" class="sidebar-link is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>Account</a>
     </nav>
     <button id="logout-btn" class="sidebar-logout">Log out</button>
   </aside>
@@ -32,92 +33,161 @@
     <header class="app-header">
       <div style="display:flex; align-items:center;">
         <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Open menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-        <span class="app-header-crumb">Application Builder</span>
+        <span class="app-header-crumb">Account</span>
       </div>
       <div class="app-header-right">
-        <div id="avatar-companion" class="avatar-companion" aria-hidden="true"></div>
         <span class="app-header-stat">🔥 <span id="header-streak">–</span></span>
         <span class="app-header-stat">⭐ <span id="header-xp">–</span> XP</span>
       </div>
     </header>
 
-    <main class="app-main" style="max-width:760px;">
+    <main class="app-main" style="max-width:640px;">
 
-    <span class="eyebrow">Application builder</span>
-    <h1 id="scholarship-title" style="font-size:clamp(22px,3vw,30px); margin-top:8px; margin-bottom:8px;">Loading…</h1>
-    <p class="dash-empty" id="scholarship-sub" style="margin-bottom:28px;"></p>
-
-    <div id="scholarship-picker" style="display:none;">
-      <p class="dash-empty" style="margin-bottom:16px;">Pick a scholarship to build its application:</p>
-      <input type="text" id="scholarship-picker-search" placeholder="Search by name…" style="width:100%; padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); margin-bottom:16px;">
-      <div id="scholarship-picker-list"></div>
-    </div>
-
-    <div id="builder-content" style="display:none;">
-
-    <div class="dash-card" style="margin-bottom:20px; border-color:var(--amber); background:var(--card-soft);">
-      <p style="font-size:13.5px; color:var(--ink); line-height:1.6;">
-        <strong>How this works:</strong> Scholar Brilliance can't submit this application for you; every scholarship's official form is different, and we'd never want to risk a mistake on something that matters this much.
-        Fill everything in here, then either use "Send to Extension" to autofill the real form (fields only, you always review and click submit yourself), or "Copy"/the PDF if you'd rather paste it in by hand.
-      </p>
-    </div>
+    <span class="eyebrow">Account settings</span>
+    <h1 style="font-size:clamp(24px,3.2vw,32px); margin-top:8px; margin-bottom:32px;">Manage your account.</h1>
 
     <div class="dash-card" style="margin-bottom:20px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline;">
-        <h3>Your Info</h3>
-        <button class="achv-demo-btn" id="copy-info-btn" style="width:auto;">Copy</button>
-      </div>
-      <div id="appinfo-content">Loading…</div>
-    </div>
-
-    <div class="dash-card" style="margin-bottom:20px;">
-      <h3>Your Essay</h3>
-      <div class="field" style="margin-top:0;">
-        <label for="essay-title-input">Essay title / prompt</label>
-        <input type="text" id="essay-title-input" placeholder="e.g. Why do you deserve this scholarship?" style="width:100%; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink);">
+      <h3>Profile</h3>
+      <div class="field">
+        <label for="full-name-input">Full name</label>
+        <input type="text" id="full-name-input">
       </div>
       <div class="field">
-        <label for="essay-content-input">Essay content</label>
-        <textarea id="essay-content-input" rows="12" placeholder="Write or paste your essay here…" style="width:100%; padding:13px 16px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink); font-family:var(--font-body); font-size:14px; resize:vertical;"></textarea>
+        <label>Email</label>
+        <input type="text" id="email-display" disabled style="opacity:.7;">
       </div>
-      <button class="btn btn-line" id="save-essay-btn" style="margin-top:14px;">Save essay</button>
-      <p id="essay-msg" class="dash-empty" style="margin-top:8px; display:none;"></p>
+      <div class="field">
+        <label>Account type</label>
+        <input type="text" id="role-display" disabled style="opacity:.7;">
+      </div>
+      <div class="field" id="org-field" style="display:none;">
+        <label>Organization</label>
+        <input type="text" id="org-display" disabled style="opacity:.7;">
+      </div>
+      <button class="btn btn-gold" id="save-profile-btn" style="margin-top:20px;">Save name</button>
+      <p id="profile-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;" id="avatar-card">
+      <h3>Your Avatar</h3>
+      <p class="dash-empty" style="margin-bottom:14px;">Unlock new species by completing your goals. How developed your avatar looks is tied to your Achievement level.</p>
+
+      <div id="avatar-large-display" style="text-align:center; margin-bottom:24px;">Loading…</div>
+
+      <p class="dash-empty" style="margin-bottom:10px; font-weight:600; color:var(--ink);">Other avatars</p>
+      <div id="avatar-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px;"></div>
+      <p id="avatar-msg" class="dash-empty" style="margin-top:12px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px; display:none;" id="school-connection-card">
+      <h3>School Connection</h3>
+      <div id="school-connection-content">Loading…</div>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;" id="appinfo-card">
+      <h3>Application Info</h3>
+      <p class="dash-empty" style="margin-bottom:14px;">Fill this in once. It gets reused automatically every time you build a scholarship application.</p>
+      <div class="add-form-grid" style="margin-bottom:0;">
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-phone">Phone</label>
+          <input type="tel" id="appinfo-phone" placeholder="(555) 123-4567">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-address">Street address</label>
+          <input type="text" id="appinfo-address" placeholder="123 Main St">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-city">City</label>
+          <input type="text" id="appinfo-city">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-state">State</label>
+          <input type="text" id="appinfo-state" placeholder="CA">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-zip">ZIP code</label>
+          <input type="text" id="appinfo-zip">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-school">School name</label>
+          <input type="text" id="appinfo-school">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-gradyear">Graduation year</label>
+          <input type="number" id="appinfo-gradyear" min="2020" max="2035">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-gpa">GPA</label>
+          <input type="number" id="appinfo-gpa" min="0" max="5" step="0.01">
+        </div>
+        <div class="field" style="margin-top:0;">
+          <label for="appinfo-major">Intended major / field of study</label>
+          <input type="text" id="appinfo-major">
+        </div>
+      </div>
+      <button class="btn btn-gold" id="save-appinfo-btn" style="margin-top:20px;">Save application info</button>
+      <p id="appinfo-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;" id="privacy-card">
+      <h3>Privacy</h3>
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px; color:var(--ink);">
+        <input type="checkbox" id="leaderboard-visible-input" style="width:18px; height:18px; accent-color:var(--purple);">
+        Show my name on the leaderboard
+      </label>
+      <p class="dash-empty" style="margin-top:8px;">If turned off, you'll still appear ranked by your real points; classmates will just see "Student #_" instead of your name. This doesn't affect what you see about yourself.</p>
+      <p id="privacy-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:20px;" id="settings-card">
+      <h3>Settings</h3>
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px; color:var(--ink);">
+        <input type="checkbox" id="sound-enabled-input" style="width:18px; height:18px; accent-color:var(--purple);">
+        Play sounds for achievements, goals, and wins
+      </label>
+      <p class="dash-empty" style="margin-top:8px;">A short chime plays when you earn a badge, complete a goal, or mark a scholarship as won.</p>
     </div>
 
     <div class="dash-card" style="margin-bottom:20px;">
-      <h3>Additional Notes / Short Answers</h3>
-      <p class="dash-empty" style="margin-bottom:12px;">Anything else this scholarship's form asks for that isn't a full essay: activities list, household info, short-answer questions.</p>
-      <textarea id="notes-input" rows="6" style="width:100%; padding:13px 16px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink); font-family:var(--font-body); font-size:14px; resize:vertical;"></textarea>
-      <button class="btn btn-line" id="save-notes-btn" style="margin-top:14px;">Save notes</button>
-      <p id="notes-msg" class="dash-empty" style="margin-top:8px; display:none;"></p>
-    </div>
-
-    <div class="dash-card" style="margin-bottom:20px;">
-      <h3>Ready to submit</h3>
-      <p class="dash-empty" style="margin-bottom:16px;">Export everything above as one document, then head to the scholarship's official page to paste it in and submit for real.</p>
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <button class="btn btn-teal" id="send-extension-btn">Send to Extension</button>
-        <button class="btn btn-gold" id="export-pdf-btn">Download as PDF</button>
-        <a id="visit-site-btn" href="#" target="_blank" rel="noopener" class="btn btn-line">Visit official application ↗</a>
+      <h3>Change email</h3>
+      <p class="dash-empty" style="margin-bottom:14px;">You'll need to confirm the change via a link sent to your new email address.</p>
+      <div class="field" style="margin-top:0;">
+        <label for="new-email-input">New email</label>
+        <input type="email" id="new-email-input" placeholder="you@example.com">
       </div>
-      <p id="extension-msg" class="dash-empty" style="margin-top:12px; display:none;"></p>
+      <button class="btn btn-line" id="change-email-btn" style="margin-top:16px;">Update email</button>
+      <p id="email-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
     </div>
 
+    <div class="dash-card">
+      <h3>Change password</h3>
+      <div class="field" style="margin-top:0;">
+        <label for="new-password-input">New password</label>
+        <input type="password" id="new-password-input" placeholder="At least 6 characters" minlength="6">
+      </div>
+      <div class="field">
+        <label for="confirm-password-input">Confirm new password</label>
+        <input type="password" id="confirm-password-input" minlength="6">
+      </div>
+      <button class="btn btn-line" id="change-password-btn" style="margin-top:16px;">Update password</button>
+      <p id="password-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </div>
+
+    <div class="dash-card" style="margin-top:24px; border-color:#c62828;">
+      <h3 style="color:#c62828;">Danger Zone</h3>
+      <p class="dash-empty" style="margin-top:8px;">Requesting deletion removes your account and all associated data (essays, tracked scholarships, goals, achievements). This can't be undone once processed. We currently handle deletion requests manually to make sure nothing is removed by mistake — clicking below opens an email pre-filled with your account details.</p>
+      <a href="#" id="delete-account-link" class="btn btn-line" style="margin-top:14px; border-color:#c62828; color:#c62828;">Request account deletion</a>
     </div>
 
   </main>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="/config.js"></script>
 <script src="/supabase-client.js"></script>
-<script src="/utils.js"></script>
-<script src="/sound.js"></script>
 <script src="/avatars.js"></script>
-<script src="/avatar-companion.js"></script>
-<script src="/achievements-award.js"></script>
-<script src="/application.js"></script>
+<script src="/sound.js"></script>
+<script src="/account.js"></script>
 <script src="/sidebar-toggle.js"></script>
 <script src="/header-stats.js"></script>
 

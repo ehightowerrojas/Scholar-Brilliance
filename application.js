@@ -1,24 +1,15 @@
 // ------------------------------------------------------------------
-// Application Builder logic
+// Account Settings logic
 // ------------------------------------------------------------------
 
-let appUserId = null;
-let currentScholarship = null;
-let currentProfile = null;
-let currentEssay = null;
+let accountUserId = null;
 
-const INFO_FIELDS = [
-  ['Full name', p => p.full_name],
-  ['Email', () => appUserEmail],
-  ['Phone', p => p.phone],
-  ['Address', p => [p.address_line1, p.city, p.state, p.zip_code].filter(Boolean).join(', ')],
-  ['School', p => p.school_name],
-  ['Graduation year', p => p.graduation_year],
-  ['GPA', p => p.gpa],
-  ['Intended major', p => p.major],
-];
-
-let appUserEmail = '';
+function showMsg(elId, text, isError) {
+  const el = document.getElementById(elId);
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.color = isError ? 'var(--ink)' : 'var(--teal)';
+}
 
 async function init() {
   const { data: { session } } = await supabaseClient.auth.getSession();
@@ -26,317 +17,374 @@ async function init() {
     window.location.href = 'login.html';
     return;
   }
-  appUserId = session.user.id;
-  appUserEmail = session.user.email;
+  accountUserId = session.user.id;
+  const role = session.user.user_metadata?.role || 'student';
 
-  const params = new URLSearchParams(window.location.search);
-  const scholarshipId = params.get('scholarship');
+  document.getElementById('email-display').value = session.user.email;
+  document.getElementById('role-display').value = role === 'staff' ? 'Counselor' : 'Student';
+  document.getElementById('full-name-input').value = session.user.user_metadata?.full_name || '';
 
-  if (!scholarshipId) {
-    await showScholarshipPicker();
-    return;
+  const deleteLink = document.getElementById('delete-account-link');
+  const deleteSubject = encodeURIComponent('Account deletion request');
+  const deleteBody = encodeURIComponent(`I would like to request deletion of my Scholar Brilliance account.\n\nEmail: ${session.user.email}\nAccount ID: ${accountUserId}`);
+  deleteLink.href = `mailto:evangel@scholarbrilliance.com?subject=${deleteSubject}&body=${deleteBody}`;
+  deleteLink.addEventListener('click', (e) => {
+    if (!confirm('This will open an email requesting permanent deletion of your account and all its data. This action, once processed, is irreversible. Continue?')) {
+      e.preventDefault();
+    }
+  });
+
+  if (role === 'staff') {
+    document.getElementById('privacy-card').style.display = 'none';
+    document.getElementById('appinfo-card').style.display = 'none';
+    document.getElementById('avatar-card').style.display = 'none';
+  } else {
+    document.getElementById('school-connection-card').style.display = 'block';
+    loadAvatarSection();
   }
 
-  const [{ data: scholarship, error: schErr }, { data: profile }, { data: essays }] = await Promise.all([
-    supabaseClient.from('scholarships').select('*').eq('id', scholarshipId).eq('user_id', appUserId).single(),
-    supabaseClient.from('profiles').select('*').eq('id', appUserId).single(),
-    supabaseClient.from('essays').select('*').eq('scholarship_id', scholarshipId).eq('user_id', appUserId).order('updated_at', { ascending: false }).limit(1),
+  const { data: profile } = await supabaseClient
+    .from('profiles')
+    .select('org_id, leaderboard_visible, phone, address_line1, city, state, zip_code, school_name, graduation_year, gpa, major')
+    .eq('id', accountUserId)
+    .single();
+
+  if (role !== 'staff') {
+    document.getElementById('leaderboard-visible-input').checked = profile?.leaderboard_visible !== false;
+    document.getElementById('appinfo-phone').value = profile?.phone || '';
+    document.getElementById('appinfo-address').value = profile?.address_line1 || '';
+    document.getElementById('appinfo-city').value = profile?.city || '';
+    document.getElementById('appinfo-state').value = profile?.state || '';
+    document.getElementById('appinfo-zip').value = profile?.zip_code || '';
+    document.getElementById('appinfo-school').value = profile?.school_name || '';
+    document.getElementById('appinfo-gradyear').value = profile?.graduation_year || '';
+    document.getElementById('appinfo-gpa').value = profile?.gpa || '';
+    document.getElementById('appinfo-major').value = profile?.major || '';
+  }
+
+  if (profile?.org_id) {
+    const { data: org } = await supabaseClient.from('organizations').select('name').eq('id', profile.org_id).single();
+    if (org) {
+      document.getElementById('org-field').style.display = 'block';
+      document.getElementById('org-display').value = org.name;
+    }
+  }
+
+  if (role !== 'staff') {
+    renderSchoolConnection(profile?.org_id);
+  }
+}
+
+function renderSchoolConnection(orgId) {
+  const el = document.getElementById('school-connection-content');
+  if (orgId) {
+    el.innerHTML = `<p class="dash-empty">✓ You're connected to a school through a referral code. Your counselor can see your progress and recommend scholarships to you.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <p class="dash-empty" style="margin-bottom:12px;">Not connected to a school yet. If your counselor gave you a referral code, enter it here to connect your account.</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input type="text" id="referral-code-input" placeholder="Referral code" style="flex:1; min-width:160px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+      <button class="btn btn-gold" id="connect-school-btn" style="padding:10px 20px;">Connect</button>
+    </div>
+    <p id="school-connect-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+  `;
+
+  document.getElementById('connect-school-btn').addEventListener('click', async () => {
+    const code = document.getElementById('referral-code-input').value.trim();
+    const msg = document.getElementById('school-connect-msg');
+    if (!code) return;
+
+    const btn = document.getElementById('connect-school-btn');
+    btn.disabled = true;
+    btn.textContent = 'Connecting…';
+
+    const { data: match, error: lookupError } = await supabaseClient
+      .from('referral_codes')
+      .select('org_id, active, expires_at')
+      .eq('code', code)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (lookupError || !match) {
+      btn.disabled = false;
+      btn.textContent = 'Connect';
+      msg.style.display = 'block';
+      msg.textContent = 'That code isn\'t valid or has been deactivated. Double-check it with your counselor.';
+      msg.style.color = '#c62828';
+      return;
+    }
+
+    if (match.expires_at && new Date(match.expires_at) < new Date()) {
+      btn.disabled = false;
+      btn.textContent = 'Connect';
+      msg.style.display = 'block';
+      msg.textContent = 'That code has expired. Ask your counselor for a new one.';
+      msg.style.color = '#c62828';
+      return;
+    }
+
+    const { error: updateError } = await supabaseClient.from('profiles').update({ org_id: match.org_id }).eq('id', accountUserId);
+
+    btn.disabled = false;
+    btn.textContent = 'Connect';
+    msg.style.display = 'block';
+    if (updateError) {
+      msg.textContent = 'Could not connect right now, try again.';
+      msg.style.color = '#c62828';
+    } else {
+      msg.textContent = 'Connected ✓';
+      msg.style.color = 'var(--teal-deep)';
+      setTimeout(() => renderSchoolConnection(match.org_id), 700);
+    }
+  });
+}
+
+document.getElementById('save-profile-btn').addEventListener('click', async () => {
+  const fullName = document.getElementById('full-name-input').value.trim();
+  if (!fullName) return;
+
+  const btn = document.getElementById('save-profile-btn');
+  btn.disabled = true;
+
+  const [{ error: authErr }, { error: profileErr }] = await Promise.all([
+    supabaseClient.auth.updateUser({ data: { full_name: fullName } }),
+    supabaseClient.from('profiles').update({ full_name: fullName }).eq('id', accountUserId),
   ]);
 
-  if (schErr || !scholarship) {
-    document.getElementById('scholarship-title').textContent = 'Scholarship not found';
-    document.getElementById('scholarship-sub').textContent = "This scholarship isn't in your tracker, or you don't have access to it.";
-    return;
-  }
-
-  currentScholarship = scholarship;
-  currentProfile = profile;
-  currentEssay = essays?.[0] || null;
-
-  document.getElementById('scholarship-title').textContent = scholarship.title;
-  document.getElementById('scholarship-sub').textContent = scholarship.amount
-    ? `$${Number(scholarship.amount).toLocaleString()}${scholarship.deadline ? ' · Deadline: ' + new Date(scholarship.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}`
-    : '';
-
-  document.getElementById('builder-content').style.display = 'block';
-
-  renderInfo();
-  renderEssay();
-  document.getElementById('notes-input').value = scholarship.application_notes || '';
-
-  const visitBtn = document.getElementById('visit-site-btn');
-  if (scholarship.website) {
-    visitBtn.href = scholarship.website;
-  } else {
-    visitBtn.style.display = 'none';
-  }
-}
-
-// Same color keys/hex values as the Tracker's .color-* CSS classes,
-// kept in sync manually since this list renders as .dash-card rather
-// than .kanban-card and so can't just reuse those classes directly.
-const COLOR_HEX = {
-  tomato: '#e57373', tangerine: '#ffb74d', banana: '#dbc400', sage: '#66bb6a',
-  peacock: '#26a69a', blueberry: '#5c9ce6', lavender: '#9575cd', graphite: '#78909c',
-};
-
-let pickerScholarships = [];
-
-// Shown when Application Builder is opened directly from the sidebar,
-// with no specific scholarship picked yet — lets the student choose
-// which one to work on, same role the old "My Essays" list used to
-// serve, but scoped to scholarships rather than standalone essays.
-async function showScholarshipPicker() {
-  document.getElementById('scholarship-title').textContent = 'Which scholarship are you working on?';
-  document.getElementById('scholarship-picker').style.display = 'block';
-  const listEl = document.getElementById('scholarship-picker-list');
-
-  const { data: scholarships, error } = await supabaseClient
-    .from('scholarships')
-    .select('id, title, amount, deadline, status, color')
-    .eq('user_id', appUserId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error(error);
-    listEl.innerHTML = `<p class="dash-empty">Could not load your scholarships right now.</p>`;
-    return;
-  }
-  if (!scholarships || scholarships.length === 0) {
-    listEl.innerHTML = `<p class="dash-empty">You haven't added any scholarships yet. <a href="tracker.html" style="color:var(--purple); font-weight:600;">Add one in your Tracker →</a></p>`;
-    return;
-  }
-
-  pickerScholarships = scholarships;
-  renderScholarshipPickerList(scholarships);
-}
-
-function renderScholarshipPickerList(scholarships) {
-  const listEl = document.getElementById('scholarship-picker-list');
-  if (scholarships.length === 0) {
-    listEl.innerHTML = `<p class="dash-empty">No matches.</p>`;
-    return;
-  }
-  listEl.innerHTML = scholarships.map(s => `
-    <a href="application.html?scholarship=${s.id}" class="dash-card" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease; border-left:4px solid ${s.color && COLOR_HEX[s.color] ? COLOR_HEX[s.color] : 'transparent'};">
-      <p style="font-weight:600; color:var(--ink); margin:0;">${escapeHtml(s.title)}</p>
-      <p class="dash-empty" style="margin-top:4px;">${s.amount ? '$' + Number(s.amount).toLocaleString() : 'No amount set'}${s.deadline ? ' · due ' + new Date(s.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}</p>
-    </a>
-  `).join('');
-}
-
-document.getElementById('scholarship-picker-search').addEventListener('input', (e) => {
-  const term = e.target.value.trim().toLowerCase();
-  const filtered = term ? pickerScholarships.filter(s => s.title.toLowerCase().includes(term)) : pickerScholarships;
-  renderScholarshipPickerList(filtered);
-});
-
-function renderInfo() {
-  const el = document.getElementById('appinfo-content');
-  const rows = INFO_FIELDS.map(([label, getter]) => {
-    const value = getter(currentProfile || {});
-    return { label, value: value || '—' };
-  });
-
-  const missing = rows.filter(r => r.value === '—').length;
-
-  el.innerHTML = `
-    ${missing > 0 ? `<p class="dash-empty" style="margin-bottom:10px;">${missing} field${missing > 1 ? 's are' : ' is'} empty. <a href="account.html" style="color:var(--purple); font-weight:600;">Fill them in on Account Settings →</a></p>` : ''}
-    ${rows.map(r => `
-      <div class="deadline-row">
-        <span>${r.label}</span>
-        <span class="dash-empty" style="font-weight:600; color:var(--ink);">${escapeHtml(String(r.value))}</span>
-      </div>
-    `).join('')}
-  `;
-}
-
-// Populates the inline essay editor with whatever's already saved for
-// this scholarship (if anything) - writing now happens directly here
-// rather than linking out to a separate page.
-function renderEssay() {
-  document.getElementById('essay-title-input').value = currentEssay?.title || '';
-  document.getElementById('essay-content-input').value = currentEssay?.content || '';
-}
-
-document.getElementById('save-essay-btn').addEventListener('click', async () => {
-  const title = document.getElementById('essay-title-input').value.trim();
-  const content = document.getElementById('essay-content-input').value;
-  const msg = document.getElementById('essay-msg');
-  if (!title) return;
-
-  const btn = document.getElementById('save-essay-btn');
-  btn.disabled = true;
-  msg.style.display = 'none';
-
-  let error;
-  if (currentEssay) {
-    ({ error } = await supabaseClient.from('essays')
-      .update({ title, content })
-      .eq('id', currentEssay.id).eq('user_id', appUserId));
-    if (!error) {
-      currentEssay.title = title;
-      currentEssay.content = content;
-    }
-  } else {
-    const { data, error: insertError } = await supabaseClient.from('essays')
-      .insert({ user_id: appUserId, title, content, scholarship_id: currentScholarship.id })
-      .select().single();
-    error = insertError;
-    if (!error) {
-      currentEssay = data;
-      await awardAchievement('draft_master', appUserId);
-    }
-  }
-
   btn.disabled = false;
-  msg.style.display = 'block';
-  if (error) {
-    console.error(error);
-    msg.style.color = '#c62828';
-    msg.textContent = `Could not save: ${error.message}`;
-    return;
-  }
-
-  msg.style.color = 'var(--teal-deep)';
-  msg.textContent = 'Saved ✓';
-  if (content.trim().length > 0) await awardAchievement('document_ready', appUserId);
-  if (typeof celebrateCompanion === 'function') celebrateCompanion();
-  if (typeof ScholarSound !== 'undefined') ScholarSound.achievement();
+  showMsg('profile-msg', authErr || profileErr ? 'Could not save, try again.' : 'Saved ✓', Boolean(authErr || profileErr));
 });
 
-function buildApplicationText() {
-  const lines = [];
-  lines.push(`Application: ${currentScholarship.title}`);
-  lines.push('');
-  lines.push('--- Your Info ---');
-  INFO_FIELDS.forEach(([label, getter]) => {
-    lines.push(`${label}: ${getter(currentProfile || {}) || ''}`);
-  });
-  lines.push('');
-  lines.push('--- Essay ---');
-  lines.push(currentEssay ? `${currentEssay.title}\n\n${currentEssay.content}` : '(No essay linked yet)');
-  const notes = document.getElementById('notes-input').value.trim();
-  if (notes) {
-    lines.push('');
-    lines.push('--- Additional Notes ---');
-    lines.push(notes);
-  }
-  return lines.join('\n');
-}
+// The minimum level required to reach each evolution tier - the
+// inverse of evolutionTierFromLevel(), needed to compute "X more
+// levels until your next stage" and to know which tiers are actually
+// reachable yet when swiping the large preview.
+const LEVEL_FOR_TIER = { 1: 1, 2: 3, 3: 5, 4: 7 };
+const TIER_LABEL = { 1: 'Lv 1-2', 2: 'Lv 3-4', 3: 'Lv 5-6', 4: 'Lv 7-8' };
 
-document.getElementById('copy-info-btn').addEventListener('click', async () => {
-  const text = INFO_FIELDS.map(([label, getter]) => `${label}: ${getter(currentProfile || {}) || ''}`).join('\n');
+let avatarSectionState = null; // cached data from the last load, so arrow clicks don't need a refetch
+let previewedTier = null; // which tier the large display is currently showing (independent of the real active tier)
+
+async function loadAvatarSection() {
+  const grid = document.getElementById('avatar-grid');
+  const largeDisplay = document.getElementById('avatar-large-display');
+
+  let species, profile, goals, earnedRows, achievements, levels;
   try {
-    await navigator.clipboard.writeText(text);
-    const btn = document.getElementById('copy-info-btn');
-    const original = btn.textContent;
-    btn.textContent = 'Copied ✓';
-    setTimeout(() => { btn.textContent = original; }, 2000);
+    const results = await Promise.all([
+      supabaseClient.from('avatar_species').select('*').order('sort_order'),
+      supabaseClient.from('profiles').select('avatar_species_id').eq('id', accountUserId).single(),
+      supabaseClient.from('goals').select('completed_at').eq('student_id', accountUserId),
+      supabaseClient.from('user_achievements').select('achievement_id').eq('user_id', accountUserId),
+      supabaseClient.from('achievements').select('id, points'),
+      supabaseClient.from('levels').select('*').order('level_number'),
+    ]);
+
+    const firstError = results.find(r => r.error)?.error;
+    if (firstError) throw firstError;
+
+    [{ data: species }, { data: profile }, { data: goals }, { data: earnedRows }, { data: achievements }, { data: levels }] = results;
   } catch (err) {
-    console.error(err);
+    console.error('Could not load avatar section:', err);
+    grid.innerHTML = '';
+    largeDisplay.innerHTML = '';
+    grid.insertAdjacentHTML('beforebegin', '<p class="dash-empty" style="color:#c62828;">Could not load your avatars right now. Please refresh the page.</p>');
+    return;
   }
-});
 
-document.getElementById('save-notes-btn').addEventListener('click', async () => {
-  const notes = document.getElementById('notes-input').value;
-  const btn = document.getElementById('save-notes-btn');
-  btn.disabled = true;
+  const completedGoalsCount = (goals || []).filter(g => g.completed_at).length;
+  const pointsMap = Object.fromEntries((achievements || []).map(a => [a.id, a.points]));
+  const totalXP = (earnedRows || []).reduce((sum, r) => sum + (pointsMap[r.achievement_id] || 0), 0);
+  let currentLevel = { level_number: 1 };
+  (levels || []).forEach(l => { if (totalXP >= l.xp_threshold) currentLevel = l; });
+  const activeTier = evolutionTierFromLevel(currentLevel.level_number);
+  const equippedId = profile?.avatar_species_id || 'raptor';
 
-  const { error } = await supabaseClient.from('scholarships')
-    .update({ application_notes: notes })
-    .eq('id', currentScholarship.id)
-    .eq('user_id', appUserId);
+  avatarSectionState = { species: species || [], levels: levels || [], totalXP, currentLevel, activeTier, equippedId, completedGoalsCount };
+  // Default the preview to the real active tier whenever the equipped
+  // species changes (including on first load); arrow clicks move it
+  // from there without affecting what's actually equipped.
+  if (previewedTier === null || previewedTier.speciesId !== equippedId) {
+    previewedTier = { speciesId: equippedId, tier: activeTier };
+  }
 
-  btn.disabled = false;
-  const msg = document.getElementById('notes-msg');
-  msg.style.display = 'block';
-  msg.textContent = error ? 'Could not save, try again.' : 'Saved ✓';
-});
+  renderLargeAvatarDisplay();
+  renderOtherAvatarsGrid();
+}
 
-document.getElementById('send-extension-btn').addEventListener('click', () => {
-  const payload = {
-    scholarshipId: currentScholarship.id,
-    scholarshipTitle: currentScholarship.title,
-    website: currentScholarship.website || '',
-    fullName: currentProfile?.full_name || '',
-    email: appUserEmail,
-    phone: currentProfile?.phone || '',
-    address: currentProfile?.address_line1 || '',
-    city: currentProfile?.city || '',
-    state: currentProfile?.state || '',
-    zip: currentProfile?.zip_code || '',
-    school: currentProfile?.school_name || '',
-    graduationYear: currentProfile?.graduation_year || '',
-    gpa: currentProfile?.gpa || '',
-    major: currentProfile?.major || '',
-    essay: currentEssay?.content || '',
-    notes: document.getElementById('notes-input').value || '',
-  };
+function renderLargeAvatarDisplay() {
+  const { species, levels, currentLevel, activeTier, equippedId } = avatarSectionState;
+  const largeDisplay = document.getElementById('avatar-large-display');
+  const equippedSpecies = species.find(s => s.id === equippedId);
+  if (!equippedSpecies) { largeDisplay.innerHTML = ''; return; }
 
-  const btn = document.getElementById('send-extension-btn');
-  const msgEl = document.getElementById('extension-msg');
-  msgEl.style.display = 'none';
-  let received = false;
+  const tier = previewedTier.tier;
+  const tierReached = tier <= activeTier;
+  const svg = renderAvatarSVG(equippedSpecies.id, tier, 180);
 
-  const listener = (event) => {
-    if (event.source !== window || event.data?.type !== 'SCHOLAR_BRILLIANCE_APP_DATA_RECEIVED') return;
-    received = true;
-    window.removeEventListener('message', listener);
-    btn.textContent = 'Sent to extension ✓';
-    setTimeout(() => { btn.textContent = 'Send to Extension'; }, 2500);
-  };
-  window.addEventListener('message', listener);
-
-  window.postMessage({ type: 'SCHOLAR_BRILLIANCE_APP_DATA', payload }, window.location.origin);
-
-  setTimeout(() => {
-    if (!received) {
-      window.removeEventListener('message', listener);
-      msgEl.style.display = 'block';
-      msgEl.textContent = "No extension detected. Install the Scholar Brilliance Autofill extension first, or use the PDF/Copy options instead.";
+  // Progress toward the next stage, per your answer: level-based, for
+  // the currently equipped avatar specifically.
+  let progressHtml = '';
+  if (activeTier < 4) {
+    const nextTierLevel = LEVEL_FOR_TIER[activeTier + 1];
+    const nextLevelRow = levels.find(l => l.level_number === nextTierLevel);
+    const prevLevelRow = levels.find(l => l.level_number === currentLevel.level_number) || { xp_threshold: 0 };
+    if (nextLevelRow) {
+      const span = nextLevelRow.xp_threshold - prevLevelRow.xp_threshold;
+      const into = Math.max(0, avatarSectionState.totalXP - prevLevelRow.xp_threshold);
+      const pct = span > 0 ? Math.min(100, (into / span) * 100) : 0;
+      progressHtml = `
+        <p class="dash-empty" style="margin-top:10px; font-size:12.5px;">Reach <strong style="color:var(--ink);">Level ${nextTierLevel}</strong> to unlock the next stage</p>
+        <div style="height:6px; border-radius:999px; background:var(--card-soft); overflow:hidden; max-width:220px; margin:6px auto 0;">
+          <div style="width:${pct}%; height:100%; background:var(--amber); border-radius:999px;"></div>
+        </div>
+      `;
     }
-  }, 800);
-});
+  } else {
+    progressHtml = `<p class="dash-empty" style="margin-top:10px; font-size:12.5px;">Final stage reached ✓</p>`;
+  }
 
-document.getElementById('export-pdf-btn').addEventListener('click', () => {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
-  const margin = 50;
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  let y = margin;
+  largeDisplay.innerHTML = `
+    <p style="font-weight:700; font-size:15px; color:var(--ink); margin-bottom:2px;">${equippedSpecies.name}</p>
+    <p class="dash-empty" style="text-transform:capitalize; margin-bottom:10px;">${equippedSpecies.rarity}</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:18px;">
+      <button id="avatar-prev-stage" aria-label="Previous stage" style="background:var(--card-soft); border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:16px; color:var(--ink); flex-shrink:0;" ${tier <= 1 ? 'disabled' : ''}>‹</button>
+      <div style="opacity:${tierReached ? 1 : 0.35}; filter:${tierReached ? 'none' : 'grayscale(1)'};">${svg}</div>
+      <button id="avatar-next-stage" aria-label="Next stage" style="background:var(--card-soft); border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:16px; color:var(--ink); flex-shrink:0;" ${tier >= 4 ? 'disabled' : ''}>›</button>
+    </div>
+    <p style="font-size:12px; font-weight:600; color:var(--ink); margin-top:8px;">${TIER_LABEL[tier]}${tierReached ? '' : ` · Unlocks at Lv ${LEVEL_FOR_TIER[tier]}`}</p>
+    ${progressHtml}
+  `;
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  const titleLines = doc.splitTextToSize(`Application: ${currentScholarship.title}`, pageWidth - margin * 2);
-  doc.text(titleLines, margin, y);
-  y += titleLines.length * 20 + 16;
+  document.getElementById('avatar-prev-stage').addEventListener('click', () => {
+    if (tier > 1) { previewedTier.tier = tier - 1; renderLargeAvatarDisplay(); }
+  });
+  document.getElementById('avatar-next-stage').addEventListener('click', () => {
+    if (tier < 4) { previewedTier.tier = tier + 1; renderLargeAvatarDisplay(); }
+  });
+}
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
-  const bodyLines = doc.splitTextToSize(buildApplicationText(), pageWidth - margin * 2);
-  const lineHeight = 15;
+function renderOtherAvatarsGrid() {
+  const { species, activeTier, equippedId, completedGoalsCount } = avatarSectionState;
+  const grid = document.getElementById('avatar-grid');
+  const others = species.filter(s => s.id !== equippedId);
 
-  bodyLines.forEach(line => {
-    if (y > pageHeight - margin) {
-      doc.addPage();
-      y = margin;
-    }
-    doc.text(line, margin, y);
-    y += lineHeight;
+  grid.innerHTML = others.map(s => {
+    const unlocked = completedGoalsCount >= s.unlock_goals_completed;
+    const svg = renderAvatarSVG(s.id, unlocked ? activeTier : 1, 72);
+    const tierPreviewHtml = [1, 2, 3, 4].map(t => `<div style="text-align:center;">${renderAvatarSVG(s.id, t, 48)}<p style="font-size:9.5px; color:var(--muted); margin-top:2px;">${TIER_LABEL[t]}</p></div>`).join('');
+    return `
+      <div style="text-align:center; opacity:${unlocked ? 1 : 0.4};">
+        ${svg}
+        <p style="font-size:11.5px; font-weight:600; margin-top:4px; color:var(--ink);">${s.name}</p>
+        <p style="font-size:10px; color:var(--muted); text-transform:capitalize;">${s.rarity}</p>
+        ${unlocked
+          ? `<button class="achv-demo-btn" data-equip="${s.id}" style="width:auto; padding:4px 10px; font-size:11px; margin-top:2px;">Select</button>`
+          : `<p style="font-size:10px; color:var(--muted);">${s.unlock_goals_completed} goal${s.unlock_goals_completed === 1 ? '' : 's'} completed to unlock</p>`}
+        <button class="dash-empty" data-preview-toggle="${s.id}" style="background:none; border:none; text-decoration:underline; cursor:pointer; font-size:10.5px; margin-top:4px; display:block; width:100%;">Preview stages</button>
+        <div id="preview-${s.id}" style="display:none; margin-top:8px; gap:6px; justify-content:center;">${tierPreviewHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('[data-preview-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = document.getElementById(`preview-${btn.dataset.previewToggle}`);
+      const isOpen = el.style.display === 'flex';
+      el.style.display = isOpen ? 'none' : 'flex';
+      btn.textContent = isOpen ? 'Preview stages' : 'Hide stages';
+    });
   });
 
-  const filename = currentScholarship.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  const blob = doc.output('blob');
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${filename}-application.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  grid.querySelectorAll('[data-equip]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { error } = await supabaseClient.from('profiles').update({ avatar_species_id: btn.dataset.equip }).eq('id', accountUserId);
+      const msg = document.getElementById('avatar-msg');
+      msg.style.display = 'block';
+      msg.textContent = error ? `Could not equip: ${error.message}` : 'Avatar updated ✓';
+      if (!error) loadAvatarSection();
+    });
+  });
+}
+
+document.getElementById('save-appinfo-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('save-appinfo-btn');
+  btn.disabled = true;
+
+  const { error } = await supabaseClient.from('profiles').update({
+    phone: document.getElementById('appinfo-phone').value.trim() || null,
+    address_line1: document.getElementById('appinfo-address').value.trim() || null,
+    city: document.getElementById('appinfo-city').value.trim() || null,
+    state: document.getElementById('appinfo-state').value.trim() || null,
+    zip_code: document.getElementById('appinfo-zip').value.trim() || null,
+    school_name: document.getElementById('appinfo-school').value.trim() || null,
+    graduation_year: document.getElementById('appinfo-gradyear').value || null,
+    gpa: document.getElementById('appinfo-gpa').value || null,
+    major: document.getElementById('appinfo-major').value.trim() || null,
+  }).eq('id', accountUserId);
+
+  btn.disabled = false;
+  showMsg('appinfo-msg', error ? 'Could not save, try again.' : 'Saved ✓', Boolean(error));
+});
+
+document.getElementById('leaderboard-visible-input').addEventListener('change', async (e) => {
+  const { error } = await supabaseClient
+    .from('profiles')
+    .update({ leaderboard_visible: e.target.checked })
+    .eq('id', accountUserId);
+
+  showMsg('privacy-msg', error ? 'Could not save, try again.' : 'Saved ✓', Boolean(error));
+});
+
+document.getElementById('sound-enabled-input').checked = !ScholarSound.isMuted();
+document.getElementById('sound-enabled-input').addEventListener('change', (e) => {
+  ScholarSound.setMuted(!e.target.checked);
+  if (e.target.checked) ScholarSound.achievement(); // quick preview so the toggle feels responsive
+});
+
+document.getElementById('change-email-btn').addEventListener('click', async () => {
+  const newEmail = document.getElementById('new-email-input').value.trim();
+  if (!newEmail) return;
+
+  const btn = document.getElementById('change-email-btn');
+  btn.disabled = true;
+  const { error } = await supabaseClient.auth.updateUser({ email: newEmail });
+  btn.disabled = false;
+
+  if (error) {
+    showMsg('email-msg', error.message, true);
+    return;
+  }
+  showMsg('email-msg', `Confirmation link sent to ${newEmail}. Your email won't change until you click it.`, false);
+  document.getElementById('new-email-input').value = '';
+});
+
+document.getElementById('change-password-btn').addEventListener('click', async () => {
+  const pw = document.getElementById('new-password-input').value;
+  const confirm = document.getElementById('confirm-password-input').value;
+
+  if (pw.length < 6) {
+    showMsg('password-msg', 'Password must be at least 6 characters.', true);
+    return;
+  }
+  if (pw !== confirm) {
+    showMsg('password-msg', "Passwords don't match.", true);
+    return;
+  }
+
+  const btn = document.getElementById('change-password-btn');
+  btn.disabled = true;
+  const { error } = await supabaseClient.auth.updateUser({ password: pw });
+  btn.disabled = false;
+
+  if (error) {
+    showMsg('password-msg', error.message, true);
+    return;
+  }
+  showMsg('password-msg', 'Password updated ✓', false);
+  document.getElementById('new-password-input').value = '';
+  document.getElementById('confirm-password-input').value = '';
 });
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
