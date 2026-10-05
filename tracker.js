@@ -14,16 +14,6 @@ function outcomeBadge(outcome) {
 // Urgency is computed relative to today (not fixed calendar months),
 // so it stays meaningful all year round rather than only working for
 // whatever month a hardcoded example happened to use.
-function urgencyClass(deadline) {
-  if (!deadline) return '';
-  const days = (new Date(deadline) - new Date(new Date().toDateString())) / 86400000;
-  if (days < 0) return 'urgency-overdue';
-  if (days <= 14) return 'urgency-soon';
-  if (days <= 30) return 'urgency-month';
-  if (days <= 60) return 'urgency-later';
-  return '';
-}
-
 function renderCard(row) {
   const isSubmitted = row.status === 'submitted';
   const outcomeControls = isSubmitted && !row.outcome ? `
@@ -52,7 +42,7 @@ function renderCard(row) {
     : '';
 
   return `
-    <div class="kanban-card ${urgencyClass(row.deadline)}" draggable="true" data-id="${row.id}">
+    <div class="kanban-card ${row.color ? 'color-' + row.color : ''}" draggable="true" data-id="${row.id}">
       <div class="kanban-card-top">
         <h4>${escapeHtml(row.title)}</h4>
         <button class="kanban-delete" data-delete="${row.id}" aria-label="Delete">×</button>
@@ -116,19 +106,7 @@ async function loadBoard() {
   }
 
   currentScholarships = data;
-
-  ['backlog', 'researching', 'writing', 'in_review', 'submitted', 'won_awaiting_funds', 'funds_received'].forEach(status => {
-    const rows = data
-      .filter(r => r.status === status)
-      .sort((a, b) => {
-        if (!a.deadline && !b.deadline) return 0;
-        if (!a.deadline) return 1;
-        if (!b.deadline) return -1;
-        return new Date(a.deadline) - new Date(b.deadline);
-      });
-    document.getElementById(`col-${status}`).innerHTML = rows.map(renderCard).join('');
-    document.getElementById(`count-${status}`).textContent = rows.length;
-  });
+  renderBoard();
 
   const submittedCount = data.filter(r => r.status === 'submitted' || r.status === 'won_awaiting_funds' || r.status === 'funds_received').length;
   await checkApplicationMilestones(submittedCount, currentUserId);
@@ -223,6 +201,68 @@ cancelAddBtn.addEventListener('click', () => {
   addForm.reset();
 });
 
+// Wires up click handling for a color-swatch-picker (the small
+// circular buttons) and returns a getter/setter pair for the
+// currently selected color - shared between the add-scholarship
+// form and the edit modal, which each have their own picker instance.
+function wireColorPicker(containerId) {
+  const container = document.getElementById(containerId);
+  const swatches = container.querySelectorAll('.color-swatch');
+  let selected = '';
+  swatches.forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      selected = swatch.dataset.color;
+      swatches.forEach(s => s.classList.toggle('is-selected', s === swatch));
+    });
+  });
+  return {
+    get: () => selected,
+    set: (color) => {
+      selected = color || '';
+      swatches.forEach(s => s.classList.toggle('is-selected', s.dataset.color === selected));
+    },
+  };
+}
+const addColorPicker = wireColorPicker('s-color-picker');
+const editColorPicker = wireColorPicker('cm-color-picker');
+
+let trackerSearchTerm = '';
+let trackerSortMode = 'deadline';
+
+function renderBoard() {
+  const term = trackerSearchTerm.toLowerCase();
+  const filtered = term
+    ? currentScholarships.filter(r => r.title.toLowerCase().includes(term))
+    : currentScholarships;
+
+  ['backlog', 'researching', 'writing', 'in_review', 'submitted', 'won_awaiting_funds', 'funds_received'].forEach(status => {
+    const rows = filtered
+      .filter(r => r.status === status)
+      .sort((a, b) => {
+        if (trackerSortMode === 'recent') {
+          return new Date(b.created_at) - new Date(a.created_at);
+        }
+        if (!a.deadline && !b.deadline) return 0;
+        if (!a.deadline) return 1;
+        if (!b.deadline) return -1;
+        return new Date(a.deadline) - new Date(b.deadline);
+      });
+    document.getElementById(`col-${status}`).innerHTML = rows.length > 0
+      ? rows.map(renderCard).join('')
+      : (term ? `<p class="dash-empty" style="padding:8px 4px;">No matches here.</p>` : '');
+    document.getElementById(`count-${status}`).textContent = rows.length;
+  });
+}
+
+document.getElementById('tracker-search').addEventListener('input', (e) => {
+  trackerSearchTerm = e.target.value.trim();
+  renderBoard();
+});
+document.getElementById('tracker-sort').addEventListener('change', (e) => {
+  trackerSortMode = e.target.value;
+  renderBoard();
+});
+
 addForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const title = document.getElementById('s-title').value.trim();
@@ -247,6 +287,7 @@ addForm.addEventListener('submit', async (e) => {
     essay_prompt: essayPrompt,
     rec_letters_needed: recLetters,
     goal_id: goalId,
+    color: addColorPicker.get() || null,
     status: 'backlog',
   });
 
@@ -261,6 +302,7 @@ addForm.addEventListener('submit', async (e) => {
   await awardAchievement('tracker_starter', currentUserId);
 
   addForm.reset();
+  addColorPicker.set('');
   addForm.style.display = 'none';
   loadBoard();
 });
@@ -364,6 +406,7 @@ async function openCardModal(id) {
   document.getElementById('cm-website').value = row.website || '';
   document.getElementById('cm-essay-prompt').value = row.essay_prompt || '';
   document.getElementById('cm-rec-letters').value = row.rec_letters_needed ?? '';
+  editColorPicker.set(row.color || '');
   document.getElementById('cm-msg').style.display = 'none';
   document.getElementById('cm-save-btn').dataset.id = id;
 
@@ -436,6 +479,7 @@ document.getElementById('cm-save-btn').addEventListener('click', async () => {
     website: document.getElementById('cm-website').value.trim() || null,
     essay_prompt: document.getElementById('cm-essay-prompt').value.trim() || null,
     rec_letters_needed: document.getElementById('cm-rec-letters').value || null,
+    color: editColorPicker.get() || null,
   };
   // Same outcome-clearing rule used by drag-and-drop: won-related
   // statuses imply outcome, earlier stages clear it.

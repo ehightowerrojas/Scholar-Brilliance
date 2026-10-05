@@ -228,11 +228,19 @@ create table if not exists public.scholarships (
   amount numeric,
   deadline date,
   website text,
+  color text,
   status text not null default 'backlog' check (status in ('backlog','researching','writing','in_review','submitted','funds_received')),
   outcome text check (outcome in ('won','not_selected')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Existing databases: add the column and its constraint separately,
+-- since create table above only applies on first creation.
+alter table public.scholarships add column if not exists color text;
+alter table public.scholarships drop constraint if exists scholarships_color_check;
+alter table public.scholarships add constraint scholarships_color_check
+  check (color is null or color in ('tomato','tangerine','banana','sage','peacock','blueberry','lavender','graphite'));
 
 create or replace function public.set_updated_at()
 returns trigger as $$

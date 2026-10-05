@@ -55,6 +55,14 @@
       </div>
     </div>
 
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+      <input type="text" id="tracker-search" placeholder="Search your scholarships by name…" style="flex:1; min-width:220px; padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+      <select id="tracker-sort" style="padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+        <option value="deadline">Sort: Due date (soonest first)</option>
+        <option value="recent">Sort: Recently added</option>
+      </select>
+    </div>
+
     <div id="tracker-tips-panel" class="dash-card" style="display:none; margin-bottom:20px; font-size:13.5px; color:var(--muted); line-height:1.5;">
       <h3>How to use this board</h3>
       <p style="margin-bottom:10px;"><strong style="color:var(--ink);">Backlog:</strong> Drop every potential scholarship here. Don't filter yet, just collect options, links, and amounts.</p>
@@ -98,6 +106,20 @@
           <select id="s-goal">
             <option value="">No specific goal</option>
           </select>
+        </div>
+        <div class="field" style="grid-column:1 / -1;">
+          <label>Color (optional)</label>
+          <div class="color-swatch-picker" id="s-color-picker">
+            <button type="button" class="color-swatch is-selected" data-color=""></button>
+            <button type="button" class="color-swatch" data-color="tomato"></button>
+            <button type="button" class="color-swatch" data-color="tangerine"></button>
+            <button type="button" class="color-swatch" data-color="banana"></button>
+            <button type="button" class="color-swatch" data-color="sage"></button>
+            <button type="button" class="color-swatch" data-color="peacock"></button>
+            <button type="button" class="color-swatch" data-color="blueberry"></button>
+            <button type="button" class="color-swatch" data-color="lavender"></button>
+            <button type="button" class="color-swatch" data-color="graphite"></button>
+          </div>
         </div>
       </div>
       <div class="add-form-actions">
@@ -164,6 +186,20 @@
         <div class="field"><label for="cm-website">Website</label><input type="url" id="cm-website"></div>
         <div class="field" style="grid-column:1 / -1;"><label for="cm-essay-prompt">Essay prompt</label><textarea id="cm-essay-prompt" rows="2"></textarea></div>
         <div class="field"><label for="cm-rec-letters">Rec. letters needed</label><input type="number" id="cm-rec-letters" min="0" max="10"></div>
+        <div class="field" style="grid-column:1 / -1;">
+          <label>Color</label>
+          <div class="color-swatch-picker" id="cm-color-picker">
+            <button type="button" class="color-swatch" data-color=""></button>
+            <button type="button" class="color-swatch" data-color="tomato"></button>
+            <button type="button" class="color-swatch" data-color="tangerine"></button>
+            <button type="button" class="color-swatch" data-color="banana"></button>
+            <button type="button" class="color-swatch" data-color="sage"></button>
+            <button type="button" class="color-swatch" data-color="peacock"></button>
+            <button type="button" class="color-swatch" data-color="blueberry"></button>
+            <button type="button" class="color-swatch" data-color="lavender"></button>
+            <button type="button" class="color-swatch" data-color="graphite"></button>
+          </div>
+        </div>
       </div>
       <div style="display:flex; gap:10px; margin-top:16px;">
         <button class="btn btn-gold" id="cm-save-btn" style="padding:10px 20px;">Save changes</button>

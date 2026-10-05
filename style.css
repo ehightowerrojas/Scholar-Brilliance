@@ -1032,10 +1032,33 @@ footer.site-footer{
   box-shadow:0 2px 8px -4px rgba(55,71,79,0.18);
   transition:opacity .15s ease, transform .15s ease, box-shadow .15s ease;
 }
-.kanban-card.urgency-overdue{ border-left-color:#c62828; }
-.kanban-card.urgency-soon{ border-left-color:#e53935; }
-.kanban-card.urgency-month{ border-left-color:#fb8c00; }
-.kanban-card.urgency-later{ border-left-color:#fdd835; }
+.kanban-card.color-tomato{ border-left-color:#e57373; }
+.kanban-card.color-tangerine{ border-left-color:#ffb74d; }
+.kanban-card.color-banana{ border-left-color:#dbc400; }
+.kanban-card.color-sage{ border-left-color:#66bb6a; }
+.kanban-card.color-peacock{ border-left-color:#26a69a; }
+.kanban-card.color-blueberry{ border-left-color:#5c9ce6; }
+.kanban-card.color-lavender{ border-left-color:#9575cd; }
+.kanban-card.color-graphite{ border-left-color:#78909c; }
+
+.color-swatch-picker{ display:flex; gap:8px; flex-wrap:wrap; }
+.color-swatch{
+  width:28px; height:28px; border-radius:50%; cursor:pointer;
+  border:2px solid transparent; padding:0;
+  transition:transform .12s ease, border-color .12s ease;
+}
+.color-swatch:hover{ transform:scale(1.1); }
+.color-swatch.is-selected{ border-color:var(--ink); }
+.color-swatch[data-color="tomato"]{ background:#e57373; }
+.color-swatch[data-color="tangerine"]{ background:#ffb74d; }
+.color-swatch[data-color="banana"]{ background:#dbc400; }
+.color-swatch[data-color="sage"]{ background:#66bb6a; }
+.color-swatch[data-color="peacock"]{ background:#26a69a; }
+.color-swatch[data-color="blueberry"]{ background:#5c9ce6; }
+.color-swatch[data-color="lavender"]{ background:#9575cd; }
+.color-swatch[data-color="graphite"]{ background:#78909c; }
+.color-swatch[data-color=""]{ background:var(--card); border-color:var(--line-strong); position:relative; }
+.color-swatch[data-color=""]::after{ content:""; position:absolute; inset:4px; background:linear-gradient(45deg, transparent 45%, #c62828 45%, #c62828 55%, transparent 55%); border-radius:50%; }
 .kanban-card-prompt{
   font-size:12px; font-style:italic; color:var(--muted);
   margin:8px 0; line-height:1.4;
@@ -1181,14 +1204,9 @@ footer.site-footer{
   width:38px; height:38px;
   flex-shrink:0;
   pointer-events:none;
-  animation:companion-idle 2.6s ease-in-out infinite;
 }
 .avatar-companion.is-celebrating{
   animation:companion-celebrate 1.4s ease-in-out;
-}
-@keyframes companion-idle{
-  0%, 100%{ transform:translateY(0) rotate(-3deg); }
-  50%{ transform:translateY(-8px) rotate(3deg); }
 }
 @keyframes companion-celebrate{
   0%{ transform:scale(1) rotate(0deg); }
