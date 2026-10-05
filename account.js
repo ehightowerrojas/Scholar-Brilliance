@@ -156,8 +156,19 @@ document.getElementById('save-profile-btn').addEventListener('click', async () =
   showMsg('profile-msg', authErr || profileErr ? 'Could not save, try again.' : 'Saved ✓', Boolean(authErr || profileErr));
 });
 
+// The minimum level required to reach each evolution tier - the
+// inverse of evolutionTierFromLevel(), needed to compute "X more
+// levels until your next stage" and to know which tiers are actually
+// reachable yet when swiping the large preview.
+const LEVEL_FOR_TIER = { 1: 1, 2: 3, 3: 5, 4: 7 };
+const TIER_LABEL = { 1: 'Lv 1-2', 2: 'Lv 3-4', 3: 'Lv 5-6', 4: 'Lv 7-8' };
+
+let avatarSectionState = null; // cached data from the last load, so arrow clicks don't need a refetch
+let previewedTier = null; // which tier the large display is currently showing (independent of the real active tier)
+
 async function loadAvatarSection() {
   const grid = document.getElementById('avatar-grid');
+  const largeDisplay = document.getElementById('avatar-large-display');
 
   let species, profile, goals, earnedRows, achievements, levels;
   try {
@@ -177,6 +188,7 @@ async function loadAvatarSection() {
   } catch (err) {
     console.error('Could not load avatar section:', err);
     grid.innerHTML = '';
+    largeDisplay.innerHTML = '';
     grid.insertAdjacentHTML('beforebegin', '<p class="dash-empty" style="color:#c62828;">Could not load your avatars right now. Please refresh the page.</p>');
     return;
   }
@@ -186,28 +198,89 @@ async function loadAvatarSection() {
   const totalXP = (earnedRows || []).reduce((sum, r) => sum + (pointsMap[r.achievement_id] || 0), 0);
   let currentLevel = { level_number: 1 };
   (levels || []).forEach(l => { if (totalXP >= l.xp_threshold) currentLevel = l; });
-  const tier = evolutionTierFromLevel(currentLevel.level_number);
-
+  const activeTier = evolutionTierFromLevel(currentLevel.level_number);
   const equippedId = profile?.avatar_species_id || 'raptor';
 
-  grid.innerHTML = (species || []).map(s => {
+  avatarSectionState = { species: species || [], levels: levels || [], totalXP, currentLevel, activeTier, equippedId, completedGoalsCount };
+  // Default the preview to the real active tier whenever the equipped
+  // species changes (including on first load); arrow clicks move it
+  // from there without affecting what's actually equipped.
+  if (previewedTier === null || previewedTier.speciesId !== equippedId) {
+    previewedTier = { speciesId: equippedId, tier: activeTier };
+  }
+
+  renderLargeAvatarDisplay();
+  renderOtherAvatarsGrid();
+}
+
+function renderLargeAvatarDisplay() {
+  const { species, levels, currentLevel, activeTier, equippedId } = avatarSectionState;
+  const largeDisplay = document.getElementById('avatar-large-display');
+  const equippedSpecies = species.find(s => s.id === equippedId);
+  if (!equippedSpecies) { largeDisplay.innerHTML = ''; return; }
+
+  const tier = previewedTier.tier;
+  const tierReached = tier <= activeTier;
+  const svg = renderAvatarSVG(equippedSpecies.id, tier, 180);
+
+  // Progress toward the next stage, per your answer: level-based, for
+  // the currently equipped avatar specifically.
+  let progressHtml = '';
+  if (activeTier < 4) {
+    const nextTierLevel = LEVEL_FOR_TIER[activeTier + 1];
+    const nextLevelRow = levels.find(l => l.level_number === nextTierLevel);
+    const prevLevelRow = levels.find(l => l.level_number === currentLevel.level_number) || { xp_threshold: 0 };
+    if (nextLevelRow) {
+      const span = nextLevelRow.xp_threshold - prevLevelRow.xp_threshold;
+      const into = Math.max(0, avatarSectionState.totalXP - prevLevelRow.xp_threshold);
+      const pct = span > 0 ? Math.min(100, (into / span) * 100) : 0;
+      progressHtml = `
+        <p class="dash-empty" style="margin-top:10px; font-size:12.5px;">Reach <strong style="color:var(--ink);">Level ${nextTierLevel}</strong> to unlock the next stage</p>
+        <div style="height:6px; border-radius:999px; background:var(--card-soft); overflow:hidden; max-width:220px; margin:6px auto 0;">
+          <div style="width:${pct}%; height:100%; background:var(--amber); border-radius:999px;"></div>
+        </div>
+      `;
+    }
+  } else {
+    progressHtml = `<p class="dash-empty" style="margin-top:10px; font-size:12.5px;">Final stage reached ✓</p>`;
+  }
+
+  largeDisplay.innerHTML = `
+    <p style="font-weight:700; font-size:15px; color:var(--ink); margin-bottom:2px;">${equippedSpecies.name}</p>
+    <p class="dash-empty" style="text-transform:capitalize; margin-bottom:10px;">${equippedSpecies.rarity}</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:18px;">
+      <button id="avatar-prev-stage" aria-label="Previous stage" style="background:var(--card-soft); border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:16px; color:var(--ink); flex-shrink:0;" ${tier <= 1 ? 'disabled' : ''}>‹</button>
+      <div style="opacity:${tierReached ? 1 : 0.35}; filter:${tierReached ? 'none' : 'grayscale(1)'};">${svg}</div>
+      <button id="avatar-next-stage" aria-label="Next stage" style="background:var(--card-soft); border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:16px; color:var(--ink); flex-shrink:0;" ${tier >= 4 ? 'disabled' : ''}>›</button>
+    </div>
+    <p style="font-size:12px; font-weight:600; color:var(--ink); margin-top:8px;">${TIER_LABEL[tier]}${tierReached ? '' : ` · Unlocks at Lv ${LEVEL_FOR_TIER[tier]}`}</p>
+    ${progressHtml}
+  `;
+
+  document.getElementById('avatar-prev-stage').addEventListener('click', () => {
+    if (tier > 1) { previewedTier.tier = tier - 1; renderLargeAvatarDisplay(); }
+  });
+  document.getElementById('avatar-next-stage').addEventListener('click', () => {
+    if (tier < 4) { previewedTier.tier = tier + 1; renderLargeAvatarDisplay(); }
+  });
+}
+
+function renderOtherAvatarsGrid() {
+  const { species, activeTier, equippedId, completedGoalsCount } = avatarSectionState;
+  const grid = document.getElementById('avatar-grid');
+  const others = species.filter(s => s.id !== equippedId);
+
+  grid.innerHTML = others.map(s => {
     const unlocked = completedGoalsCount >= s.unlock_goals_completed;
-    const isEquipped = s.id === equippedId;
-    const svg = renderAvatarSVG(s.id, unlocked ? tier : 1, 72);
-    const tierPreviewHtml = [1, 2, 3, 4].map(t => {
-      const label = t === 1 ? 'Lv 1-2' : t === 2 ? 'Lv 3-4' : t === 3 ? 'Lv 5-6' : 'Lv 7-8';
-      return `<div style="text-align:center;">${renderAvatarSVG(s.id, t, 48)}<p style="font-size:9.5px; color:var(--muted); margin-top:2px;">${label}</p></div>`;
-    }).join('');
+    const svg = renderAvatarSVG(s.id, unlocked ? activeTier : 1, 72);
+    const tierPreviewHtml = [1, 2, 3, 4].map(t => `<div style="text-align:center;">${renderAvatarSVG(s.id, t, 48)}<p style="font-size:9.5px; color:var(--muted); margin-top:2px;">${TIER_LABEL[t]}</p></div>`).join('');
     return `
       <div style="text-align:center; opacity:${unlocked ? 1 : 0.4};">
-        <div style="position:relative; display:inline-block;">
-          ${svg}
-          ${isEquipped ? '<div style="position:absolute; top:-4px; right:-4px; background:var(--teal); color:white; border-radius:50%; width:20px; height:20px; font-size:11px; display:flex; align-items:center; justify-content:center;">✓</div>' : ''}
-        </div>
+        ${svg}
         <p style="font-size:11.5px; font-weight:600; margin-top:4px; color:var(--ink);">${s.name}</p>
         <p style="font-size:10px; color:var(--muted); text-transform:capitalize;">${s.rarity}</p>
         ${unlocked
-          ? (isEquipped ? '' : `<button class="achv-demo-btn" data-equip="${s.id}" style="width:auto; padding:4px 10px; font-size:11px; margin-top:2px;">Equip</button>`)
+          ? `<button class="achv-demo-btn" data-equip="${s.id}" style="width:auto; padding:4px 10px; font-size:11px; margin-top:2px;">Select</button>`
           : `<p style="font-size:10px; color:var(--muted);">${s.unlock_goals_completed} goal${s.unlock_goals_completed === 1 ? '' : 's'} completed to unlock</p>`}
         <button class="dash-empty" data-preview-toggle="${s.id}" style="background:none; border:none; text-decoration:underline; cursor:pointer; font-size:10.5px; margin-top:4px; display:block; width:100%;">Preview stages</button>
         <div id="preview-${s.id}" style="display:none; margin-top:8px; gap:6px; justify-content:center;">${tierPreviewHtml}</div>
