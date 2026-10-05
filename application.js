@@ -72,6 +72,16 @@ async function init() {
   }
 }
 
+// Same color keys/hex values as the Tracker's .color-* CSS classes,
+// kept in sync manually since this list renders as .dash-card rather
+// than .kanban-card and so can't just reuse those classes directly.
+const COLOR_HEX = {
+  tomato: '#e57373', tangerine: '#ffb74d', banana: '#dbc400', sage: '#66bb6a',
+  peacock: '#26a69a', blueberry: '#5c9ce6', lavender: '#9575cd', graphite: '#78909c',
+};
+
+let pickerScholarships = [];
+
 // Shown when Application Builder is opened directly from the sidebar,
 // with no specific scholarship picked yet — lets the student choose
 // which one to work on, same role the old "My Essays" list used to
@@ -83,7 +93,7 @@ async function showScholarshipPicker() {
 
   const { data: scholarships, error } = await supabaseClient
     .from('scholarships')
-    .select('id, title, amount, deadline, status')
+    .select('id, title, amount, deadline, status, color')
     .eq('user_id', appUserId)
     .order('created_at', { ascending: false });
 
@@ -97,13 +107,29 @@ async function showScholarshipPicker() {
     return;
   }
 
+  pickerScholarships = scholarships;
+  renderScholarshipPickerList(scholarships);
+}
+
+function renderScholarshipPickerList(scholarships) {
+  const listEl = document.getElementById('scholarship-picker-list');
+  if (scholarships.length === 0) {
+    listEl.innerHTML = `<p class="dash-empty">No matches.</p>`;
+    return;
+  }
   listEl.innerHTML = scholarships.map(s => `
-    <a href="application.html?scholarship=${s.id}" class="dash-card" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease;">
+    <a href="application.html?scholarship=${s.id}" class="dash-card" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease; border-left:4px solid ${s.color && COLOR_HEX[s.color] ? COLOR_HEX[s.color] : 'transparent'};">
       <p style="font-weight:600; color:var(--ink); margin:0;">${escapeHtml(s.title)}</p>
       <p class="dash-empty" style="margin-top:4px;">${s.amount ? '$' + Number(s.amount).toLocaleString() : 'No amount set'}${s.deadline ? ' · due ' + new Date(s.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}</p>
     </a>
   `).join('');
 }
+
+document.getElementById('scholarship-picker-search').addEventListener('input', (e) => {
+  const term = e.target.value.trim().toLowerCase();
+  const filtered = term ? pickerScholarships.filter(s => s.title.toLowerCase().includes(term)) : pickerScholarships;
+  renderScholarshipPickerList(filtered);
+});
 
 function renderInfo() {
   const el = document.getElementById('appinfo-content');
