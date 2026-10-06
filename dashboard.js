@@ -618,18 +618,4 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   }
 });
 
-// Dismissible promo card, remembered across visits via localStorage
-// (this is a real production site, not a chat artifact, so
-// localStorage is the right tool here).
-const autofillPromoCard = document.getElementById('autofill-promo-card');
-if (autofillPromoCard) {
-  if (localStorage.getItem('sb_dismissed_autofill_promo') === 'true') {
-    autofillPromoCard.style.display = 'none';
-  }
-  document.getElementById('autofill-promo-dismiss').addEventListener('click', () => {
-    localStorage.setItem('sb_dismissed_autofill_promo', 'true');
-    autofillPromoCard.style.display = 'none';
-  });
-}
-
 loadDashboard();

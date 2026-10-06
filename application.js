@@ -192,7 +192,7 @@ function renderScholarshipPickerList(scholarships) {
     return;
   }
   listEl.innerHTML = scholarships.map(s => `
-    <a href="application.html?scholarship=${s.id}" class="dash-card" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease; border-left:4px solid ${s.color && COLOR_HEX[s.color] ? COLOR_HEX[s.color] : 'transparent'};">
+    <a href="application.html?scholarship=${s.id}" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease; background:#fbf6ec; border:1px solid #e8dfc8; border-left:4px solid ${s.color && COLOR_HEX[s.color] ? COLOR_HEX[s.color] : 'transparent'}; border-radius:var(--radius-sm); padding:14px 18px;">
       <p style="font-weight:600; color:var(--ink); margin:0;">${escapeHtml(s.title)}</p>
       <p class="dash-empty" style="margin-top:4px;">${s.amount ? '$' + Number(s.amount).toLocaleString() : 'No amount set'}${s.deadline ? ' · due ' + new Date(s.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}</p>
     </a>
