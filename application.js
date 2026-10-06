@@ -37,32 +37,35 @@ async function init() {
     return;
   }
 
-  const [{ data: scholarship, error: schErr }, { data: profile }, { data: essays }] = await Promise.all([
+  const [{ data: scholarship, error: schErr }, { data: profile }, { data: essays }, { data: questions }] = await Promise.all([
     supabaseClient.from('scholarships').select('*').eq('id', scholarshipId).eq('user_id', appUserId).single(),
     supabaseClient.from('profiles').select('*').eq('id', appUserId).single(),
     supabaseClient.from('essays').select('*').eq('scholarship_id', scholarshipId).eq('user_id', appUserId).order('updated_at', { ascending: false }).limit(1),
+    supabaseClient.from('scholarship_questions').select('*').eq('scholarship_id', scholarshipId).eq('user_id', appUserId).order('sort_order'),
   ]);
 
   if (schErr || !scholarship) {
-    document.getElementById('scholarship-title').textContent = 'Scholarship not found';
-    document.getElementById('scholarship-sub').textContent = "This scholarship isn't in your tracker, or you don't have access to it.";
+    document.getElementById('scholarship-not-found').style.display = 'block';
     return;
   }
 
   currentScholarship = scholarship;
   currentProfile = profile;
   currentEssay = essays?.[0] || null;
+  currentQuestions = questions || [];
 
   document.getElementById('scholarship-title').textContent = scholarship.title;
   document.getElementById('scholarship-sub').textContent = scholarship.amount
     ? `$${Number(scholarship.amount).toLocaleString()}${scholarship.deadline ? ' · Deadline: ' + new Date(scholarship.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}`
     : '';
+  document.getElementById('scholarship-header-card').style.borderLeftColor = scholarship.color && COLOR_HEX[scholarship.color] ? COLOR_HEX[scholarship.color] : 'transparent';
+  document.getElementById('import-url-input').value = scholarship.website || '';
 
   document.getElementById('builder-content').style.display = 'block';
 
   renderInfo();
   renderEssay();
-  document.getElementById('notes-input').value = scholarship.application_notes || '';
+  renderQuestions();
 
   const visitBtn = document.getElementById('visit-site-btn');
   if (scholarship.website) {
@@ -79,6 +82,77 @@ const COLOR_HEX = {
   tomato: '#e57373', tangerine: '#ffb74d', banana: '#dbc400', sage: '#66bb6a',
   peacock: '#26a69a', blueberry: '#5c9ce6', lavender: '#9575cd', graphite: '#78909c',
 };
+
+let currentQuestions = [];
+
+document.getElementById('import-toggle-btn').addEventListener('click', () => {
+  const panel = document.getElementById('import-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('import-fetch-btn').addEventListener('click', async () => {
+  const url = document.getElementById('import-url-input').value.trim();
+  const resultEl = document.getElementById('import-result');
+  if (!url) return;
+
+  resultEl.innerHTML = `<p class="dash-empty">Fetching…</p>`;
+
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const resp = await fetch(`/api/extract?url=${encodeURIComponent(url)}`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    const data = await resp.json();
+
+    if (data.error) {
+      resultEl.innerHTML = `<p class="dash-empty">${escapeHtml(data.error)}</p>`;
+      return;
+    }
+    if (!data.extracted) {
+      resultEl.innerHTML = `<p class="dash-empty">Couldn't find any details on that page.</p>`;
+      return;
+    }
+
+    resultEl.innerHTML = `
+      <div style="background:var(--card-soft); border-radius:var(--radius-sm); padding:12px;">
+        <p style="font-size:13px; color:var(--ink);"><strong>${escapeHtml(data.title) || 'Untitled'}</strong>${data.amount ? ` · $${Number(data.amount).toLocaleString()}` : ''}</p>
+        ${data.deadlineText ? `<p class="dash-empty" style="margin-top:2px;">Possible deadline: ${escapeHtml(data.deadlineText)}</p>` : ''}
+        <button class="btn btn-gold" id="apply-import-btn" style="margin-top:10px; padding:8px 16px; font-size:13px;">Apply these details</button>
+      </div>
+    `;
+
+    document.getElementById('apply-import-btn').addEventListener('click', async (e) => {
+      e.target.disabled = true;
+      e.target.textContent = 'Applying…';
+
+      const updates = { website: url };
+      if (data.title) updates.title = data.title;
+      if (data.amount) updates.amount = data.amount;
+
+      const { error } = await supabaseClient.from('scholarships').update(updates).eq('id', currentScholarship.id).eq('user_id', appUserId);
+      if (error) {
+        console.error(error);
+        e.target.textContent = 'Could not apply, try again';
+        e.target.disabled = false;
+        return;
+      }
+
+      Object.assign(currentScholarship, updates);
+      document.getElementById('scholarship-title').textContent = currentScholarship.title;
+      document.getElementById('scholarship-sub').textContent = currentScholarship.amount
+        ? `$${Number(currentScholarship.amount).toLocaleString()}${currentScholarship.deadline ? ' · Deadline: ' + new Date(currentScholarship.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}`
+        : '';
+      const visitBtn = document.getElementById('visit-site-btn');
+      visitBtn.href = url;
+      visitBtn.style.display = '';
+
+      e.target.textContent = 'Applied ✓';
+    });
+  } catch (err) {
+    console.error(err);
+    resultEl.innerHTML = `<p class="dash-empty">Something went wrong reaching that page.</p>`;
+  }
+});
 
 let pickerScholarships = [];
 
@@ -159,6 +233,55 @@ function renderEssay() {
   document.getElementById('essay-content-input').value = currentEssay?.content || '';
 }
 
+function renderQuestions() {
+  const listEl = document.getElementById('questions-list');
+  if (currentQuestions.length === 0) {
+    listEl.innerHTML = `<p class="dash-empty" style="margin-bottom:12px;">No questions added yet.</p>`;
+    return;
+  }
+  listEl.innerHTML = currentQuestions.map(q => `
+    <div class="field" data-question-id="${q.id}" style="border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px; margin-bottom:12px;">
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <input type="text" class="question-text-input" value="${escapeHtml(q.question)}" placeholder="e.g. List your extracurricular activities" style="flex:1; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink); font-weight:600;">
+        <button class="delete-question-btn" aria-label="Delete question" style="background:none; border:none; cursor:pointer; color:var(--muted); font-size:18px; padding:4px 8px; flex-shrink:0;">×</button>
+      </div>
+      <textarea class="question-answer-input" rows="3" placeholder="Your answer…" style="width:100%; margin-top:8px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink); font-family:var(--font-body); font-size:13.5px; resize:vertical;">${escapeHtml(q.answer)}</textarea>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('[data-question-id]').forEach(row => {
+    const id = row.dataset.questionId;
+    const questionInput = row.querySelector('.question-text-input');
+    const answerInput = row.querySelector('.question-answer-input');
+    const saveField = async (field, value) => {
+      const q = currentQuestions.find(q => q.id === id);
+      if (q) q[field] = value;
+      await supabaseClient.from('scholarship_questions').update({ [field]: value }).eq('id', id).eq('user_id', appUserId);
+    };
+    questionInput.addEventListener('blur', () => saveField('question', questionInput.value.trim()));
+    answerInput.addEventListener('blur', () => saveField('answer', answerInput.value));
+    row.querySelector('.delete-question-btn').addEventListener('click', async () => {
+      await supabaseClient.from('scholarship_questions').delete().eq('id', id).eq('user_id', appUserId);
+      currentQuestions = currentQuestions.filter(q => q.id !== id);
+      renderQuestions();
+    });
+  });
+}
+
+document.getElementById('add-question-btn').addEventListener('click', async () => {
+  const sortOrder = currentQuestions.length;
+  const { data, error } = await supabaseClient.from('scholarship_questions')
+    .insert({ scholarship_id: currentScholarship.id, user_id: appUserId, question: '', answer: '', sort_order: sortOrder })
+    .select().single();
+  if (error) { console.error(error); return; }
+  currentQuestions.push(data);
+  renderQuestions();
+  // Focus the newly added question's text field so the student can
+  // start typing immediately rather than hunting for it.
+  const newRow = document.querySelector(`[data-question-id="${data.id}"] .question-text-input`);
+  if (newRow) newRow.focus();
+});
+
 document.getElementById('save-essay-btn').addEventListener('click', async () => {
   const title = document.getElementById('essay-title-input').value.trim();
   const content = document.getElementById('essay-content-input').value;
@@ -216,11 +339,12 @@ function buildApplicationText() {
   lines.push('');
   lines.push('--- Essay ---');
   lines.push(currentEssay ? `${currentEssay.title}\n\n${currentEssay.content}` : '(No essay linked yet)');
-  const notes = document.getElementById('notes-input').value.trim();
-  if (notes) {
+  if (currentQuestions.length > 0) {
     lines.push('');
-    lines.push('--- Additional Notes ---');
-    lines.push(notes);
+    lines.push('--- Questions ---');
+    currentQuestions.forEach(q => {
+      if (q.question.trim()) lines.push(`${q.question}\n${q.answer}\n`);
+    });
   }
   return lines.join('\n');
 }
@@ -236,22 +360,6 @@ document.getElementById('copy-info-btn').addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
   }
-});
-
-document.getElementById('save-notes-btn').addEventListener('click', async () => {
-  const notes = document.getElementById('notes-input').value;
-  const btn = document.getElementById('save-notes-btn');
-  btn.disabled = true;
-
-  const { error } = await supabaseClient.from('scholarships')
-    .update({ application_notes: notes })
-    .eq('id', currentScholarship.id)
-    .eq('user_id', appUserId);
-
-  btn.disabled = false;
-  const msg = document.getElementById('notes-msg');
-  msg.style.display = 'block';
-  msg.textContent = error ? 'Could not save, try again.' : 'Saved ✓';
 });
 
 document.getElementById('send-extension-btn').addEventListener('click', () => {
@@ -271,7 +379,7 @@ document.getElementById('send-extension-btn').addEventListener('click', () => {
     gpa: currentProfile?.gpa || '',
     major: currentProfile?.major || '',
     essay: currentEssay?.content || '',
-    notes: document.getElementById('notes-input').value || '',
+    questions: currentQuestions.map(q => ({ question: q.question, answer: q.answer })),
   };
 
   const btn = document.getElementById('send-extension-btn');
@@ -294,7 +402,7 @@ document.getElementById('send-extension-btn').addEventListener('click', () => {
     if (!received) {
       window.removeEventListener('message', listener);
       msgEl.style.display = 'block';
-      msgEl.textContent = "No extension detected. Install the Scholar Brilliance Autofill extension first, or use the PDF/Copy options instead.";
+      msgEl.innerHTML = `No extension detected on this page. If you've already downloaded it: downloading the file alone doesn't install it — it needs to be loaded as an unpacked extension in <code>chrome://extensions</code> (enable Developer mode, then "Load unpacked"). Also try refreshing this tab, since the extension only activates on pages loaded after it was installed. Otherwise, use the PDF/Copy options instead.`;
     }
   }, 800);
 });
