@@ -115,8 +115,12 @@ const AVATAR_SPECIES_META = {
   sailback: { name: 'Sail-back', color: '#1E88E5', rarity: 'legendary' },
 };
 
-const AVATAR_FRAME_COLORS = { 1: '#c9c4d6', 2: '#5E35B1', 3: '#009688', 4: '#FFC107' };
-const AVATAR_FRAME_WIDTH = { 1: 2, 2: 3, 3: 4, 4: 5 };
+// No more frame/circle - the only thing that should visibly change
+// across tiers is the creature itself. Each species in
+// AVATAR_EVOLUTION_FEATURES defines what new geometry gets added at
+// tiers 2, 3 and 4 (tier 1 is just the bare base body) - actual
+// horns, spikes, plates, wings or a sail growing in, themed to what
+// that species already looks like, not a generic size/color effect.
 
 function evolutionTierFromLevel(levelNumber) {
   if (levelNumber >= 7) return 4;
@@ -125,25 +129,74 @@ function evolutionTierFromLevel(levelNumber) {
   return 1;
 }
 
+const AVATAR_EVOLUTION_FEATURES = {
+  // Spine spikes growing in, back to front.
+  raptor: {
+    2: [{ points: '-33,-10 -30,-28 -23,-10', fill: 'body' }],
+    3: [{ points: '-33,-10 -30,-28 -23,-10', fill: 'body' }, { points: '-19,-34 -16,-52 -9,-34', fill: 'body' }],
+    4: [{ points: '-33,-10 -30,-28 -23,-10', fill: 'body' }, { points: '-19,-34 -16,-52 -9,-34', fill: 'body' }, { points: '-1,-36 2,-54 9,-36', fill: 'body' }],
+  },
+  // A head crest growing taller, plus a neck frill bump at full tier.
+  longneck: {
+    2: [{ points: '36,-56 40,-68 44,-56', fill: 'body' }],
+    3: [{ points: '34,-56 39,-74 44,-56', fill: 'body' }],
+    4: [{ points: '34,-56 39,-78 44,-56', fill: 'body' }, { points: '6,-18 14,-30 20,-18', fill: 'body' }],
+  },
+  // Blocky armor plates stacking up along the back.
+  armored: {
+    2: [{ points: '-10,-30 -6,-44 2,-38 -2,-26', fill: 'body' }],
+    3: [{ points: '-10,-30 -6,-44 2,-38 -2,-26', fill: 'body' }, { points: '4,-30 10,-42 17,-36 12,-24', fill: 'body' }],
+    4: [{ points: '-10,-30 -6,-44 2,-38 -2,-26', fill: 'body' }, { points: '4,-30 10,-42 17,-36 12,-24', fill: 'body' }, { points: '-22,-12 -20,-26 -13,-22 -15,-10', fill: 'body' }],
+  },
+  // The two small built-in horn nubs extend taller, then a third grows in.
+  horned: {
+    2: [{ points: '33,-32 35,-42 38,-52 40,-42 37,-32', fill: 'body' }],
+    3: [{ points: '33,-32 35,-42 38,-52 40,-42 37,-32', fill: 'body' }, { points: '46,-20 50,-28 55,-34 56,-24 50,-16', fill: 'body' }],
+    4: [{ points: '33,-32 35,-42 38,-52 40,-42 37,-32', fill: 'body' }, { points: '46,-20 50,-28 55,-34 56,-24 50,-16', fill: 'body' }, { points: '10,-22 12,-32 16,-24', fill: 'body' }],
+  },
+  // Already-spiky base gets taller spike tips, then an extra spike joins the row.
+  plated: {
+    2: [{ points: '-13,-23 -9,-38 -5,-23', fill: 'body' }],
+    3: [{ points: '-13,-23 -9,-38 -5,-23', fill: 'body' }, { points: '9,-25 14,-40 19,-25', fill: 'body' }],
+    4: [{ points: '-13,-23 -9,-38 -5,-23', fill: 'body' }, { points: '9,-25 14,-40 19,-25', fill: 'body' }, { points: '20,-20 26,-30 30,-18', fill: 'body' }],
+  },
+  // A tusk growing from the heavy jaw, then a second, then they lengthen.
+  heavyjaw: {
+    2: [{ points: '46,-14 52,-10 44,-6', fill: '#F5F7FA' }],
+    3: [{ points: '46,-16 56,-10 44,-4', fill: '#F5F7FA' }, { points: '30,-10 36,-4 28,-2', fill: '#F5F7FA' }],
+    4: [{ points: '46,-18 60,-10 44,-2', fill: '#F5F7FA' }, { points: '28,-12 38,-2 26,2', fill: '#F5F7FA' }],
+  },
+  // The wing gains longer, sharper flight feathers trailing off the tip.
+  flyer: {
+    2: [{ points: '-50,-26 -68,-30 -52,-18', fill: 'body' }],
+    3: [{ points: '-50,-26 -68,-30 -52,-18', fill: 'body' }, { points: '-40,-14 -56,-10 -42,-4', fill: 'body' }],
+    4: [{ points: '-50,-26 -72,-32 -52,-18', fill: 'body' }, { points: '-40,-14 -60,-10 -42,-4', fill: 'body' }, { points: '-20,-2 -32,4 -22,8', fill: 'body' }],
+  },
+  // An actual sail growing up from the back, taller each tier - matches the name directly.
+  sailback: {
+    2: [{ points: '-14,-20 -6,-38 4,-20', fill: 'body' }],
+    3: [{ points: '-18,-18 -8,-48 6,-20', fill: 'body' }],
+    4: [{ points: '-22,-16 -9,-58 10,-20', fill: 'body' }],
+  },
+};
+
 function renderAvatarSVG(speciesId, tier, size) {
   size = size || 64;
   const art = AVATAR_SPECIES_ART[speciesId] || AVATAR_SPECIES_ART.raptor;
   const meta = AVATAR_SPECIES_META[speciesId] || AVATAR_SPECIES_META.raptor;
   const outline = '#16141F';
   const bodyPolys = art.body.map(pts => `<polygon points="${pts}"/>`).join('');
-  const frameColor = AVATAR_FRAME_COLORS[tier] || AVATAR_FRAME_COLORS[1];
-  const frameWidth = AVATAR_FRAME_WIDTH[tier] || AVATAR_FRAME_WIDTH[1];
 
-  const sparkles = tier >= 4
-    ? '<polygon points="24,28 27,32 24,36 21,32" fill="#FFC107"/><polygon points="150,32 153,36 150,40 147,36" fill="#FFC107"/><polygon points="142,148 145,152 142,156 139,152" fill="#FFC107"/>'
-    : '';
+  const featureSet = (AVATAR_EVOLUTION_FEATURES[speciesId] && AVATAR_EVOLUTION_FEATURES[speciesId][tier]) || [];
+  const featurePolys = featureSet.map(f =>
+    `<polygon points="${f.points}" fill="${f.fill === 'body' ? meta.color : f.fill}" stroke="${outline}" stroke-width="2.5" stroke-linejoin="round"/>`
+  ).join('');
 
   return `<svg viewBox="0 0 180 180" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="90" cy="90" r="82" fill="#F5F7FA" stroke="${frameColor}" stroke-width="${frameWidth}"/>
-    ${sparkles}
     <g transform="translate(90,95) scale(0.85)">
       <g fill="${outline}">${bodyPolys}</g>
       <g fill="${meta.color}" transform="scale(0.94)">${bodyPolys}</g>
+      ${featurePolys}
       <polygon points="${art.eye.points}" fill="${art.eye.color}"/>
     </g>
   </svg>`;
