@@ -110,6 +110,7 @@ async function loadBoard() {
 
   const submittedCount = data.filter(r => r.status === 'submitted' || r.status === 'won_awaiting_funds' || r.status === 'funds_received').length;
   await checkApplicationMilestones(submittedCount, currentUserId);
+  await checkScholarshipCollectorMilestones(data.length, currentUserId);
 
   wireCardEvents();
 }
@@ -146,7 +147,11 @@ function wireCardEvents() {
       await supabaseClient.from('scholarships').update(update).eq('id', id).eq('user_id', currentUserId);
       if (outcome === 'won' && typeof ScholarSound !== 'undefined') ScholarSound.won();
       if (outcome === 'won' && typeof celebrateCompanion === 'function') celebrateCompanion();
-      loadBoard();
+      await loadBoard();
+      if (outcome === 'won') {
+        const totalWon = currentScholarships.filter(r => r.outcome === 'won').reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+        await checkFinancialMilestones(totalWon, currentUserId);
+      }
     });
   });
 
@@ -182,7 +187,18 @@ function wireColumnDrops() {
 
       await supabaseClient.from('scholarships').update(update).eq('id', id).eq('user_id', currentUserId);
       await awardAchievement('organizer', currentUserId);
-      if (newStatus === 'submitted') await awardAchievement('first_submission', currentUserId);
+      if (newStatus === 'submitted') {
+        await awardAchievement('first_submission', currentUserId);
+        const row = currentScholarships.find(r => r.id === id);
+        if (row) {
+          if (row.deadline) {
+            const daysUntilDeadline = (new Date(row.deadline) - new Date()) / 86400000;
+            if (daysUntilDeadline >= 30) await awardAchievement('early_bird', currentUserId);
+          }
+          const hoursSinceCreated = (new Date() - new Date(row.created_at)) / 3600000;
+          if (hoursSinceCreated <= 24) await awardAchievement('speed_demon', currentUserId);
+        }
+      }
       loadBoard();
     });
   });
@@ -300,6 +316,7 @@ addForm.addEventListener('submit', async (e) => {
   }
 
   await awardAchievement('tracker_starter', currentUserId);
+  if (addColorPicker.get()) await awardAchievement('first_color', currentUserId);
 
   addForm.reset();
   addColorPicker.set('');
@@ -497,6 +514,7 @@ document.getElementById('cm-save-btn').addEventListener('click', async () => {
   msg.style.color = error ? '#c62828' : 'var(--teal-deep)';
 
   if (!error) {
+    if (editColorPicker.get()) await awardAchievement('first_color', currentUserId);
     loadBoard();
     setTimeout(closeCardModal, 700);
   }

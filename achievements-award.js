@@ -57,11 +57,74 @@ const STREAK_MILESTONES = [
   { count: 2, id: 'streak_3' },
   { count: 4, id: 'streak_7' },
   { count: 10, id: 'streak_30' },
+  { count: 20, id: 'streak_20' },
+  { count: 52, id: 'streak_52' },
 ];
 
 async function checkStreakMilestones(streakCount, userId) {
   for (const tier of STREAK_MILESTONES) {
     if (streakCount >= tier.count) {
+      await awardAchievement(tier.id, userId);
+    }
+  }
+}
+
+// How many scholarships are sitting in the tracker at once (any
+// status), distinct from how many have been submitted.
+const SCHOLARSHIP_COLLECTOR_MILESTONES = [
+  { count: 5, id: 'scholarship_collector_5' },
+  { count: 15, id: 'scholarship_collector_15' },
+  { count: 30, id: 'scholarship_collector_30' },
+];
+
+async function checkScholarshipCollectorMilestones(trackedCount, userId) {
+  for (const tier of SCHOLARSHIP_COLLECTOR_MILESTONES) {
+    if (trackedCount >= tier.count) {
+      await awardAchievement(tier.id, userId);
+    }
+  }
+}
+
+const ESSAY_WRITER_MILESTONES = [
+  { count: 5, id: 'essay_writer_5' },
+  { count: 15, id: 'essay_writer_15' },
+];
+
+async function checkEssayWriterMilestones(essayCount, userId) {
+  for (const tier of ESSAY_WRITER_MILESTONES) {
+    if (essayCount >= tier.count) {
+      await awardAchievement(tier.id, userId);
+    }
+  }
+}
+
+const GOAL_GETTER_MILESTONES = [
+  { count: 3, id: 'goal_getter_3' },
+  { count: 10, id: 'goal_getter_10' },
+];
+
+async function checkGoalGetterMilestones(completedGoalsCount, userId) {
+  for (const tier of GOAL_GETTER_MILESTONES) {
+    if (completedGoalsCount >= tier.count) {
+      await awardAchievement(tier.id, userId);
+    }
+  }
+}
+
+// Total dollars won across every scholarship marked 'won', regardless
+// of whether funds have actually been received yet.
+const FINANCIAL_MILESTONES = [
+  { amount: 1, id: 'first_win' },
+  { amount: 1000, id: 'earner_1k' },
+  { amount: 5000, id: 'earner_5k' },
+  { amount: 10000, id: 'earner_10k' },
+  { amount: 25000, id: 'earner_25k' },
+  { amount: 50000, id: 'earner_50k' },
+];
+
+async function checkFinancialMilestones(totalWonAmount, userId) {
+  for (const tier of FINANCIAL_MILESTONES) {
+    if (totalWonAmount >= tier.amount) {
       await awardAchievement(tier.id, userId);
     }
   }

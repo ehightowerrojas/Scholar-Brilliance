@@ -147,6 +147,7 @@ document.getElementById('import-fetch-btn').addEventListener('click', async () =
       visitBtn.style.display = '';
 
       e.target.textContent = 'Applied ✓';
+      awardAchievement('first_import', appUserId);
     });
   } catch (err) {
     console.error(err);
@@ -276,6 +277,7 @@ document.getElementById('add-question-btn').addEventListener('click', async () =
   if (error) { console.error(error); return; }
   currentQuestions.push(data);
   renderQuestions();
+  await awardAchievement('first_question', appUserId);
   // Focus the newly added question's text field so the student can
   // start typing immediately rather than hunting for it.
   const newRow = document.querySelector(`[data-question-id="${data.id}"] .question-text-input`);
@@ -309,6 +311,8 @@ document.getElementById('save-essay-btn').addEventListener('click', async () => 
     if (!error) {
       currentEssay = data;
       await awardAchievement('draft_master', appUserId);
+      const { count } = await supabaseClient.from('essays').select('id', { count: 'exact', head: true }).eq('user_id', appUserId);
+      if (count) await checkEssayWriterMilestones(count, appUserId);
     }
   }
 
@@ -392,6 +396,7 @@ document.getElementById('send-extension-btn').addEventListener('click', () => {
     received = true;
     window.removeEventListener('message', listener);
     btn.textContent = 'Sent to extension ✓';
+    awardAchievement('first_autofill', appUserId);
     setTimeout(() => { btn.textContent = 'Send to Extension'; }, 2500);
   };
   window.addEventListener('message', listener);
@@ -445,6 +450,7 @@ document.getElementById('export-pdf-btn').addEventListener('click', () => {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+  awardAchievement('first_pdf', appUserId);
 });
 
 document.getElementById('logout-btn').addEventListener('click', async () => {

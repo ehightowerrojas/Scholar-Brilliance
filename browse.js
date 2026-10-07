@@ -254,6 +254,7 @@ document.getElementById('extract-btn').addEventListener('click', async () => {
         return;
       }
       await awardAchievement('tracker_starter', browseUserId);
+      await awardAchievement('first_import', browseUserId);
       e.target.textContent = 'Added ✓';
     });
   } catch (err) {

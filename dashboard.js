@@ -333,6 +333,8 @@ function renderGoal(goalRows, rows) {
       await supabaseClient.from('goals').update({ completed_at: new Date().toISOString() }).eq('id', goal.id);
       await awardAchievement('goal_crusher', userId);
       if (typeof celebrateCompanion === 'function') celebrateCompanion();
+      const { count } = await supabaseClient.from('goals').select('id', { count: 'exact', head: true }).eq('student_id', userId).not('completed_at', 'is', null);
+      if (count) await checkGoalGetterMilestones(count, userId);
     }
   });
 

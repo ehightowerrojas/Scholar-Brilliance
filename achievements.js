@@ -14,6 +14,13 @@ const ICONS = {
   crown:  '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5L3 8z"/>',
   trophy: '<path d="M8 4h8v4a4 4 0 0 1-8 0V4z"/><path d="M6 6H4a2 2 0 0 0 2 4"/><path d="M18 6h2a2 2 0 0 1-2 4"/><path d="M10 15h4v3h-4z"/><path d="M8 21h8"/>',
   flame:  '<path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1.5-1-2-1-3.5 1.5 1 3 3 3 6a5 5 0 0 1-10 0c0-5 3-6 5-11.5z"/>',
+  dollar:  '<path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7"/>',
+  star:    '<path d="M12 2l2.9 6.5L22 9.5l-5 5 1.5 7.5L12 18.5 5.5 22 7 14.5l-5-5 7.1-1z"/>',
+  link:    '<path d="M9 17H7a5 5 0 0 1 0-10h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><path d="M8 12h8"/>',
+  message: '<path d="M21 11.5a8.4 8.4 0 0 1-8.4 8.4H7.6L3 22l1.1-4.6A8.4 8.4 0 1 1 21 11.5z"/>',
+  droplet: '<path d="M12 2c-4 6-7 9.5-7 13.5a7 7 0 0 0 14 0C19 11.5 16 8 12 2z"/>',
+  download: '<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>',
+  zap:      '<path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>',
 };
 
 function iconSvg(key) {

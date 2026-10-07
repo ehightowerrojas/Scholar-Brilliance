@@ -303,7 +303,10 @@ function renderOtherAvatarsGrid() {
       const msg = document.getElementById('avatar-msg');
       msg.style.display = 'block';
       msg.textContent = error ? `Could not equip: ${error.message}` : 'Avatar updated ✓';
-      if (!error) loadAvatarSection();
+      if (!error) {
+        await awardAchievement('avatar_swapped', accountUserId);
+        loadAvatarSection();
+      }
     });
   });
 }
