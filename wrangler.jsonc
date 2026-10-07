@@ -10,6 +10,14 @@
   },
   "vars": {
     "SUPABASE_URL": "https://trbcndodzwzpxikkhsvt.supabase.co",
-    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyYmNuZG9kend6cHhpa2toc3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MTQxODMsImV4cCI6MjEwMzA5MDE4M30.xMPwWQ4_SVFuYYnNkSyPGEvhsKht9XR_8Txz0WQ4HTI"
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyYmNuZG9kend6cHhpa2toc3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MTQxODMsImV4cCI6MjEwMzA5MDE4M30.xMPwWQ4_SVFuYYnNkSyPGEvhsKht9XR_8Txz0WQ4HTI",
+    // Stripe Price IDs — not secret, just identifiers. Create these
+    // in the Stripe Dashboard (Product catalog → Add product →
+    // Add price) and paste the "price_..." id here. Real secrets
+    // (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+    // SUPABASE_SERVICE_ROLE_KEY) are set separately with
+    // `wrangler secret put <NAME>` — never put those here.
+    "STRIPE_PRICE_INDIVIDUAL_MONTHLY": "price_1UNzqD4rWusGfIPLPkgs4uPw",
+    "STRIPE_PRICE_ORG_SEAT_MONTHLY": "price_1UO04B4rWusGfIPLSabWR2RW"
   }
 }
