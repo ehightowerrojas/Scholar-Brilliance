@@ -1,8 +1,8 @@
 // ------------------------------------------------------------------
-// Shared avatar companion widget — a small floating avatar that
-// idles with a continuous dance loop and bursts into a bigger
-// celebration animation on command. Used on any page with an
-// #avatar-companion element (Dashboard, Tracker, My Essays).
+// Shared avatar companion widget, shown in the header on every
+// authenticated page so it persists as the student navigates. Links
+// to Account; stays still otherwise, and bursts into a celebration
+// animation on command (e.g. saving an essay, hitting a goal).
 //
 // Loaded once at page load, independent of each page's own data
 // refresh cycle (e.g. dashboard.js/tracker.js reload their own data

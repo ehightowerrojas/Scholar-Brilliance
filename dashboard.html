@@ -36,9 +36,9 @@
         <span class="app-header-crumb">Dashboard</span>
       </div>
       <div class="app-header-right">
-        <div id="avatar-companion" class="avatar-companion" aria-hidden="true"></div>
-        <span class="app-header-stat">🔥 <span id="header-streak">–</span></span>
-        <span class="app-header-stat">⭐ <span id="header-xp">–</span> XP</span>
+        <a href="/account.html" id="avatar-companion" class="avatar-companion" aria-label="Your account"></a>
+        <a href="/dashboard.html#streak-section" class="app-header-stat">🔥 <span id="header-streak">–</span></a>
+        <a href="/achievements.html" class="app-header-stat">⭐ <span id="header-xp">–</span> XP · <span id="header-level">Lv –</span></a>
       </div>
     </header>
 
@@ -69,7 +69,7 @@
       <div id="goal-content">Loading…</div>
     </div>
 
-    <div class="dash-card motion-in" style="margin-bottom:24px; animation-delay:0.2s;">
+    <div class="dash-card motion-in" id="streak-section" style="margin-bottom:24px; animation-delay:0.2s;">
       <h3>Your Streak</h3>
       <div id="streak-content">Loading…</div>
     </div>

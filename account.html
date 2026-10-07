@@ -36,8 +36,9 @@
         <span class="app-header-crumb">Account</span>
       </div>
       <div class="app-header-right">
-        <span class="app-header-stat">🔥 <span id="header-streak">–</span></span>
-        <span class="app-header-stat">⭐ <span id="header-xp">–</span> XP</span>
+        <a href="/account.html" id="avatar-companion" class="avatar-companion" aria-label="Your account"></a>
+        <a href="/dashboard.html#streak-section" class="app-header-stat">🔥 <span id="header-streak">–</span></a>
+        <a href="/achievements.html" class="app-header-stat">⭐ <span id="header-xp">–</span> XP · <span id="header-level">Lv –</span></a>
       </div>
     </header>
 
@@ -186,6 +187,7 @@
 <script src="/config.js"></script>
 <script src="/supabase-client.js"></script>
 <script src="/avatars.js"></script>
+<script src="/avatar-companion.js"></script>
 <script src="/sound.js"></script>
 <script src="/account.js"></script>
 <script src="/sidebar-toggle.js"></script>

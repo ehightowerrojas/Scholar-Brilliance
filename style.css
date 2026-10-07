@@ -280,7 +280,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .app-header-crumb{ font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--ink); }
 .app-header-right{ display:flex; align-items:center; gap:18px; }
-.app-header-stat{ display:flex; align-items:center; gap:6px; font-family:var(--font-accent); font-weight:700; font-size:13.5px; color:var(--ink); }
+.app-header-stat{ display:flex; align-items:center; gap:6px; font-family:var(--font-accent); font-weight:700; font-size:13.5px; color:var(--ink); text-decoration:none; cursor:pointer; transition:opacity .15s ease; }
+.app-header-stat:hover{ opacity:0.7; }
 .sidebar-toggle{ display:none; background:none; border:none; cursor:pointer; padding:4px; }
 .app-main{ flex:1; padding:40px 32px; max-width:1000px; width:100%; }
 
@@ -1201,9 +1202,10 @@ footer.site-footer{
 }
 
 .avatar-companion{
+  display:block;
   width:38px; height:38px;
   flex-shrink:0;
-  pointer-events:none;
+  cursor:pointer;
 }
 .avatar-companion.is-celebrating{
   animation:companion-celebrate 1.4s ease-in-out;

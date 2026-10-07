@@ -546,6 +546,8 @@ function renderAchievements(earnedRows, achievements, levels) {
 
   const headerXP = document.getElementById('header-xp');
   if (headerXP) headerXP.textContent = totalXP.toLocaleString();
+  const headerLevel = document.getElementById('header-level');
+  if (headerLevel) headerLevel.textContent = `Lv ${current.level_number}`;
 
   const recent = earnedRows.slice(0, 4);
   const earnedIds = new Set(earnedRows.map(r => r.achievement_id));

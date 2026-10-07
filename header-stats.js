@@ -9,6 +9,7 @@
 (async function () {
   const streakEl = document.getElementById('header-streak');
   const xpEl = document.getElementById('header-xp');
+  const levelEl = document.getElementById('header-level');
   if (!streakEl || !xpEl) return;
 
   const { data: { session } } = await supabaseClient.auth.getSession();
@@ -29,10 +30,11 @@
   const twelveWeeksAgo = new Date();
   twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84);
 
-  const [{ data: activityRows }, { data: earnedRows }, { data: achievements }] = await Promise.all([
+  const [{ data: activityRows }, { data: earnedRows }, { data: achievements }, { data: levels }] = await Promise.all([
     supabaseClient.from('weekly_activity').select('week_start').eq('user_id', userId).gte('week_start', twelveWeeksAgo.toISOString().slice(0, 10)),
     supabaseClient.from('user_achievements').select('achievement_id').eq('user_id', userId),
     supabaseClient.from('achievements').select('id, points'),
+    supabaseClient.from('levels').select('*').order('level_number'),
   ]);
 
   function weekStr(d) {
@@ -55,7 +57,10 @@
 
   const pointsMap = Object.fromEntries((achievements || []).map(a => [a.id, a.points]));
   const totalXP = (earnedRows || []).reduce((sum, r) => sum + (pointsMap[r.achievement_id] || 0), 0);
+  let currentLevel = { level_number: 1 };
+  (levels || []).forEach(l => { if (totalXP >= l.xp_threshold) currentLevel = l; });
 
   streakEl.textContent = `${streak} week${streak === 1 ? '' : 's'}`;
   xpEl.textContent = totalXP.toLocaleString();
+  if (levelEl) levelEl.textContent = `Lv ${currentLevel.level_number}`;
 })();
