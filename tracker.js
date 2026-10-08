@@ -43,7 +43,7 @@ function renderCard(row) {
 
   return `
     <div class="kanban-card ${row.color ? 'color-' + row.color : ''}" draggable="true" data-id="${row.id}">
-      <div class="kanban-card-top">
+      <div class="kanban-card-top kanban-card-color-strip">
         <h4>${escapeHtml(row.title)}</h4>
         <button class="kanban-delete" data-delete="${row.id}" aria-label="Delete">×</button>
       </div>

@@ -1026,21 +1026,29 @@ footer.site-footer{
 .kanban-card{
   background:#fbf6ec;
   border:1px solid #e8dfc8;
-  border-left:4px solid transparent;
   border-radius:var(--radius-sm);
   padding:14px;
   cursor:grab;
   box-shadow:0 2px 8px -4px rgba(55,71,79,0.18);
   transition:opacity .15s ease, transform .15s ease, box-shadow .15s ease;
 }
-.kanban-card.color-tomato{ border-left-color:#e57373; }
-.kanban-card.color-tangerine{ border-left-color:#ffb74d; }
-.kanban-card.color-banana{ border-left-color:#dbc400; }
-.kanban-card.color-sage{ border-left-color:#66bb6a; }
-.kanban-card.color-peacock{ border-left-color:#26a69a; }
-.kanban-card.color-blueberry{ border-left-color:#5c9ce6; }
-.kanban-card.color-lavender{ border-left-color:#9575cd; }
-.kanban-card.color-graphite{ border-left-color:#78909c; }
+/* Color tag renders as a horizontal rule right under the title —
+   like the printed line on a real index card — instead of a left
+   edge stripe. Lives on .kanban-card-top (title + delete button row)
+   so it sits exactly under the name, not the whole card. */
+.kanban-card-color-strip{
+  border-bottom:3px solid transparent;
+  padding-bottom:10px;
+  margin-bottom:8px;
+}
+.kanban-card.color-tomato .kanban-card-color-strip{ border-bottom-color:#e57373; }
+.kanban-card.color-tangerine .kanban-card-color-strip{ border-bottom-color:#ffb74d; }
+.kanban-card.color-banana .kanban-card-color-strip{ border-bottom-color:#dbc400; }
+.kanban-card.color-sage .kanban-card-color-strip{ border-bottom-color:#66bb6a; }
+.kanban-card.color-peacock .kanban-card-color-strip{ border-bottom-color:#26a69a; }
+.kanban-card.color-blueberry .kanban-card-color-strip{ border-bottom-color:#5c9ce6; }
+.kanban-card.color-lavender .kanban-card-color-strip{ border-bottom-color:#9575cd; }
+.kanban-card.color-graphite .kanban-card-color-strip{ border-bottom-color:#78909c; }
 
 .color-swatch-picker{ display:flex; gap:8px; flex-wrap:wrap; }
 .color-swatch{

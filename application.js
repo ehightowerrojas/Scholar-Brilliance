@@ -58,7 +58,7 @@ async function init() {
   document.getElementById('scholarship-sub').textContent = scholarship.amount
     ? `$${Number(scholarship.amount).toLocaleString()}${scholarship.deadline ? ' · Deadline: ' + new Date(scholarship.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}`
     : '';
-  document.getElementById('scholarship-header-card').style.borderLeftColor = scholarship.color && COLOR_HEX[scholarship.color] ? COLOR_HEX[scholarship.color] : 'transparent';
+  document.getElementById('scholarship-title').style.borderBottomColor = scholarship.color && COLOR_HEX[scholarship.color] ? COLOR_HEX[scholarship.color] : 'transparent';
   document.getElementById('import-url-input').value = scholarship.website || '';
 
   document.getElementById('builder-content').style.display = 'block';
@@ -193,9 +193,9 @@ function renderScholarshipPickerList(scholarships) {
     return;
   }
   listEl.innerHTML = scholarships.map(s => `
-    <a href="application.html?scholarship=${s.id}" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease; background:#fbf6ec; border:1px solid #e8dfc8; border-left:4px solid ${s.color && COLOR_HEX[s.color] ? COLOR_HEX[s.color] : 'transparent'}; border-radius:var(--radius-sm); padding:14px 18px;">
-      <p style="font-weight:600; color:var(--ink); margin:0;">${escapeHtml(s.title)}</p>
-      <p class="dash-empty" style="margin-top:4px;">${s.amount ? '$' + Number(s.amount).toLocaleString() : 'No amount set'}${s.deadline ? ' · due ' + new Date(s.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}</p>
+    <a href="application.html?scholarship=${s.id}" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease; background:#fbf6ec; border:1px solid #e8dfc8; border-radius:var(--radius-sm); padding:14px 18px;">
+      <p style="font-weight:600; color:var(--ink); margin:0; padding-bottom:8px; margin-bottom:8px; border-bottom:3px solid ${s.color && COLOR_HEX[s.color] ? COLOR_HEX[s.color] : 'transparent'};">${escapeHtml(s.title)}</p>
+      <p class="dash-empty" style="margin-top:0;">${s.amount ? '$' + Number(s.amount).toLocaleString() : 'No amount set'}${s.deadline ? ' · due ' + new Date(s.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}</p>
     </a>
   `).join('');
 }
