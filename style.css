@@ -9,9 +9,10 @@
   --purple-soft: #8b6fc9; /* lighter shade, used for gradients only (not in kit) */
   --teal:        #009688; /* accent — success, growth, interactive elements */
   --teal-deep:   #00786b; /* hover state, derived from Teal */
-  --amber:       #ffc107; /* CTA + gamification rewards */
-  --amber-deep:  #e6a800; /* hover state, derived from Amber - background use only */
-  --amber-text:  #855f00; /* darkened further for text-on-light-background use, since amber-deep alone fails WCAG contrast as text color */
+  --amber:       #e3a73c; /* CTA + gamification rewards — softened from a pure saturated gold (#ffc107) to a warmer, less neon amber */
+  --amber-deep:  #c6902e; /* hover state, derived from Amber - background use only */
+  --amber-text:  #7a5a1f; /* darkened further for text-on-light-background use, since amber-deep alone fails WCAG contrast as text color */
+  --ink-on-amber: #2b2206; /* fixed near-black text for use on top of --amber/--amber-text fills — those are saturated fixed colors, not theme-aware, so text on them must stay fixed dark too (same reasoning as --charcoal-band/--white below) */
 
   /* Supporting colors */
   --paper: #f5f7fa; /* Soft White — page background */
@@ -49,20 +50,27 @@
    data-theme="dark" attribute on <html>, set by theme-toggle.js
    (before first paint, from localStorage or the OS preference) —
    see that file for the toggle logic. Brand accents (purple, teal,
-   amber) and the fixed roles above (--white, --charcoal-band) are
-   intentionally left unchanged; only the "surface" tokens flip.
+   amber) and the fixed roles above (--white, --charcoal-band,
+   --ink-on-amber) are intentionally left unchanged; only the
+   "surface" tokens flip.
+   The neutral surfaces below (--paper/--surface/--card/--line) are
+   built from #1d1d1d, the actual charcoal black used as the dark
+   slide background in the pitch deck — a true neutral charcoal,
+   not a purple tint — so brand purple only shows up where it's
+   meant to (accents, card-soft, focus rings), not smeared across
+   the whole page background.
    ------------------------------------------------------------ */
 html[data-theme="dark"]{
-  --paper: #15131d;
-  --ink:   #ece9f2;
-  --muted: rgba(236,233,242,0.78);
-  --amber-text: #ffd466; /* the light-mode value is tuned for text-on-light; dark mode needs a brighter amber to stay legible on a dark background */
+  --paper: #1d1d1d;
+  --ink:   #eaeaea;
+  --muted: rgba(234,234,234,0.78);
+  --amber-text: #e8bd63; /* the light-mode value is tuned for text-on-light; dark mode needs a lighter amber to stay legible on a dark background — softened from a near-neon gold */
 
-  --card:      #1f1b2c;
-  --card-soft: #2c2444;
-  --line:        #332c47;
-  --line-strong: #8f7fd4;
-  --surface: #17141f;
+  --card:      #262626;
+  --card-soft: #2e2832; /* muted plum — a soft brand-purple tint, not a saturated one */
+  --line:        #3a3a3a;
+  --line-strong: #827aa0; /* softened from a bright lavender-purple to a muted purple-gray, still clears 3:1 UI-border contrast against --paper and --surface */
+  --surface: #212121;
   --index-card-bg:     #2a2420;
   --index-card-border: #4a4038;
 }
@@ -138,7 +146,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .btn-gold{
   background:var(--amber);
-  color:var(--ink);
+  color:var(--ink-on-amber);
   box-shadow:var(--shadow-pop);
 }
 .btn-gold:hover{ background:var(--amber-deep); }
@@ -161,6 +169,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   font-weight:600;
 }
 .btn-line:hover{ background:#005850; }
+/* Destructive action (account deletion, etc.) — outlined rather than
+   filled teal like .btn-line, since red text ended up sitting on a
+   teal fill there and was hard to read. Fixed red regardless of
+   theme, matching the other fixed status colors (#c62828) already
+   used for this "danger" meaning elsewhere in the app. */
+.btn-danger-outline{
+  background:transparent;
+  border-color:#c62828;
+  color:#c62828;
+  font-weight:600;
+}
+.btn-danger-outline:hover{ background:rgba(198,40,40,0.08); }
 .btn-block{ width:100%; }
 
 /* ---------- nav ----------
@@ -707,7 +727,7 @@ html[data-theme="dark"] .theme-toggle-icon-moon{ display:block; }
   display:flex; align-items:center; justify-content:center;
   font-size:11px; font-weight:700; margin-top:1px;
 }
-.audience-card.student .check{ background:var(--amber); color:var(--ink); }
+.audience-card.student .check{ background:var(--amber); color:var(--ink-on-amber); }
 .audience-card.school .check{ background:var(--card-soft); color:var(--ink); }
 
 /* ---------- pricing teaser ---------- */
@@ -830,7 +850,7 @@ footer.site-footer{
   background:rgba(255,255,255,0.12); color:var(--white);
   border:1px solid rgba(255,255,255,0.3);
 }
-.login-milestone.done .dot{ background:var(--amber); color:var(--ink); border-color:var(--amber); }
+.login-milestone.done .dot{ background:var(--amber); color:var(--ink-on-amber); border-color:var(--amber); }
 .login-milestone span.label{ font-family:var(--font-body); font-size:14px; color:rgba(255,255,255,0.85); }
 
 .login-panel{
@@ -986,7 +1006,7 @@ footer.site-footer{
   padding:20px;
   transition:transform .15s ease, opacity .2s ease, box-shadow .2s ease;
 }
-.achv-card.earned{ background:var(--amber); color:var(--ink); border-color:var(--amber); }
+.achv-card.earned{ background:var(--amber); color:var(--ink-on-amber); border-color:var(--amber); }
 .achv-card.locked{ opacity:.6; }
 .achv-icon{
   width:38px; height:38px; border-radius:10px;
@@ -1174,7 +1194,7 @@ footer.site-footer{
   padding:3px 9px; border-radius:999px; border:1px solid var(--line-strong); color:var(--muted);
 }
 .kanban-badge.won{ background:var(--teal-deep); color:var(--white); border-color:var(--teal-deep); }
-.kanban-badge.funds-received{ background:var(--amber); color:var(--ink); border-color:var(--amber); }
+.kanban-badge.funds-received{ background:var(--amber); color:var(--ink-on-amber); border-color:var(--amber); }
 .kanban-badge.not-selected{ color:var(--muted); }
 .kanban-card-actions{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
 .kanban-card-actions .achv-demo-btn{ margin-top:0; }
@@ -1222,11 +1242,13 @@ footer.site-footer{
 }
 .stat-chip.purple{ background:var(--purple); border-color:var(--purple); }
 .stat-chip.teal{ background:var(--teal-deep); border-color:var(--teal-deep); }
-.stat-chip.amber{ background:var(--amber-text); border-color:var(--amber-text); }
+.stat-chip.amber{ background:var(--amber); border-color:var(--amber); }
 .stat-chip strong{ font-family:var(--font-accent); font-weight:800; font-size:24px; color:var(--ink); }
-.stat-chip.purple strong, .stat-chip.teal strong, .stat-chip.amber strong{ color:var(--white); }
+.stat-chip.purple strong, .stat-chip.teal strong{ color:var(--white); }
+.stat-chip.amber strong{ color:var(--ink-on-amber); } /* amber is a light fill, unlike purple/teal, so it needs dark text (same reasoning as --ink-on-amber elsewhere) rather than white */
 .stat-chip span{ font-size:12px; color:var(--muted); }
-.stat-chip.purple span, .stat-chip.teal span, .stat-chip.amber span{ color:rgba(255,255,255,0.9); }
+.stat-chip.purple span, .stat-chip.teal span{ color:rgba(255,255,255,0.9); }
+.stat-chip.amber span{ color:rgba(43,34,6,0.85); }
 
 .stat-grid-mini{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .stat-grid-mini-4{ grid-template-columns:repeat(4, 1fr); margin-top:14px; }
@@ -1451,7 +1473,7 @@ a.press-card:hover{ --hover-lift:-4px; box-shadow:var(--shadow-soft); border-col
 .press-visual-summit{ background:linear-gradient(135deg, var(--teal), var(--teal-deep)); }
 .press-badge{
   position:absolute; bottom:12px; right:14px;
-  background:var(--amber); color:var(--ink);
+  background:var(--amber); color:var(--ink-on-amber);
   font-family:var(--font-accent); font-weight:800; font-size:12px;
   padding:5px 12px; border-radius:999px;
 }
