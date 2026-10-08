@@ -353,15 +353,15 @@ function renderGoal(goalRows, rows) {
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
         <div style="flex:2; min-width:160px;">
           <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">Goal name</label>
-          <input type="text" id="goal-name-input" placeholder="e.g. STEM scholarships" value="${isEdit ? escapeHtml(existingGoal.name) : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+          <input type="text" id="goal-name-input" placeholder="e.g. STEM scholarships" value="${isEdit ? escapeHtml(existingGoal.name) : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);">
         </div>
         <div style="flex:1; min-width:100px;">
           <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;" id="goal-target-label">Target ($)</label>
-          <input type="number" id="goal-amount-input" placeholder="5000" min="0" value="${isEdit ? goalTarget(existingGoal) : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+          <input type="number" id="goal-amount-input" placeholder="5000" min="0" value="${isEdit ? goalTarget(existingGoal) : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);">
         </div>
         <div style="flex:1; min-width:140px;">
           <label style="display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px;">Deadline (optional)</label>
-          <input type="date" id="goal-deadline-input" value="${isEdit && existingGoal.target_date ? existingGoal.target_date : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+          <input type="date" id="goal-deadline-input" value="${isEdit && existingGoal.target_date ? existingGoal.target_date : ''}" style="width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);">
         </div>
         <button class="btn btn-gold" id="save-goal-btn" style="padding:10px 18px;">${isEdit ? 'Save changes' : 'Add goal'}</button>
         ${(goalRows.length > 0 || isEdit) ? '<button class="btn btn-line" id="cancel-goal-edit-btn" style="padding:10px 18px;">Cancel</button>' : ''}

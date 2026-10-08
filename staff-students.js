@@ -82,7 +82,7 @@ function openStudentModal(studentId) {
       </div>` : ''}
 
     <div class="catalog-card-actions" style="margin-top:16px;">
-      <select id="rec-select-${s.id}" style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+      <select id="rec-select-${s.id}" style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); font-size:13px;">
         <option value="">Recommend a scholarship…</option>
         ${catalogOptions}
       </select>
@@ -91,9 +91,9 @@ function openStudentModal(studentId) {
     <p class="dash-empty" id="recommend-msg-${s.id}" style="display:none; margin-top:6px; font-size:12px;"></p>
 
     <div class="catalog-card-actions" style="margin-top:10px; flex-wrap:wrap;">
-      <input type="text" id="goal-name-${s.id}" placeholder="Goal name (e.g. STEM scholarships)" style="flex:1; min-width:160px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
-      <input type="number" id="goal-amount-${s.id}" placeholder="Target ($)" min="0" style="width:100px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
-      <input type="date" id="goal-deadline-${s.id}" style="width:140px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+      <input type="text" id="goal-name-${s.id}" placeholder="Goal name (e.g. STEM scholarships)" style="flex:1; min-width:160px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); font-size:13px;">
+      <input type="number" id="goal-amount-${s.id}" placeholder="Target ($)" min="0" style="width:100px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); font-size:13px;">
+      <input type="date" id="goal-deadline-${s.id}" style="width:140px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); font-size:13px;">
       <button class="btn btn-teal" style="padding:8px 16px; font-size:13px;" data-assign-goal="${s.id}">Assign goal</button>
     </div>
     <p class="dash-empty" id="goal-msg-${s.id}" style="display:none; margin-top:6px; font-size:12px;"></p>

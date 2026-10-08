@@ -39,7 +39,7 @@ async function loadScholarships() {
       </div>
       ${orgStudents.length > 0 ? `
       <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-        <select id="recommend-select-${item.id}" style="flex:1; min-width:160px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-size:13px;">
+        <select id="recommend-select-${item.id}" style="flex:1; min-width:160px; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); font-size:13px;">
           <option value="">Recommend to a student…</option>
           ${studentOptions}
         </select>

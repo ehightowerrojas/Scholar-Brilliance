@@ -14,19 +14,23 @@
   --amber-text:  #855f00; /* darkened further for text-on-light-background use, since amber-deep alone fails WCAG contrast as text color */
 
   /* Supporting colors */
-  --paper: #f5f7fa; /* Soft White — backgrounds */
-  --ink:   #37474f; /* Charcoal — primary text, footer bg, analytics contrast */
-  --muted: rgba(55,71,79,0.78); /* Charcoal at reduced opacity for secondary text - 78% chosen to clear WCAG AA (4.5:1) against both white and card-soft backgrounds */
+  --paper: #f5f7fa; /* Soft White — page background */
+  --ink:   #37474f; /* Charcoal — primary text. Theme-aware: flips light in dark mode, so it's for TEXT only — a fixed-charcoal background fill (footer, stat band, toasts) uses --charcoal-band instead, which never flips. */
+  --muted: rgba(55,71,79,0.78); /* Charcoal at reduced opacity for secondary text - 78% chosen to clear WCAG AA (4.5:1) against both white and card-soft backgrounds. Has its own dark-mode override below since it isn't computed from --ink. */
+  --charcoal-band: #37474f; /* Fixed brand charcoal for "Background Charcoal, Text White" sections per the kit (footer, stat band, toasts) — intentionally does NOT change with theme, same as --white below. */
 
-  --card:      #ffffff;
+  --card:      #ffffff; /* elevated panels — dash-cards, modals, sidebar, header */
   --card-soft: #ede7f6; /* light Deep Purple tint for subtle panels */
   --line:        #e1e1ea;
   --line-strong: #8578bb; /* darkened from #cfc7e3 to clear WCAG's 3:1 non-text contrast minimum for input/UI borders */
-  --white: #ffffff;
+  --white: #ffffff; /* Fixed pure white — for text/icons sitting on a saturated color fill (badges, buttons) and brand chrome (logo badge). Intentionally does NOT change with theme; plain surfaces (inputs, tags) use --surface instead, which does. */
+  --surface: var(--white); /* plain input/tag/chip backgrounds, paired with --ink for text — theme-aware */
+  --index-card-bg:     #fbf6ec; /* Tracker/Application Builder "index card" look */
+  --index-card-border: #e8dfc8;
 
   /* Back-compat aliases used by inline styles across the app pages */
   --fg: var(--ink);
-  --bg: var(--white);
+  --bg: var(--surface);
 
   --font-display: "Montserrat", "Segoe UI", sans-serif; /* headings, nav, buttons, UI labels */
   --font-body:    "Open Sans", "Segoe UI", sans-serif;  /* body copy, descriptions */
@@ -38,6 +42,29 @@
 
   --shadow-soft: 0 20px 45px -25px rgba(63, 36, 120, 0.30);
   --shadow-pop:  0 14px 30px -12px rgba(94, 53, 177, 0.35);
+}
+
+/* ------------------------------------------------------------
+   Dark mode — same tokens, dark-mode values. Applied via a
+   data-theme="dark" attribute on <html>, set by theme-toggle.js
+   (before first paint, from localStorage or the OS preference) —
+   see that file for the toggle logic. Brand accents (purple, teal,
+   amber) and the fixed roles above (--white, --charcoal-band) are
+   intentionally left unchanged; only the "surface" tokens flip.
+   ------------------------------------------------------------ */
+html[data-theme="dark"]{
+  --paper: #15131d;
+  --ink:   #ece9f2;
+  --muted: rgba(236,233,242,0.78);
+  --amber-text: #ffd466; /* the light-mode value is tuned for text-on-light; dark mode needs a brighter amber to stay legible on a dark background */
+
+  --card:      #1f1b2c;
+  --card-soft: #2c2444;
+  --line:        #332c47;
+  --line-strong: #8f7fd4;
+  --surface: #17141f;
+  --index-card-bg:     #2a2420;
+  --index-card-border: #4a4038;
 }
 
 *, *::before, *::after{ box-sizing:border-box; }
@@ -164,7 +191,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   border-radius:var(--radius-md);
 }
 .site-nav.is-scrolled .nav-cta{
-  background:var(--white);
+  background:var(--surface);
   padding:6px 28px;
   border-radius:var(--radius-md);
   box-shadow:0 4px 14px rgba(0,0,0,0.12);
@@ -284,6 +311,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .app-header-stat:hover{ opacity:0.7; }
 .sidebar-toggle{ display:none; background:none; border:none; cursor:pointer; padding:4px; }
 .app-main{ flex:1; padding:40px 32px; max-width:1000px; width:100%; }
+
+/* Dark mode toggle — shows a sun icon in dark mode (click to go
+   light) and a moon icon in light mode (click to go dark), i.e. the
+   icon always previews where the click will take you. Works in both
+   the app header and the public-page nav; theme-toggle.js wires the
+   click handler and flips html[data-theme]. */
+.theme-toggle{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:32px; height:32px; flex-shrink:0;
+  border-radius:50%; border:1px solid var(--line-strong);
+  background:none; color:var(--ink);
+  cursor:pointer; padding:0;
+  transition:background .15s ease;
+}
+.theme-toggle:hover{ background:var(--card-soft); }
+.theme-toggle svg{ width:17px; height:17px; }
+.theme-toggle-icon-moon{ display:none; }
+html[data-theme="dark"] .theme-toggle-icon-sun{ display:none; }
+html[data-theme="dark"] .theme-toggle-icon-moon{ display:block; }
 
 @media (max-width:900px){
   .app-sidebar{
@@ -467,7 +513,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
    STAT / PROBLEM BAND — Charcoal for "analytics contrast" per kit
    ============================================================ */
 .stat-band{
-  background:var(--ink);
+  background:var(--charcoal-band);
   color:var(--white);
   padding:56px 0;
   position:relative;
@@ -716,7 +762,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 /* ---------- footer ----------
    Brand kit: Background Charcoal, Text White, Icons/Accents Teal. */
 footer.site-footer{
-  background:var(--ink);
+  background:var(--charcoal-band);
   color:rgba(255,255,255,0.7);
   padding:52px 0 32px;
 }
@@ -827,7 +873,7 @@ footer.site-footer{
   padding:9px 16px;
   border-radius:999px;
   border:1.5px solid var(--line-strong);
-  background:var(--white);
+  background:var(--surface);
   font-family:var(--font-display);
   font-weight:600;
   font-size:13px;
@@ -861,7 +907,7 @@ footer.site-footer{
   padding:13px 16px;
   border-radius:var(--radius-sm);
   border:1px solid var(--line);
-  background:var(--white);
+  background:var(--surface);
   color:var(--ink);
   font-family:var(--font-body);
   font-size:14.5px;
@@ -1024,8 +1070,8 @@ footer.site-footer{
 .kanban-drop.drag-over{ background:rgba(94,53,177,0.08); }
 
 .kanban-card{
-  background:#fbf6ec;
-  border:1px solid #e8dfc8;
+  background:var(--index-card-bg);
+  border:1px solid var(--index-card-border);
   border-radius:var(--radius-sm);
   padding:14px;
   cursor:grab;
@@ -1196,7 +1242,7 @@ footer.site-footer{
 .dash-toast{
   position:fixed; bottom:24px; left:50%;
   transform:translate(-50%, 20px);
-  background:var(--ink); color:var(--white);
+  background:var(--charcoal-band); color:var(--white);
   font-family:var(--font-display); font-weight:600; font-size:13.5px;
   padding:12px 22px; border-radius:999px;
   box-shadow:0 8px 24px rgba(0,0,0,0.25);
@@ -1267,7 +1313,7 @@ footer.site-footer{
    ============================================================ */
 .browse-search input{
   width:100%; padding:13px 16px; border-radius:var(--radius-sm);
-  border:1px solid var(--line-strong); background:var(--white); color:var(--ink); font-family:var(--font-body); font-size:14.5px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:14.5px;
 }
 .catalog-list{ display:flex; flex-direction:column; gap:14px; }
 .catalog-card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius-md); padding:20px; }

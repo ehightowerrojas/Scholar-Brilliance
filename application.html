@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>(function(){try{var t=localStorage.getItem('sb-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect x=%270%27 y=%270%27 width=%2724%27 height=%2724%27 rx=%276%27 fill=%27white%27/%3E%3Cpath d=%27M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z%27 fill=%27%235E35B1%27/%3E%3Cpath d=%27M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z%27 fill=%27%23FFC107%27/%3E%3Cpath d=%27M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E">
 <title>Build Application: Scholar Brilliance</title>
@@ -35,6 +36,7 @@
         <span class="app-header-crumb">Application Builder</span>
       </div>
       <div class="app-header-right">
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="theme-toggle-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><svg class="theme-toggle-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
         <a href="/account.html" id="avatar-companion" class="avatar-companion" aria-label="Your account"></a>
         <a href="/dashboard.html#streak-section" class="app-header-stat">🔥 <span id="header-streak">–</span></a>
         <a href="/achievements.html" class="app-header-stat">⭐ <span id="header-xp">–</span> XP · <span id="header-level">Lv –</span></a>
@@ -47,7 +49,7 @@
 
     <div id="scholarship-picker" style="display:none; margin-top:12px;">
       <p class="dash-empty" style="margin-bottom:16px;">Pick a scholarship to build its application:</p>
-      <input type="text" id="scholarship-picker-search" placeholder="Search by name…" style="width:100%; padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink); margin-bottom:16px;">
+      <input type="text" id="scholarship-picker-search" placeholder="Search by name…" style="width:100%; padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); margin-bottom:16px;">
       <div id="scholarship-picker-list"></div>
     </div>
 
@@ -58,13 +60,13 @@
 
     <div id="builder-content" style="display:none;">
 
-    <div id="scholarship-header-card" style="background:#fbf6ec; border:1px solid #e8dfc8; border-radius:var(--radius-sm); padding:18px 22px; margin-top:12px; margin-bottom:20px;">
+    <div id="scholarship-header-card" style="background:var(--index-card-bg); border:1px solid var(--index-card-border); border-radius:var(--radius-sm); padding:18px 22px; margin-top:12px; margin-bottom:20px;">
       <h1 id="scholarship-title" style="font-size:clamp(20px,3vw,27px); margin-bottom:10px; padding-bottom:10px; border-bottom:3px solid transparent;">Loading…</h1>
       <p class="dash-empty" id="scholarship-sub" style="margin-bottom:12px;"></p>
       <button class="dash-empty" id="import-toggle-btn" style="background:none; border:none; text-decoration:underline; cursor:pointer; font-size:12.5px; padding:0;">Import / refresh details from website</button>
       <div id="import-panel" style="display:none; margin-top:12px;">
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <input type="text" id="import-url-input" placeholder="https://…" style="flex:1; min-width:200px; padding:9px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+          <input type="text" id="import-url-input" placeholder="https://…" style="flex:1; min-width:200px; padding:9px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);">
           <button class="btn btn-line" id="import-fetch-btn" style="padding:9px 16px; font-size:13px;">Fetch details</button>
         </div>
         <div id="import-result" style="margin-top:10px;"></div>
@@ -83,11 +85,11 @@
       <h3>Your Essay</h3>
       <div class="field" style="margin-top:0;">
         <label for="essay-title-input">Essay title / prompt</label>
-        <input type="text" id="essay-title-input" placeholder="e.g. Why do you deserve this scholarship?" style="width:100%; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink);">
+        <input type="text" id="essay-title-input" placeholder="e.g. Why do you deserve this scholarship?" style="width:100%; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--surface); color:var(--ink);">
       </div>
       <div class="field">
         <label for="essay-content-input">Essay content</label>
-        <textarea id="essay-content-input" rows="12" placeholder="Write or paste your essay here…" style="width:100%; padding:13px 16px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink); font-family:var(--font-body); font-size:14px; resize:vertical;"></textarea>
+        <textarea id="essay-content-input" rows="12" placeholder="Write or paste your essay here…" style="width:100%; padding:13px 16px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:14px; resize:vertical;"></textarea>
       </div>
       <button class="btn btn-line" id="save-essay-btn" style="margin-top:14px;">Save essay</button>
       <p id="essay-msg" class="dash-empty" style="margin-top:8px; display:none;"></p>
@@ -129,5 +131,6 @@
 <script src="/sidebar-toggle.js"></script>
 <script src="/header-stats.js"></script>
 
+<script src="/theme-toggle.js"></script>
 </body>
 </html>

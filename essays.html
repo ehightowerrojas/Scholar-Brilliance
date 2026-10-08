@@ -5,7 +5,7 @@
 <script>(function(){try{var t=localStorage.getItem('sb-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect x=%270%27 y=%270%27 width=%2724%27 height=%2724%27 rx=%276%27 fill=%27white%27/%3E%3Cpath d=%27M12 2L20 5V11C20 16.5 16.5 20.5 12 22C7.5 20.5 4 16.5 4 11V5L12 2Z%27 fill=%27%235E35B1%27/%3E%3Cpath d=%27M12 5.3L13 7.9H15.6L13.5 9.5L14.3 12L12 10.5L9.7 12L10.5 9.5L8.4 7.9H11L12 5.3Z%27 fill=%27%23FFC107%27/%3E%3Cpath d=%27M7 14.8C8.6 13.9 10.3 13.6 12 14.2C13.7 13.6 15.4 13.9 17 14.8C15.7 16.4 13.9 17.4 12 17.6C10.1 17.4 8.3 16.4 7 14.8Z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E">
-<title>Browse Scholarships: Scholar Brilliance</title>
+<title>My Essays: Scholar Brilliance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
@@ -21,8 +21,8 @@
     <nav class="sidebar-nav">
       <a href="/dashboard.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
       <a href="/tracker.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>Tracker</a>
-      <a href="/browse.html" class="sidebar-link is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Browse</a>
-      <a href="/application.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Application Builder</a>
+      <a href="/browse.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Browse</a>
+      <a href="/essays.html" class="sidebar-link is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>My Essays</a>
       <a href="/achievements.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4h8v4a4 4 0 0 1-8 0V4z"/><path d="M6 6H4a2 2 0 0 0 2 4M18 6h2a2 2 0 0 1-2 4M10 15h4v3h-4zM8 21h8"/></svg>Achievements</a>
       <a href="/leaderboard.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>Leaderboard</a>
       <a href="/account.html" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>Account</a>
@@ -34,67 +34,89 @@
     <header class="app-header">
       <div style="display:flex; align-items:center;">
         <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Open menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-        <span class="app-header-crumb">Browse</span>
+        <span class="app-header-crumb">My Essays</span>
       </div>
       <div class="app-header-right">
         <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="theme-toggle-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><svg class="theme-toggle-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-        <a href="/account.html" id="avatar-companion" class="avatar-companion" aria-label="Your account"></a>
-        <a href="/dashboard.html#streak-section" class="app-header-stat">🔥 <span id="header-streak">–</span></a>
-        <a href="/achievements.html" class="app-header-stat">⭐ <span id="header-xp">–</span> XP · <span id="header-level">Lv –</span></a>
+        <div id="avatar-companion" class="avatar-companion" aria-hidden="true"></div>
+        <span class="app-header-stat">🔥 <span id="header-streak">–</span></span>
+        <span class="app-header-stat">⭐ <span id="header-xp">–</span> XP</span>
       </div>
     </header>
 
-    <main class="app-main" style="max-width:960px;">
+    <main class="app-main" style="max-width:900px;">
 
-    <span class="eyebrow">Browse scholarships</span>
-    <h1 style="font-size:clamp(24px,3.2vw,32px); margin-top:8px; margin-bottom:8px;">Scholarships from Scholar Brilliance</h1>
-
-    <div class="dash-card" style="margin-bottom:24px;">
-      <h3>My Interests</h3>
-      <p class="dash-empty" style="margin-bottom:12px;">Select what you're interested in. Your school can use this to recommend scholarships to you directly.</p>
-      <div id="interests-tags" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
-      <div id="interests-saved-msg" style="display:none; align-items:center; gap:6px; margin-top:12px; color:var(--teal-deep); font-weight:600; font-size:13px;">
-        <span>✓</span><span>Got it. We've saved your interests.</span>
+    <div class="tracker-head">
+      <div>
+        <span class="eyebrow">My essays</span>
+        <h1 style="font-size:clamp(22px,3vw,28px); margin-top:8px;">Track your scholarship applications and essay submissions.</h1>
       </div>
+      <button class="btn btn-gold" id="add-toggle-btn">+ New Essay</button>
     </div>
 
-    <div id="recommended-section" style="display:none; margin-bottom:36px;">
-      <h2 style="font-size:18px; color:var(--purple); margin-bottom:14px;">Recommended for you</h2>
-      <div id="recommended-list" class="catalog-list"></div>
+    <div class="stat-grid-mini" style="grid-template-columns:repeat(4,1fr); border:1px solid var(--line); border-radius:var(--radius-md); padding:20px; margin-bottom:24px;">
+      <div><strong id="stat-total">0</strong><span>Total Essays</span></div>
+      <div><strong id="stat-won">0</strong><span>Won</span></div>
+      <div><strong id="stat-submitted">0</strong><span>Submitted</span></div>
+      <div><strong id="stat-working">0</strong><span>Working On</span></div>
     </div>
 
-    <div class="browse-search">
-      <input type="text" id="catalog-search" placeholder="Search scholarships…">
+    <div id="filter-confirm-banner" style="display:none; margin-bottom:14px; padding:10px 14px; background:var(--card-soft); border-radius:var(--radius-sm); font-size:13.5px; color:var(--ink);"></div>
+
+    <div style="display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap;">
+      <input type="text" id="essay-search" placeholder="Search essays, scholarships, or prompts…" style="flex:1; min-width:200px; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--bg); color:var(--fg);">
+      <select id="essay-filter" style="padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--bg); color:var(--fg);">
+        <option value="all">All Essays</option>
+        <option value="won">Won</option>
+        <option value="funds_received">Funds Received</option>
+        <option value="submitted">Submitted</option>
+        <option value="working">Working On</option>
+        <option value="not_selected">Not Selected</option>
+      </select>
     </div>
 
-    <div id="catalog-list" class="catalog-list" style="margin-top:20px; margin-bottom:44px;">Loading…</div>
-
-    <div class="dash-card extractor-box" style="margin-bottom:44px;">
-      <h3>Import a scholarship you found <span class="beta-tag">Beta</span></h3>
-      <p class="dash-empty" style="margin-bottom:14px;">Already found one somewhere else? Paste the URL and we'll pull the details into your tracker for you.</p>
-      <div style="display:flex; gap:8px;">
-        <input type="url" id="extract-url" placeholder="Paste the scholarship's webpage URL…" style="flex:1; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--bg); color:var(--fg);">
-        <button class="btn btn-gold" id="extract-btn" style="padding:12px 20px;">Import</button>
+    <form id="essay-form" class="add-form" style="display:none;">
+      <input type="hidden" id="essay-id">
+      <div class="field">
+        <label for="essay-title">Essay title / prompt</label>
+        <input type="text" id="essay-title" placeholder="Leadership Philosophy" required>
       </div>
-      <p class="dash-empty" style="margin-top:12px; font-size:12px;">
-        Tips for best results: use the official scholarship page from the organization · always verify details after import · doesn't work with sites that block scraping (like Bold.org).
-      </p>
-      <div id="extract-result" style="margin-top:18px;"></div>
-    </div>
+      <div class="field">
+        <label for="essay-scholarship">Linked scholarship (optional)</label>
+        <select id="essay-scholarship">
+          <option value="">Not linked yet, standalone draft</option>
+        </select>
+      </div>
+      <div class="field" id="essay-prompt-reference" style="display:none;">
+        <label>Essay prompt for this scholarship</label>
+        <p style="font-size:13.5px; font-style:italic; color:var(--muted); background:var(--card-soft); padding:10px 12px; border-radius:var(--radius-sm); margin:0;" id="essay-prompt-reference-text"></p>
+      </div>
+      <div class="field">
+        <label for="essay-content">Essay content</label>
+        <textarea id="essay-content" rows="10" placeholder="Write or paste your essay here…" style="width:100%; padding:13px 16px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--bg); color:var(--fg); font-family:var(--font-body); font-size:14px; resize:vertical;"></textarea>
+      </div>
+      <div class="add-form-actions">
+        <button type="button" class="btn btn-ghost-dark" id="cancel-essay-btn">Cancel</button>
+        <button type="submit" class="btn btn-gold">Save essay</button>
+      </div>
+      <p id="essay-save-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    </form>
 
+    <div id="essays-list" class="catalog-list">Loading…</div>
   </main>
-  </div>
+
+    </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="/config.js"></script>
 <script src="/utils.js"></script>
 <script src="/supabase-client.js"></script>
+<script src="/sound.js"></script>
 <script src="/avatars.js"></script>
 <script src="/avatar-companion.js"></script>
-<script src="/sound.js"></script>
 <script src="/achievements-award.js"></script>
-<script src="/formatters.js"></script>
-<script src="/browse.js"></script>
+<script src="/essays.js"></script>
 <script src="/sidebar-toggle.js"></script>
 <script src="/header-stats.js"></script>
 

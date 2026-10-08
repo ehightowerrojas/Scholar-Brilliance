@@ -84,7 +84,7 @@ function renderSchoolConnection(orgId) {
   el.innerHTML = `
     <p class="dash-empty" style="margin-bottom:12px;">Not connected to a school yet. If your counselor gave you a referral code, enter it here to connect your account.</p>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <input type="text" id="referral-code-input" placeholder="Referral code" style="flex:1; min-width:160px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--white); color:var(--ink);">
+      <input type="text" id="referral-code-input" placeholder="Referral code" style="flex:1; min-width:160px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);">
       <button class="btn btn-gold" id="connect-school-btn" style="padding:10px 20px;">Connect</button>
     </div>
     <p id="school-connect-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
