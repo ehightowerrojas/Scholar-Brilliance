@@ -193,7 +193,7 @@ function renderScholarshipPickerList(scholarships) {
     return;
   }
   listEl.innerHTML = scholarships.map(s => `
-    <a href="application.html?scholarship=${s.id}" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease; background:var(--index-card-bg); border:1px solid var(--index-card-border); border-radius:var(--radius-sm); padding:14px 18px;">
+    <a href="application.html?scholarship=${s.id}" style="display:block; margin-bottom:10px; text-decoration:none; transition:border-color .15s ease; background:#fbf6ec; border:1px solid #e8dfc8; border-radius:var(--radius-sm); padding:14px 18px;">
       <p style="font-weight:600; color:var(--ink); margin:0; padding-bottom:8px; margin-bottom:8px; border-bottom:3px solid ${s.color && COLOR_HEX[s.color] ? COLOR_HEX[s.color] : 'transparent'};">${escapeHtml(s.title)}</p>
       <p class="dash-empty" style="margin-top:0;">${s.amount ? '$' + Number(s.amount).toLocaleString() : 'No amount set'}${s.deadline ? ' · due ' + new Date(s.deadline + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}</p>
     </a>
@@ -243,10 +243,10 @@ function renderQuestions() {
   listEl.innerHTML = currentQuestions.map(q => `
     <div class="field" data-question-id="${q.id}" style="border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px; margin-bottom:12px;">
       <div style="display:flex; gap:10px; align-items:flex-start;">
-        <input type="text" class="question-text-input" value="${escapeHtml(q.question)}" placeholder="e.g. List your extracurricular activities" style="flex:1; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--surface); color:var(--ink); font-weight:600;">
+        <input type="text" class="question-text-input" value="${escapeHtml(q.question)}" placeholder="e.g. List your extracurricular activities" style="flex:1; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink); font-weight:600;">
         <button class="delete-question-btn" aria-label="Delete question" style="background:none; border:none; cursor:pointer; color:var(--muted); font-size:18px; padding:4px 8px; flex-shrink:0;">×</button>
       </div>
-      <textarea class="question-answer-input" rows="3" placeholder="Your answer…" style="width:100%; margin-top:8px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:13.5px; resize:vertical;">${escapeHtml(q.answer)}</textarea>
+      <textarea class="question-answer-input" rows="3" placeholder="Your answer…" style="width:100%; margin-top:8px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--white); color:var(--ink); font-family:var(--font-body); font-size:13.5px; resize:vertical;">${escapeHtml(q.answer)}</textarea>
     </div>
   `).join('');
 
