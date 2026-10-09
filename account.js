@@ -73,6 +73,151 @@ async function init() {
   if (role !== 'staff') {
     renderSchoolConnection(profile?.org_id);
   }
+
+  renderBilling(role, profile?.org_id);
+}
+
+// ------------------------------------------------------------------
+// Billing — subscribe/manage via the Worker's Stripe endpoints. The
+// subscriptions row itself is read directly via Supabase (RLS lets a
+// user/staff member see their own row); only starting checkout or
+// opening the billing portal goes through the Worker, since those
+// need the Stripe secret key.
+// ------------------------------------------------------------------
+
+async function billingFetch(path, body) {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const resp = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+    body: JSON.stringify(body || {}),
+  });
+  let data = {};
+  try { data = await resp.json(); } catch { /* non-JSON error response, fall through with empty data */ }
+  if (!resp.ok) throw new Error(data.error || 'Something went wrong.');
+  return data;
+}
+
+const BILLING_STATUS_LABEL = {
+  active: 'Active',
+  trialing: 'Trial',
+  past_due: 'Past due',
+  incomplete: 'Incomplete',
+  canceled: 'Canceled',
+  unpaid: 'Unpaid',
+  paused: 'Paused',
+};
+
+async function renderBilling(role, orgId) {
+  const el = document.getElementById('billing-content');
+  const isStaffWithOrg = role === 'staff' && Boolean(orgId);
+  const column = isStaffWithOrg ? 'org_id' : 'user_id';
+  const value = isStaffWithOrg ? orgId : accountUserId;
+
+  const { data: sub } = await supabaseClient
+    .from('subscriptions')
+    .select('status, seats, current_period_end, cancel_at_period_end')
+    .eq(column, value)
+    .maybeSingle();
+
+  // Clean the ?billing=success/canceled param out of the URL so a
+  // page refresh doesn't keep re-showing the banner below.
+  const params = new URLSearchParams(window.location.search);
+  const billingResult = params.get('billing');
+  if (billingResult) {
+    params.delete('billing');
+    const rest = params.toString();
+    history.replaceState({}, '', window.location.pathname + (rest ? `?${rest}` : ''));
+  }
+
+  const banner = billingResult === 'success'
+    ? `<p class="dash-empty" style="color:var(--teal-deep); margin-bottom:14px;">✓ Thanks! Your subscription is being set up — this can take a few seconds to show below.</p>`
+    : billingResult === 'canceled'
+    ? `<p class="dash-empty" style="margin-bottom:14px;">Checkout was canceled — you weren't charged.</p>`
+    : '';
+
+  const isActive = sub && ['active', 'trialing', 'past_due'].includes(sub.status);
+
+  if (isActive) {
+    const renewalText = sub.current_period_end
+      ? new Date(sub.current_period_end).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+      : null;
+    el.innerHTML = `
+      ${banner}
+      <p class="dash-empty" style="margin-bottom:6px;">Status: <strong style="color:var(--ink);">${BILLING_STATUS_LABEL[sub.status] || sub.status}</strong>${isStaffWithOrg && sub.seats ? ` · ${sub.seats} seat${sub.seats === 1 ? '' : 's'}` : ''}</p>
+      ${renewalText ? `<p class="dash-empty" style="margin-bottom:14px;">${sub.cancel_at_period_end ? 'Cancels' : 'Renews'} on ${renewalText}</p>` : ''}
+      <button class="btn btn-line" id="manage-billing-btn">Manage billing</button>
+      <p id="billing-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    `;
+    document.getElementById('manage-billing-btn').addEventListener('click', async (e) => {
+      const btn = e.target;
+      btn.disabled = true;
+      btn.textContent = 'Opening…';
+      try {
+        const { url } = await billingFetch('/api/billing/portal');
+        window.location.href = url;
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Manage billing';
+        showMsg('billing-msg', err.message, true);
+      }
+    });
+    return;
+  }
+
+  if (isStaffWithOrg) {
+    el.innerHTML = `
+      ${banner}
+      <p class="dash-empty" style="margin-bottom:14px;">Buy seats for your students at $14.99 / student / month. Each seat covers one student's full access.</p>
+      <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+        <div class="field" style="margin-top:0;">
+          <label for="seats-input">Number of seats</label>
+          <input type="number" id="seats-input" min="1" max="5000" value="10" style="width:120px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);">
+        </div>
+        <button class="btn btn-gold" id="subscribe-btn" style="padding:12px 24px;">Purchase seats</button>
+      </div>
+      <p id="billing-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+    `;
+    document.getElementById('subscribe-btn').addEventListener('click', async (e) => {
+      const seats = parseInt(document.getElementById('seats-input').value, 10);
+      if (!Number.isInteger(seats) || seats < 1) {
+        showMsg('billing-msg', 'Enter a valid number of seats.', true);
+        return;
+      }
+      const btn = e.target;
+      btn.disabled = true;
+      btn.textContent = 'Starting checkout…';
+      try {
+        const { url } = await billingFetch('/api/billing/checkout', { plan: 'org_seats', seats });
+        window.location.href = url;
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Purchase seats';
+        showMsg('billing-msg', err.message, true);
+      }
+    });
+    return;
+  }
+
+  el.innerHTML = `
+    ${banner}
+    <p class="dash-empty" style="margin-bottom:14px;">Subscribe for $14.99 / month — full tracker, essay workspace, achievements, and scholarship discovery.</p>
+    <button class="btn btn-gold" id="subscribe-btn">Subscribe</button>
+    <p id="billing-msg" class="dash-empty" style="margin-top:10px; display:none;"></p>
+  `;
+  document.getElementById('subscribe-btn').addEventListener('click', async (e) => {
+    const btn = e.target;
+    btn.disabled = true;
+    btn.textContent = 'Starting checkout…';
+    try {
+      const { url } = await billingFetch('/api/billing/checkout', { plan: 'individual' });
+      window.location.href = url;
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Subscribe';
+      showMsg('billing-msg', err.message, true);
+    }
+  });
 }
 
 function renderSchoolConnection(orgId) {
